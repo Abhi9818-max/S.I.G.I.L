@@ -14,7 +14,8 @@ import {
   subWeeks,
   endOfDay,
   startOfYear,
-  endOfYear
+  endOfYear,
+  addDays,
 } from 'date-fns';
 import type { RecordEntry, MonthColumn, MonthlyDayData, TaskDefinition } from '@/types';
 import { getContributionLevel, DEFAULT_TASK_COLOR, NUM_WEEKS_TO_DISPLAY } from './config';
@@ -33,19 +34,19 @@ export const getMonthlyGraphData = (
   // Determine the date range
   let startDate: Date;
   let endDate: Date;
+  const currentYear = getYear(today);
+  const displayYear = year || currentYear;
 
-  if (year) {
-    // If a specific year is provided, show the whole year
-    startDate = startOfYear(new Date(year, 0, 1));
-    endDate = endOfYear(new Date(year, 11, 31));
-  } else if (displayMode === 'full') {
-    // Default full view: 52-week rolling period
-    endDate = endOfDay(today);
-    startDate = startOfDay(subWeeks(today, NUM_WEEKS_TO_DISPLAY - 1));
+  if (displayMode === 'full') {
+    startDate = startOfYear(new Date(displayYear, 0, 1));
+    endDate = endOfYear(new Date(displayYear, 11, 31));
   } else {
-    // Current month view for the dashboard
+    // current_month view for the dashboard
     startDate = startOfMonth(today);
-    endDate = endOfDay(today);
+    // Ensure end date includes the entire current month
+    const daysInMonth = getDaysInMonth(today);
+    endDate = setDate(today, daysInMonth);
+    endDate = endOfDay(endDate);
   }
   
   const allDaysInRange = eachDayOfInterval({ start: startDate, end: endDate });
