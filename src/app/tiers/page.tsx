@@ -21,7 +21,7 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
                 src={`/tiers/tier-${index + 1}.png`}
                 alt={`Image for ${tier.name}`}
                 fill
-                className="object-cover object-top"
+                className="object-cover object-bottom"
                 unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
@@ -29,9 +29,9 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
       </CardContent>
       <CardHeader>
         <div className="flex items-center gap-3">
-            <span className="text-3xl">{tier.icon}</span>
+            <span className="text-2xl">{tier.icon}</span>
             <div>
-                <CardTitle>{tier.name}</CardTitle>
+                <CardTitle className="text-xl">{tier.name}</CardTitle>
                 <CardDescription>Levels {tier.minLevel} - {tier.maxLevel}</CardDescription>
             </div>
         </div>
