@@ -4,7 +4,7 @@
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData } from '@/types';
 import React, from 'react';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
@@ -110,20 +110,19 @@ interface UserRecordsContextType {
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
 
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isUserDataLoaded } = useAuth();
-  const [userData, setUserData] = React.useState<UserData | null>(null);
+  const { user, userData: authUserData, isUserDataLoaded } = useAuth(); // Use userData from AuthProvider
+  const [localUserData, setLocalUserData] = React.useState<UserData | null>(null);
   const { toast } = useToast();
 
+  const userData = localUserData || authUserData;
+
+  // This effect will sync the local state with the auth provider's state
+  // This helps reflect immediate changes while still being based on the fetched data
   React.useEffect(() => {
-    if (user) {
-      const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
-        setUserData(doc.data() as UserData);
-      });
-      return () => unsub();
-    } else {
-      setUserData(null);
+    if (authUserData) {
+      setLocalUserData(authUserData);
     }
-  }, [user]);
+  }, [authUserData]);
 
   const records = React.useMemo(() => userData?.records || [], [userData]);
   const taskDefinitions = React.useMemo(() => {
@@ -142,6 +141,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateUserDataInDb = React.useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (user) {
+        // Optimistically update local state
+        setLocalUserData(prevData => {
+            const newState = { ...(prevData || authUserData!), ...dataToUpdate };
+            return newState as UserData;
+        });
+
       const userDocRef = doc(db, 'users', user.uid);
       try {
         const sanitizedData = removeUndefinedValues(dataToUpdate);
@@ -150,9 +155,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       } catch (error) {
         console.error("Error updating user data in DB:", error);
+        // If the DB update fails, we might want to revert the optimistic update
+        // or show a toast message. For now, we log the error.
+        setLocalUserData(authUserData); // Revert to last known good state from auth
       }
     }
-  }, [user]);
+  }, [user, authUserData]);
 
   const getTaskDefinitionById = React.useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);
@@ -708,3 +716,5 @@ export const useUserRecords = (): UserRecordsContextType => {
   }
   return context;
 };
+
+    
