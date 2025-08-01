@@ -34,7 +34,6 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
                 unoptimized
             />
         </div>
-        <p className="text-sm text-muted-foreground italic">"{tier.welcomeMessage}"</p>
       </CardContent>
     </Card>
   );
@@ -60,7 +59,9 @@ export default function TiersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {TIER_INFO.map((tier, index) => (
-                        <TierCard key={tier.slug} tier={tier} index={index} />
+                        <Link href={`/tiers/${tier.slug}`} key={tier.slug}>
+                           <TierCard tier={tier} index={index} />
+                        </Link>
                     ))}
                 </div>
 
