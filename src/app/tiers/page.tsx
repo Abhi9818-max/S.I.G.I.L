@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,17 @@ import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { cn } from '@/lib/utils';
 import { CornerDownLeft, Star } from 'lucide-react';
 
-const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number }) => {
+const TierCard = ({ tier, index, isCurrentTier, isClicked, onClick }: { tier: typeof TIER_INFO[0], index: number, isCurrentTier: boolean, isClicked: boolean, onClick: () => void }) => {
   const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <Card 
+        onClick={onClick}
+        className={cn(
+            "flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer",
+            isCurrentTier && 'current-tier-glow',
+            isClicked && 'click-glow-animation'
+        )}
+    >
       <CardContent className="p-0">
         <div className="relative w-full aspect-[1/1]">
             <Image
@@ -47,8 +54,14 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
 
 export default function TiersPage() {
     const { getUserLevelInfo } = useUserRecords();
+    const [clickedTierSlug, setClickedTierSlug] = useState<string | null>(null);
     const levelInfo = getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
+
+    const handleCardClick = (slug: string) => {
+        setClickedTierSlug(slug);
+        setTimeout(() => setClickedTierSlug(null), 500); // Remove glow after animation
+    };
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -64,8 +77,16 @@ export default function TiersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {TIER_INFO.map((tier, index) => (
-                        <Link href={`/tiers/${tier.slug}`} key={tier.slug}>
-                           <TierCard tier={tier} index={index} />
+                        <Link href={`/tiers/${tier.slug}`} key={tier.slug} passHref>
+                           <div onClick={() => handleCardClick(tier.slug)}>
+                                <TierCard 
+                                    tier={tier} 
+                                    index={index}
+                                    isCurrentTier={levelInfo?.tierSlug === tier.slug}
+                                    isClicked={clickedTierSlug === tier.slug}
+                                    onClick={() => {}} // The div handles the click for animation
+                                />
+                           </div>
                         </Link>
                     ))}
                 </div>

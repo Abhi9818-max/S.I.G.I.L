@@ -104,4 +104,34 @@
       box-shadow: 0 0 14px 4px hsl(var(--primary) / 0.5);
     }
   }
+
+  .current-tier-glow {
+    box-shadow: 0 0 12px 3px hsl(var(--destructive) / 0.6);
+    animation: current-tier-pulse 3s infinite ease-in-out;
+  }
+
+  @keyframes current-tier-pulse {
+    0%, 100% {
+      box-shadow: 0 0 12px 3px hsl(var(--destructive) / 0.6);
+    }
+    50% {
+      box-shadow: 0 0 18px 5px hsl(var(--destructive) / 0.4);
+    }
+  }
+
+  .click-glow-animation {
+    animation: click-glow 0.5s ease-out forwards;
+  }
+
+  @keyframes click-glow {
+    0% {
+      box-shadow: 0 0 0 0 hsl(var(--foreground) / 0);
+    }
+    50% {
+      box-shadow: 0 0 16px 4px hsl(var(--foreground) / 0.3);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--foreground) / 0);
+    }
+  }
 }
