@@ -182,7 +182,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
       const ey = my;
       const textAnchor = cos >= 0 ? 'start' : 'end';
     
-      if (payload.name === 'Unallocated' || percent === 0) return null;
+      if (percent === 0) return null;
       
       const labelValue = dashboardSettings.pieChartLabelFormat === 'time'
         ? `${Math.floor(payload.value / 60)}h ${payload.value % 60}m`
