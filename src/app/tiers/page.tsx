@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { CornerDownLeft, Star } from 'lucide-react';
 
 const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number }) => {
+  const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
   return (
     <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <CardContent className="p-0">
@@ -23,7 +24,7 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
                 fill
                 className={cn(
                     "object-cover",
-                    tier.slug === 'ancient-kin' && 'object-bottom'
+                    customCropTiers.includes(tier.slug) && 'object-top'
                 )}
                 unoptimized
             />
