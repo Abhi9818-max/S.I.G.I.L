@@ -15,15 +15,6 @@ import { CornerDownLeft, Star } from 'lucide-react';
 const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number }) => {
   return (
     <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-            <span className="text-2xl">{tier.icon}</span>
-            <div>
-                <CardTitle className="text-xl">{tier.name}</CardTitle>
-                <CardDescription>Levels {tier.minLevel} - {tier.maxLevel}</CardDescription>
-            </div>
-        </div>
-      </CardHeader>
       <CardContent className="p-0">
         <div className="relative w-full aspect-[1/1]">
             <Image
@@ -39,6 +30,15 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
         </div>
       </CardContent>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+            <span className="text-2xl">{tier.icon}</span>
+            <div>
+                <CardTitle className="text-xl">{tier.name}</CardTitle>
+                <CardDescription>Levels {tier.minLevel} - {tier.maxLevel}</CardDescription>
+            </div>
+        </div>
+      </CardHeader>
     </Card>
   );
 };
