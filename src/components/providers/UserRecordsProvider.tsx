@@ -3,8 +3,8 @@
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData } from '@/types';
-import React, from 'react';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
@@ -110,42 +110,45 @@ interface UserRecordsContextType {
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
 
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userData: authUserData, isUserDataLoaded } = useAuth(); // Use userData from AuthProvider
-  const [localUserData, setLocalUserData] = React.useState<UserData | null>(null);
+  const { user, isUserDataLoaded } = useAuth();
+  const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
 
-  const userData = localUserData || authUserData;
-
-  // This effect will sync the local state with the auth provider's state
-  // This helps reflect immediate changes while still being based on the fetched data
-  React.useEffect(() => {
-    if (authUserData) {
-      setLocalUserData(authUserData);
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          setUserData(docSnap.data() as UserData);
+        }
+      } else {
+        setUserData(null);
+      }
+    };
+    if (isUserDataLoaded) {
+      loadUserData();
     }
-  }, [authUserData]);
+  }, [user, isUserDataLoaded]);
 
-  const records = React.useMemo(() => userData?.records || [], [userData]);
-  const taskDefinitions = React.useMemo(() => {
+  const records = useMemo(() => userData?.records || [], [userData]);
+  const taskDefinitions = useMemo(() => {
     if (userData?.taskDefinitions && userData.taskDefinitions.length > 0) {
       return userData.taskDefinitions;
     }
     return DEFAULT_TASK_DEFINITIONS.map(task => ({ ...task, id: task.id || uuidv4() }));
   }, [userData]);
-  const totalBonusPoints = React.useMemo(() => userData?.bonusPoints || 0, [userData]);
-  const unlockedAchievements = React.useMemo(() => userData?.unlockedAchievements || [], [userData]);
-  const spentSkillPoints = React.useMemo(() => userData?.spentSkillPoints || {}, [userData]);
-  const unlockedSkills = React.useMemo(() => userData?.unlockedSkills || [], [userData]);
-  const freezeCrystals = React.useMemo(() => userData?.freezeCrystals || 0, [userData]);
-  const awardedStreakMilestones = React.useMemo(() => userData?.awardedStreakMilestones || {}, [userData]);
-  const highGoals = React.useMemo(() => userData?.highGoals || [], [userData]);
+  const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
+  const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);
+  const spentSkillPoints = useMemo(() => userData?.spentSkillPoints || {}, [userData]);
+  const unlockedSkills = useMemo(() => userData?.unlockedSkills || [], [userData]);
+  const freezeCrystals = useMemo(() => userData?.freezeCrystals || 0, [userData]);
+  const awardedStreakMilestones = useMemo(() => userData?.awardedStreakMilestones || {}, [userData]);
+  const highGoals = useMemo(() => userData?.highGoals || [], [userData]);
 
-  const updateUserDataInDb = React.useCallback(async (dataToUpdate: Partial<UserData>) => {
+  const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (user) {
-        // Optimistically update local state
-        setLocalUserData(prevData => {
-            const newState = { ...(prevData || authUserData!), ...dataToUpdate };
-            return newState as UserData;
-        });
+        setUserData(prevData => ({ ...(prevData || {}), ...dataToUpdate } as UserData));
 
       const userDocRef = doc(db, 'users', user.uid);
       try {
@@ -155,18 +158,15 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       } catch (error) {
         console.error("Error updating user data in DB:", error);
-        // If the DB update fails, we might want to revert the optimistic update
-        // or show a toast message. For now, we log the error.
-        setLocalUserData(authUserData); // Revert to last known good state from auth
       }
     }
-  }, [user, authUserData]);
+  }, [user]);
 
-  const getTaskDefinitionById = React.useCallback((taskId: string): TaskDefinition | undefined => {
+  const getTaskDefinitionById = useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);
   }, [taskDefinitions]);
     
-  const getCurrentStreak = React.useCallback((taskId: string | null = null): number => {
+  const getCurrentStreak = useCallback((taskId: string | null = null): number => {
     if (!isUserDataLoaded) return 0;
   
     const allRecords = [...records];
@@ -213,7 +213,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return streak;
   }, [records, getTaskDefinitionById, isUserDataLoaded]);
 
-  const addRecord = React.useCallback((entry: Omit<RecordEntry, 'id'>) => {
+  const addRecord = useCallback((entry: Omit<RecordEntry, 'id'>) => {
     const newRecord: RecordEntry = {
       ...entry,
       id: uuidv4(),
@@ -224,21 +224,21 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     updateUserDataInDb({ records: updatedRecords });
   }, [records, updateUserDataInDb]);
 
-  const updateRecord = React.useCallback((entry: RecordEntry) => {
+  const updateRecord = useCallback((entry: RecordEntry) => {
       const updatedRecords = records.map(r => r.id === entry.id ? { ...entry, value: Number(entry.value) } : r);
       updateUserDataInDb({ records: updatedRecords });
   }, [records, updateUserDataInDb]);
 
-  const deleteRecord = React.useCallback((recordId: string) => {
+  const deleteRecord = useCallback((recordId: string) => {
       const updatedRecords = records.filter(r => r.id !== recordId);
       updateUserDataInDb({ records: updatedRecords });
   }, [records, updateUserDataInDb]);
 
-  const getRecordsByDate = React.useCallback((date: string): RecordEntry[] => {
+  const getRecordsByDate = useCallback((date: string): RecordEntry[] => {
     return records.filter(r => r.date === date);
   }, [records]);
 
-  const getRecordsForDateRange = React.useCallback((startDate: Date, endDate: Date): RecordEntry[] => {
+  const getRecordsForDateRange = useCallback((startDate: Date, endDate: Date): RecordEntry[] => {
     const start = startOfDay(startDate);
     const end = startOfDay(endDate);
 
@@ -252,7 +252,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
   }, [records]);
 
-  const getAggregateSum = React.useCallback((startDate: Date, endDate: Date, taskId: string | null = null): number => {
+  const getAggregateSum = useCallback((startDate: Date, endDate: Date, taskId: string | null = null): number => {
     let relevantRecords = getRecordsForDateRange(startDate, endDate);
     if (taskId) {
       relevantRecords = relevantRecords.filter(r => r.taskType === taskId);
@@ -260,18 +260,18 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return relevantRecords.reduce((sum, r) => sum + (Number(r.value) || 0), 0);
   }, [getRecordsForDateRange]);
 
-  const getYearlySum = React.useCallback((year: number, taskId: string | null = null): number => {
+  const getYearlySum = useCallback((year: number, taskId: string | null = null): number => {
     const startDate = startOfYear(new Date(year, 0, 1));
     const endDate = endOfYear(new Date(year, 11, 31));
     return getAggregateSum(startDate, endDate, taskId);
   }, [getAggregateSum]);
 
-  const getAllRecordsStringified = React.useCallback(() => {
+  const getAllRecordsStringified = useCallback(() => {
     const formattedRecords = records.map(r => ({ date: r.date, value: r.value, taskType: r.taskType }));
     return JSON.stringify(formattedRecords);
   }, [records]);
 
-  const getDailyConsistency = React.useCallback((days: number, taskId: string | null = null): number => {
+  const getDailyConsistency = useCallback((days: number, taskId: string | null = null): number => {
     if (!isUserDataLoaded || days <= 0) return 0;
   
     const today = startOfDay(new Date());
@@ -324,7 +324,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   
   }, [getRecordsForDateRange, getTaskDefinitionById, isUserDataLoaded]);
 
-  const addTaskDefinition = React.useCallback((taskData: Omit<TaskDefinition, 'id'>): string => {
+  const addTaskDefinition = useCallback((taskData: Omit<TaskDefinition, 'id'>): string => {
     const newId = uuidv4();
     const newTask: TaskDefinition = {
       ...taskData,
@@ -335,18 +335,18 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return newId;
   }, [taskDefinitions, updateUserDataInDb]);
 
-  const updateTaskDefinition = React.useCallback((updatedTask: TaskDefinition) => {
+  const updateTaskDefinition = useCallback((updatedTask: TaskDefinition) => {
     const updatedTasks = taskDefinitions.map(task => task.id === updatedTask.id ? { ...updatedTask } : task);
     updateUserDataInDb({ taskDefinitions: updatedTasks });
   }, [taskDefinitions, updateUserDataInDb]);
 
-  const deleteTaskDefinition = React.useCallback((taskId: string) => {
+  const deleteTaskDefinition = useCallback((taskId: string) => {
     const updatedTasks = taskDefinitions.filter(task => task.id !== taskId);
     const updatedRecords = records.map(rec => rec.taskType === taskId ? {...rec, taskType: undefined} : rec);
     updateUserDataInDb({ taskDefinitions: updatedTasks, records: updatedRecords });
   }, [taskDefinitions, records, updateUserDataInDb]);
 
-  const getStatsForCompletedWeek = React.useCallback((weekOffset: number, taskId?: string | null): WeeklyProgressStats | null => {
+  const getStatsForCompletedWeek = useCallback((weekOffset: number, taskId?: string | null): WeeklyProgressStats | null => {
     if (records.length === 0) return null;
     const today = new Date();
     const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -366,7 +366,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   }, [records, getAggregateSum]);
 
-  const getWeeklyAggregatesForChart = React.useCallback((numberOfWeeks: number, taskId?: string | null): AggregatedTimeDataPoint[] => {
+  const getWeeklyAggregatesForChart = useCallback((numberOfWeeks: number, taskId?: string | null): AggregatedTimeDataPoint[] => {
     if (records.length === 0) return [];
     const today = new Date();
     const data: AggregatedTimeDataPoint[] = [];
@@ -387,29 +387,29 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return data;
   }, [records, getAggregateSum]);
 
-  const getTotalBaseRecordValue = React.useCallback((): number => {
+  const getTotalBaseRecordValue = useCallback((): number => {
     return records.reduce((sum, record) => sum + (Number(record.value) || 0), 0);
   }, [records]);
 
-  const getUserLevelInfo = React.useCallback((): UserLevelInfo => {
+  const getUserLevelInfo = useCallback((): UserLevelInfo => {
     const sumOfRecordValues = getTotalBaseRecordValue();
     const totalExperience = sumOfRecordValues + totalBonusPoints;
     return calculateUserLevelInfo(totalExperience);
   }, [getTotalBaseRecordValue, totalBonusPoints]);
 
-  const awardTierEntryBonus = React.useCallback((bonusAmount: number) => {
+  const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
       const newBonus = totalBonusPoints + bonusAmount;
       updateUserDataInDb({ bonusPoints: newBonus });
     }
   }, [totalBonusPoints, updateUserDataInDb]);
 
-  const deductBonusPoints = React.useCallback((penalty: number) => {
+  const deductBonusPoints = useCallback((penalty: number) => {
     const newBonus = totalBonusPoints - Math.abs(penalty);
     updateUserDataInDb({ bonusPoints: newBonus });
   }, [totalBonusPoints, updateUserDataInDb]);
 
-  const useFreezeCrystal = React.useCallback(() => {
+  const useFreezeCrystal = useCallback(() => {
     if (freezeCrystals > 0) {
       const newCrystals = freezeCrystals - 1;
       updateUserDataInDb({ freezeCrystals: newCrystals });
@@ -418,18 +418,18 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 
   // Constellation Functions
-  const getAvailableSkillPoints = React.useCallback((taskId: string): number => {
+  const getAvailableSkillPoints = useCallback((taskId: string): number => {
     if (records.length === 0) return 0;
     const totalPoints = getAggregateSum(new Date("1900-01-01"), new Date(), taskId);
     const spentPoints = spentSkillPoints[taskId] || 0;
     return totalPoints - spentPoints;
   }, [getAggregateSum, records, spentSkillPoints]);
 
-  const isSkillUnlocked = React.useCallback((skillId: string): boolean => {
+  const isSkillUnlocked = useCallback((skillId: string): boolean => {
     return unlockedSkills.includes(skillId);
   }, [unlockedSkills]);
 
-  const unlockSkill = React.useCallback((skillId: string, taskId: string, cost: number): boolean => {
+  const unlockSkill = useCallback((skillId: string, taskId: string, cost: number): boolean => {
     const availablePoints = getAvailableSkillPoints(taskId);
     if (availablePoints >= cost && !isSkillUnlocked(skillId)) {
         const updatedPoints = { ...spentSkillPoints, [taskId]: (spentSkillPoints[taskId] || 0) + cost };
@@ -440,10 +440,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return false;
   }, [getAvailableSkillPoints, isSkillUnlocked, updateUserDataInDb, spentSkillPoints, unlockedSkills]);
 
-  const constellations = React.useMemo(() => CONSTELLATIONS, []);
+  const constellations = useMemo(() => CONSTELLATIONS, []);
 
   // Insights Functions
-  const getTaskDistribution = React.useCallback((startDate: Date, endDate: Date, taskId: string | null = null): TaskDistributionData[] => {
+  const getTaskDistribution = useCallback((startDate: Date, endDate: Date, taskId: string | null = null): TaskDistributionData[] => {
     let relevantRecords = getRecordsForDateRange(startDate, endDate);
     if (taskId) {
         relevantRecords = relevantRecords.filter(r => r.taskType === taskId);
@@ -468,7 +468,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }));
   }, [getRecordsForDateRange, getTaskDefinitionById]);
 
-  const getProductivityByDay = React.useCallback((startDate: Date, endDate: Date, taskId: string | null = null): ProductivityByDayData[] => {
+  const getProductivityByDay = useCallback((startDate: Date, endDate: Date, taskId: string | null = null): ProductivityByDayData[] => {
     let relevantRecords = getRecordsForDateRange(startDate, endDate);
      if (taskId) {
         relevantRecords = relevantRecords.filter(r => r.taskType === taskId);
@@ -490,7 +490,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return dayTotals;
   }, [getRecordsForDateRange]);
 
-  const getDailyTimeBreakdown = React.useCallback((date: Date = new Date()): DailyTimeBreakdownData[] => {
+  const getDailyTimeBreakdown = useCallback((date: Date = new Date()): DailyTimeBreakdownData[] => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const dailyRecords = getRecordsByDate(dateStr);
     
@@ -537,7 +537,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [getRecordsByDate, taskDefinitions, getTaskDefinitionById]);
 
   // Achievement Check
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isUserDataLoaded) return;
     const levelInfo = getUserLevelInfo();
     const streaks: Record<string, number> = {};
@@ -567,28 +567,28 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb]);
 
   // High Goal Functions
-  const addHighGoal = React.useCallback((goalData: Omit<HighGoal, 'id'>) => {
+  const addHighGoal = useCallback((goalData: Omit<HighGoal, 'id'>) => {
     const newGoal: HighGoal = { ...goalData, id: uuidv4() };
     const updatedGoals = [...highGoals, newGoal];
     updateUserDataInDb({ highGoals: updatedGoals });
   }, [highGoals, updateUserDataInDb]);
 
-  const updateHighGoal = React.useCallback((updatedGoal: HighGoal) => {
+  const updateHighGoal = useCallback((updatedGoal: HighGoal) => {
     const updatedGoals = highGoals.map(g => g.id === updatedGoal.id ? updatedGoal : g);
     updateUserDataInDb({ highGoals: updatedGoals });
   }, [highGoals, updateUserDataInDb]);
 
-  const deleteHighGoal = React.useCallback((goalId: string) => {
+  const deleteHighGoal = useCallback((goalId: string) => {
     const updatedGoals = highGoals.filter(g => g.id !== goalId);
     updateUserDataInDb({ highGoals: updatedGoals });
   }, [highGoals, updateUserDataInDb]);
   
-  const getHighGoalProgress = React.useCallback((goal: HighGoal) => {
+  const getHighGoalProgress = useCallback((goal: HighGoal) => {
     return getAggregateSum(parseISO(goal.startDate), parseISO(goal.endDate), goal.taskId);
   }, [getAggregateSum]);
   
   // Streak milestone rewards check
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isUserDataLoaded || !user) return;
     const newMilestones: Record<string, number[]> = {};
     let crystalsAwarded = 0;
@@ -621,7 +621,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [records, taskDefinitions, awardedStreakMilestones, freezeCrystals, isUserDataLoaded, user, getCurrentStreak, updateUserDataInDb, toast]);
 
 
-  const contextValue = React.useMemo(() => ({
+  const contextValue = useMemo(() => ({
     records,
     addRecord,
     updateRecord,
