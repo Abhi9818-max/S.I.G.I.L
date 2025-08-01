@@ -24,6 +24,7 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
                 className="object-cover"
                 unoptimized
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
         </div>
       </CardContent>
       <CardHeader>
