@@ -12,7 +12,7 @@ import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { cn } from '@/lib/utils';
 import { CornerDownLeft, Star } from 'lucide-react';
 
-const TierCard = ({ tier }: { tier: typeof TIER_INFO[0] }) => {
+const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number }) => {
   return (
     <Card className="flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <CardHeader>
@@ -27,11 +27,11 @@ const TierCard = ({ tier }: { tier: typeof TIER_INFO[0] }) => {
       <CardContent className="flex-grow flex flex-col gap-4">
         <div className="aspect-video relative w-full rounded-md overflow-hidden">
             <Image
-                src={`https://placehold.co/600x400.png`}
+                src={`/tiers/tier-${index + 1}.png`}
                 alt={`Image for ${tier.name}`}
                 fill
                 className="object-cover"
-                data-ai-hint="fantasy landscape"
+                unoptimized
             />
         </div>
         <p className="text-sm text-muted-foreground italic">"{tier.welcomeMessage}"</p>
@@ -59,8 +59,8 @@ export default function TiersPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {TIER_INFO.map(tier => (
-                        <TierCard key={tier.slug} tier={tier} />
+                    {TIER_INFO.map((tier, index) => (
+                        <TierCard key={tier.slug} tier={tier} index={index} />
                     ))}
                 </div>
 
