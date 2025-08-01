@@ -8,20 +8,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import type { UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { LEVEL_NAMES, TIER_INFO } from '@/lib/config';
-import { BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { BookOpen, Star } from 'lucide-react';
 
 interface LevelDetailsModalProps {
   isOpen: boolean;
@@ -71,7 +66,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
             <h4 className="font-semibold text-lg">Level {currentLevel}: {levelName}</h4>
             <p className="text-sm text-muted-foreground">Your current standing in the S.I.G.I.L. system.</p>
@@ -102,49 +97,16 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
                 <span className="font-bold text-lg text-primary">{totalAccumulatedValue.toLocaleString()}</span>
             </div>
           </div>
-
-          <Separator />
-
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="all-levels">
-              <AccordionTrigger>
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  View All Levels & Tiers
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                 <ScrollArea className="h-[250px] pr-4">
-                  <ul className="space-y-4">
-                    {TIER_INFO.map(tier => (
-                      <li key={tier.slug} className="p-3 rounded-lg bg-muted/20 border border-border/50">
-                        <h5 className="font-semibold text-md flex items-center gap-2 mb-2 sticky top-0 bg-muted/30 backdrop-blur-sm py-1 -mx-3 -mt-3 px-3 rounded-t-lg border-b border-border/50">
-                          {tier.icon} {tier.name} 
-                          <span className="text-sm font-normal text-muted-foreground ml-auto">(Lv. {tier.minLevel}-{tier.maxLevel})</span>
-                        </h5>
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                          {LEVEL_NAMES.slice(tier.minLevel - 1, tier.maxLevel).map((name, index) => {
-                            const levelNumber = tier.minLevel + index;
-                            const isCurrent = levelNumber === currentLevel;
-                            return (
-                              <li key={name} className={cn(
-                                "text-sm p-1 rounded-md",
-                                isCurrent ? "font-bold text-primary bg-primary/10" : "text-muted-foreground"
-                              )}>
-                                {name}
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollArea>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
         </div>
+
+        <DialogFooter>
+          <Button asChild className="w-full" variant="outline" onClick={() => onOpenChange(false)}>
+            <Link href="/tiers">
+                <Star className="mr-2 h-4 w-4" />
+                View All Tiers
+            </Link>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
