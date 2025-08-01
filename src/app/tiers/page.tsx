@@ -21,7 +21,7 @@ const TierCard = ({ tier, index }: { tier: typeof TIER_INFO[0], index: number })
                 src={`/tiers/tier-${index + 1}.png`}
                 alt={`Image for ${tier.name}`}
                 fill
-                className="object-cover"
+                className="object-cover object-top"
                 unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
