@@ -60,14 +60,13 @@ export default function TierDetailPage() {
                 </Button>
                 
                 <Card className="max-w-4xl mx-auto shadow-xl overflow-hidden">
-                    <div className="relative w-full">
+                    <div className="relative mx-auto max-w-lg p-4">
                         <Image
                             src={`/tiers/tier-${tierIndex + 1}.png`}
                             alt={`Image for ${tier.name}`}
-                            width={300}
-                            height={150}
-                            className="w-full h-auto"
-                            unoptimized
+                            width={600}
+                            height={300}
+                            className="w-full h-auto rounded-lg"
                         />
                     </div>
                     <CardHeader>
