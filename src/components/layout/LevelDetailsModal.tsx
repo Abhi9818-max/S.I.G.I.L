@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, Star } from 'lucide-react';
+import Image from 'next/image';
+import { TIER_INFO } from '@/lib/config';
 
 interface LevelDetailsModalProps {
   isOpen: boolean;
@@ -39,7 +41,10 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     valueTowardsNextLevel,
     pointsForNextLevel,
     isMaxLevel,
+    tierSlug,
   } = levelInfo;
+  
+  const tierIndex = TIER_INFO.findIndex(t => t.slug === tierSlug);
 
   const getTierProgressClassName = (group: number): string => {
     switch (group) {
@@ -56,6 +61,17 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
+        {tierIndex !== -1 && (
+            <div className="relative mx-auto -mt-2 p-4">
+              <Image
+                src={`/tiers/tier-${tierIndex + 1}.png`}
+                alt={`Image for ${tierName}`}
+                width={200}
+                height={100}
+                className="h-auto rounded-lg mx-auto"
+              />
+            </div>
+        )}
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
             <span className="text-4xl">{tierIcon}</span>
