@@ -64,8 +64,8 @@ export default function TierDetailPage() {
                         <Image
                             src={`/tiers/tier-${tierIndex + 1}.png`}
                             alt={`Image for ${tier.name}`}
-                            width={1200}
-                            height={600}
+                            width={600}
+                            height={300}
                             className="w-full h-auto"
                             unoptimized
                         />
