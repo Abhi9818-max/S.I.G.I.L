@@ -113,8 +113,6 @@ const FriendsContent = () => {
                                 <UserSearch className="h-6 w-6 text-primary" />
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
                             </div>
-                            <p className="text-sm text-muted-foreground">Search for other users by their exact username to connect.</p>
-                            
                             <div className="space-y-3">
                                 <div className="flex gap-2">
                                     <Input
@@ -158,8 +156,6 @@ const FriendsContent = () => {
                                 <Users className="h-6 w-6 text-primary" />
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
                             </div>
-                            <p className="text-sm text-muted-foreground">View your connected friends and their progress.</p>
-                            
                             {friends.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                             ) : (
