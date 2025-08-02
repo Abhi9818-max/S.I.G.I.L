@@ -59,26 +59,26 @@ export default function TierDetailPage() {
                     Back to All Tiers
                 </Button>
                 
-                <Card className="max-w-4xl mx-auto shadow-xl overflow-hidden">
+                <div className="max-w-4xl mx-auto">
                     <div className="relative mx-auto max-w-lg p-4">
                         <Image
                             src={`/tiers/tier-${tierIndex + 1}.png`}
                             alt={`Image for ${tier.name}`}
-                            width={600}
-                            height={300}
-                            className="w-full h-auto rounded-lg"
+                            width={300}
+                            height={150}
+                            className="h-auto rounded-lg mx-auto"
                         />
                     </div>
-                    <CardHeader>
+                    <div className="p-6">
                         <div className="flex items-center gap-4">
                             <span className="text-5xl">{tier.icon}</span>
                             <div>
-                                <CardTitle className="text-3xl">{tier.name}</CardTitle>
-                                <CardDescription>Levels {tier.minLevel} - {tier.maxLevel}</CardDescription>
+                                <h2 className="text-3xl font-semibold leading-none tracking-tight">{tier.name}</h2>
+                                <p className="text-sm text-muted-foreground">Levels {tier.minLevel} - {tier.maxLevel}</p>
                             </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
+                    </div>
+                    <div className="p-6 pt-0">
                         <blockquote className="border-l-4 border-primary pl-4 italic text-lg text-foreground/80">
                            "{tier.welcomeMessage}"
                         </blockquote>
@@ -92,11 +92,11 @@ export default function TierDetailPage() {
                                 <p className="text-muted-foreground text-sm">Upon reaching this tier, you are awarded <span className="font-bold text-primary">{tier.tierEntryBonus}</span> bonus XP to honor your progress.</p>
                             </div>
                         )}
-                    </CardContent>
+                    </div>
 
                     <Separator className="my-6" />
 
-                    <CardContent>
+                    <div className="p-6 pt-0">
                         <h3 className="text-xl font-semibold mb-4 text-primary">Levels in this Tier</h3>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {levelsInTier.map((levelName, index) => {
@@ -119,8 +119,8 @@ export default function TierDetailPage() {
                                 );
                             })}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </main>
         </div>
     );
