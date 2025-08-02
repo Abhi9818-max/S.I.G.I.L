@@ -152,29 +152,37 @@ const FriendsContent = () => {
                         </div>
                         
                         <div className="space-y-4">
-                             <div className="flex items-center gap-2">
-                                <Users className="h-6 w-6 text-primary" />
-                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
-                            </div>
-                            {friends.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {friends.map(friend => (
-                                        <Link href={`/friends/${friend.uid}`} key={friend.uid}>
-                                            <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar>
-                                                        <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                        <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="font-medium">{friend.username}</span>
-                                                </div>
+                             <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                                <AccordionItem value="friends-list">
+                                    <AccordionTrigger>
+                                        <div className="flex items-center gap-2">
+                                            <Users className="h-6 w-6 text-primary" />
+                                            <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        {friends.length === 0 ? (
+                                            <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                                        ) : (
+                                            <div className="space-y-3 pt-4">
+                                                {friends.map(friend => (
+                                                    <Link href={`/friends/${friend.uid}`} key={friend.uid}>
+                                                        <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar>
+                                                                    <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                                    <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                </Avatar>
+                                                                <span className="font-medium">{friend.username}</span>
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                ))}
                                             </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
+                                        )}
+                                    </AccordionContent>
+                                </AccordionItem>
+                             </Accordion>
                         </div>
                     </div>
 
