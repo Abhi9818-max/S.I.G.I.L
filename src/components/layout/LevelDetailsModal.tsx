@@ -61,7 +61,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0">
+      <DialogContent className="sm:max-w-md p-0 flex flex-col max-h-[90vh]">
         <DialogHeader className="p-6 pb-4 border-b">
            {tierIndex !== -1 && (
             <div className="relative mx-auto -mt-2 p-4">
@@ -83,8 +83,8 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(100vh-300px)]">
-          <div className="space-y-4 p-6">
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="space-y-4 p-6 pt-0">
             <div>
               <h4 className="font-semibold text-lg">Level {currentLevel}: {levelName}</h4>
               <p className="text-sm text-muted-foreground">Your current standing in the S.I.G.I.L. system.</p>
@@ -118,7 +118,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 pt-4 border-t">
+        <DialogFooter className="p-6 pt-4 border-t flex-shrink-0">
           <Button asChild className="w-full" variant="outline" onClick={() => onOpenChange(false)}>
             <Link href="/tiers">
                 <Star className="mr-2 h-4 w-4" />
