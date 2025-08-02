@@ -476,22 +476,22 @@ export const QUOTES: Quote[] = [
   {
     text: "Count your age by friends, not years. Count your life by smiles, not tears.",
     author: "John Lennon",
-    category: "Wisdom",
+    category: "Wisdom"
   },
   {
     text: "Any fool can know. The point is to understand.",
     author: "Albert Einstein",
-    category: "Wisdom",
+    category: "Wisdom"
   },
   {
     text: "It is not the man who has too little, but the man who craves more, that is poor.",
     author: "Seneca",
-    category: "Wisdom",
+    category: "Wisdom"
   },
   {
     text: "You will not be punished for your anger, you will be punished by your anger.",
     author: "Buddha",
-    category: "Wisdom",
+    category: "Wisdom"
   },
   {
     text: "The first principle is that you must not fool yourself and you are the easiest person to fool.",
