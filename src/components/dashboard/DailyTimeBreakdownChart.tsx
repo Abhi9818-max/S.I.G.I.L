@@ -24,6 +24,9 @@ interface DailyTimeBreakdownChartProps {
   hideDescription?: boolean;
   records?: RecordEntry[];
   taskDefinitions?: TaskDefinition[];
+  hideTitle?: boolean;
+  hideTitleDate?: boolean;
+  headerContent?: React.ReactNode;
 }
 
 const getDailyTimeBreakdown = (
@@ -85,7 +88,7 @@ const getDailyTimeBreakdown = (
 };
 
 
-const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, hideDescription = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
+const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, hideDescription = false, records: recordsProp, taskDefinitions: taskDefinitionsProp, hideTitle = false, hideTitleDate = false, headerContent = null }) => {
     const userRecordsContext = useUserRecords();
     const { dashboardSettings } = useSettings();
     
@@ -155,7 +158,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
         });
     };
 
-    const chartTitle = date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown';
+    const chartTitle = hideTitleDate ? 'Time Breakdown' : (date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown');
     const chartDescription = `A 24-hour visualization of your time-based tasks.`;
 
     const pieData = useMemo(() => {
@@ -214,13 +217,18 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
 
     return (
         <div>
-            <div className="flex flex-col space-y-1.5 mb-6">
-                <div className="flex items-center gap-2">
-                    <Clock className="h-6 w-6 text-accent" />
-                    <h2 className="text-2xl font-semibold leading-none tracking-tight">{chartTitle}</h2>
-                </div>
-                {!hideDescription && <p className="text-sm text-muted-foreground">{chartDescription}</p>}
-            </div>
+            {!hideTitle && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mb-6">
+                  <div className="flex items-center gap-2">
+                      <Clock className="h-6 w-6 text-accent" />
+                      <div>
+                        <h2 className="text-2xl font-semibold leading-none tracking-tight">{chartTitle}</h2>
+                        {!hideDescription && <p className="text-sm text-muted-foreground">{chartDescription}</p>}
+                      </div>
+                  </div>
+                  {headerContent}
+              </div>
+            )}
             
             <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">

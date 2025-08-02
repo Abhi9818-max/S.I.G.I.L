@@ -169,12 +169,19 @@ const FriendProfileContent = () => {
 
                 <div className="p-6 md:p-0">
                     <Tabs defaultValue="today" className="w-full">
-                        <div className="flex justify-end items-center mb-4">
-                             <TabsList>
-                                <TabsTrigger value="today">Today</TabsTrigger>
-                                <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                            </TabsList>
-                        </div>
+                         <DailyTimeBreakdownChart
+                            hideFooter={true}
+                            hideDescription={true}
+                            hideTitleDate={true}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
+                            headerContent={(
+                                <TabsList>
+                                    <TabsTrigger value="today">Today</TabsTrigger>
+                                    <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                                </TabsList>
+                            )}
+                        />
                         <TabsContent value="today">
                             <DailyTimeBreakdownChart
                                 date={today}
@@ -182,6 +189,7 @@ const FriendProfileContent = () => {
                                 taskDefinitions={friendTasks}
                                 hideFooter={true}
                                 hideDescription={true}
+                                hideTitle={true}
                             />
                         </TabsContent>
                         <TabsContent value="yesterday">
@@ -191,6 +199,7 @@ const FriendProfileContent = () => {
                                 taskDefinitions={friendTasks}
                                 hideFooter={true}
                                 hideDescription={true}
+                                hideTitle={true}
                             />
                         </TabsContent>
                     </Tabs>
