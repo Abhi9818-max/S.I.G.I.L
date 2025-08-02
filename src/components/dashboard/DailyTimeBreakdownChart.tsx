@@ -213,7 +213,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     });
 
     return (
-        <div className="bg-card shadow-lg rounded-lg p-6">
+        <div>
             <div className="flex flex-col space-y-1.5 mb-6">
                 <div className="flex items-center gap-2">
                     <Clock className="h-6 w-6 text-accent" />
