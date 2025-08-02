@@ -92,15 +92,15 @@ export default function InsightsPage() {
         onManageTasksClick={() => {}}
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <Card className="shadow-lg w-full max-w-6xl mx-auto">
-          <CardHeader>
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="p-6">
             <div className="flex items-center gap-2">
               <BarChart2 className="h-6 w-6 text-primary" />
-              <CardTitle>Your Insights</CardTitle>
+              <h1 className="text-2xl font-semibold leading-none tracking-tight">Your Insights</h1>
             </div>
-            <CardDescription>A deeper look into your patterns of growth and effort.</CardDescription>
-          </CardHeader>
-          <CardContent>
+            <p className="text-sm text-muted-foreground mt-2">A deeper look into your patterns of growth and effort.</p>
+          </div>
+          <div className="p-6 pt-0">
              <div className="p-4 border rounded-lg bg-muted/50 mb-8">
                 <div className="flex flex-col md:flex-row flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
@@ -180,8 +180,8 @@ export default function InsightsPage() {
                 <TaskDistributionChart startDate={dateRange.start} endDate={dateRange.end} taskId={selectedTaskId} />
                 <ProductivityByDayChart startDate={dateRange.start} endDate={dateRange.end} taskId={selectedTaskId} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         <div className="text-center mt-8">
             <Button asChild variant="outline">
                 <Link href="/">
