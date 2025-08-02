@@ -152,7 +152,7 @@ const FriendsContent = () => {
                         </div>
                         
                         <div className="space-y-4">
-                             <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                             <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="friends-list">
                                     <AccordionTrigger>
                                         <div className="flex items-center gap-2">
@@ -299,3 +299,5 @@ export default function FriendsPage() {
         </FriendProvider>
     )
 }
+
+    
