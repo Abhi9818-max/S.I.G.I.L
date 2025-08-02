@@ -44,57 +44,56 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Load from Firebase on auth state change
   useEffect(() => {
     if (isUserDataLoaded && userData) {
-        const allStoredItems = userData.todoItems || [];
-        const itemsToUpdate: TodoItem[] = [];
-        let penaltiesApplied = false;
+      const allStoredItems = userData.todoItems || [];
+      
+      const itemsToUpdate: TodoItem[] = [];
+      let penaltiesApplied = false;
 
-        const processedItems = allStoredItems.map(item => {
-            if (!item.completed && !item.penaltyApplied && item.dueDate) {
-                const dueDate = startOfDay(parseISO(item.dueDate));
-                if (isPast(dueDate)) {
-                    penaltiesApplied = true;
-                    // Mark for update instead of calling state-modifying function directly
-                    const updatedItem = { ...item, penaltyApplied: true };
-                    itemsToUpdate.push(updatedItem);
-                    return updatedItem;
-                }
-            }
-            return item;
+      const processedItems = allStoredItems.map(item => {
+        if (!item.completed && !item.penaltyApplied && item.dueDate) {
+          const dueDate = startOfDay(parseISO(item.dueDate));
+          if (isPast(dueDate)) {
+            penaltiesApplied = true;
+            const updatedItem = { ...item, penaltyApplied: true };
+            itemsToUpdate.push(updatedItem);
+            return updatedItem;
+          }
+        }
+        return item;
+      });
+
+      if (penaltiesApplied) {
+        let totalPenalty = 0;
+        const updatedItemsMap = new Map(itemsToUpdate.map(item => [item.id, item]));
+        
+        const finalItems = allStoredItems.map(item => updatedItemsMap.get(item.id) || item);
+        
+        itemsToUpdate.forEach(item => {
+          if (item.penalty && item.penalty > 0) {
+            totalPenalty += item.penalty;
+          }
         });
 
-        if (penaltiesApplied) {
-            let totalPenalty = 0;
-            const updatedItemsMap = new Map(itemsToUpdate.map(item => [item.id, item]));
-            
-            const finalItems = allStoredItems.map(item => updatedItemsMap.get(item.id) || item);
-            
-            itemsToUpdate.forEach(item => {
-                if(item.penalty && item.penalty > 0) {
-                    totalPenalty += item.penalty;
-                }
-            });
-
-            if (totalPenalty > 0) {
-                userRecords.deductBonusPoints(totalPenalty);
-                toast({
-                    title: "Pacts Judged",
-                    description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP.`,
-                    variant: "destructive",
-                    duration: 7000,
-                });
-            }
-            
-            // Save all updated items back to the DB at once.
-            userRecords.updateUserDataInDb({ todoItems: finalItems });
-            setTodoItems(finalItems);
-        } else {
-            setTodoItems(allStoredItems);
+        if (totalPenalty > 0) {
+          userRecords.deductBonusPoints(totalPenalty);
+          toast({
+            title: "Pacts Judged",
+            description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP.`,
+            variant: "destructive",
+            duration: 7000,
+          });
         }
+        
+        userRecords.updateUserDataInDb({ todoItems: finalItems });
+        setTodoItems(finalItems);
+      } else {
+        setTodoItems(allStoredItems);
+      }
 
     } else if (isUserDataLoaded) {
-        setTodoItems([]);
+      setTodoItems([]);
     }
-}, [userData, isUserDataLoaded, userRecords.deductBonusPoints, userRecords.updateUserDataInDb, toast]);
+  }, [userData, isUserDataLoaded, userRecords.deductBonusPoints, userRecords.updateUserDataInDb, toast]);
 
 
   const addTodoItem = useCallback((text: string, dueDate?: string, penalty?: number) => {
@@ -112,6 +111,7 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     setTodoItems(prevItems => {
         const newItems = [newItem, ...prevItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Save to DB immediately without waiting for an effect
         userRecords.updateUserDataInDb({ todoItems: newItems });
         return newItems;
     });
