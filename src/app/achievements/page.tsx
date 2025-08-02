@@ -70,23 +70,23 @@ export default function AchievementsPage() {
         onManageTasksClick={() => {}}
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <Card className="shadow-lg w-full max-w-4xl mx-auto">
-          <CardHeader>
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="p-6">
             <div className="flex items-center gap-2">
               <Trophy className="h-6 w-6 text-primary" />
-              <CardTitle>Achievements</CardTitle>
+              <h1 className="text-2xl font-semibold leading-none tracking-tight">Achievements</h1>
             </div>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground mt-2">
               Milestones that mark your journey. Unlocking achievements grants permanent recognition of your efforts.
-            </CardDescription>
-            <div className="pt-2">
+            </p>
+            <div className="pt-4">
               <p className="text-sm text-muted-foreground">Unlocked: {unlockedCount} / {totalAchievements}</p>
               <div className="w-full bg-muted rounded-full h-2.5 mt-1">
                   <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="p-6 pt-0">
             <TooltipProvider>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {ACHIEVEMENTS.map(ach => (
@@ -98,8 +98,8 @@ export default function AchievementsPage() {
                 ))}
               </div>
             </TooltipProvider>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
         S.I.G.I.L. Achievements &copy; {currentYear}
