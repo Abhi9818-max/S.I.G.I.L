@@ -168,13 +168,15 @@ const FriendProfileContent = () => {
                 </div>
 
                 <div className="p-6 md:p-0">
-                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                    <Tabs defaultValue="today" className="w-full mt-4">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="today">Today</TabsTrigger>
-                            <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="today" className="mt-4">
+                    <Tabs defaultValue="today" className="w-full">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                             <TabsList>
+                                <TabsTrigger value="today">Today</TabsTrigger>
+                                <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                            </TabsList>
+                        </div>
+                        <TabsContent value="today">
                             <DailyTimeBreakdownChart
                                 date={today}
                                 records={friendRecords}
@@ -183,7 +185,7 @@ const FriendProfileContent = () => {
                                 hideDescription={true}
                             />
                         </TabsContent>
-                        <TabsContent value="yesterday" className="mt-4">
+                        <TabsContent value="yesterday">
                             <DailyTimeBreakdownChart
                                 date={yesterday}
                                 records={friendRecords}
