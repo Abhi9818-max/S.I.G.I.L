@@ -147,7 +147,6 @@ const FriendProfileContent = () => {
                         </Avatar>
                         <div className="flex-grow">
                             <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
-                            <p className="text-muted-foreground">Viewing a snapshot of their progress.</p>
                         </div>
                         <div className="w-full md:w-auto">
                             <LevelIndicator levelInfo={friendLevelInfo} />
@@ -166,14 +165,12 @@ const FriendProfileContent = () => {
                        <ListChecks className="h-6 w-6 text-primary" />
                        <h2 className="text-2xl font-semibold">Pacts</h2>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">A look at {friendData.username}'s current pacts.</p>
                    <PactList items={friendPacts} isEditable={false} />
                 </div>
 
                 <div className="p-6 md:p-0">
                     <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                    <p className="text-sm text-muted-foreground mb-4">A look at their time allocation for today and yesterday.</p>
-                    <Tabs defaultValue="today" className="w-full">
+                    <Tabs defaultValue="today" className="w-full mt-4">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="today">Today</TabsTrigger>
                             <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
@@ -200,8 +197,7 @@ const FriendProfileContent = () => {
                 <TaskComparisonChart friendData={friendData} />
                 
                 <div className="p-6 md:p-0">
-                    <h2 className="text-2xl font-semibold">Contribution Graph</h2>
-                    <p className="text-sm text-muted-foreground mb-4">A full overview of their activity.</p>
+                    <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
                     <TaskFilterBar
                         taskDefinitions={friendTasks}
                         selectedTaskId={selectedTaskFilterId}

@@ -155,7 +155,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     };
 
     const chartTitle = date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown';
-    const chartDescription = date ? `A visualization of time-based tasks for this day.` : `A 24-hour visualization of your time-based tasks for today.`
+    const chartDescription = `A 24-hour visualization of your time-based tasks.`;
 
     const pieData = useMemo(() => {
         const totalMinutes = data.reduce((sum, item) => item.name !== 'Unallocated' ? sum + item.value : sum, 0);

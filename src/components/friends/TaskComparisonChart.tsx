@@ -62,7 +62,6 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                         <BarChart className="h-6 w-6 text-primary" />
                         <CardTitle>Task Comparison</CardTitle>
                     </div>
-                    <CardDescription>A comparison of total effort across all shared tasks.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -86,7 +85,6 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                     <BarChart className="h-6 w-6 text-primary" />
                     <CardTitle>Task Comparison</CardTitle>
                 </div>
-                <CardDescription>A comparison of total effort across all shared tasks.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
