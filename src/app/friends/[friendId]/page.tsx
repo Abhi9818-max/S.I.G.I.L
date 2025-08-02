@@ -139,18 +139,16 @@ export default function FriendProfilePage() {
                     Back to Friends
                 </Button>
                 <div className="p-6 md:p-0">
-                    <div className="flex flex-row items-center justify-between gap-4">
-                         <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16 md:h-20 md:w-20">
-                                <AvatarImage src={friendAvatar} />
-                                <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-grow">
-                                <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                    <div className="flex flex-row items-center gap-4">
+                        <Avatar className="h-16 w-16 md:h-20 md:w-20">
+                            <AvatarImage src={friendAvatar} />
+                            <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                            <div className="mt-1">
+                               <LevelIndicator levelInfo={friendLevelInfo} />
                             </div>
-                        </div>
-                        <div className="w-auto">
-                            <LevelIndicator levelInfo={friendLevelInfo} />
                         </div>
                     </div>
                 </div>
