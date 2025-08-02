@@ -85,7 +85,6 @@ export default function TierDetailPage() {
                         <div className="mt-6 space-y-2">
                             <p className="text-sm text-muted-foreground">Tier Progress</p>
                             <Progress value={tierProgressPercentage} indicatorClassName={cn(levelInfo && `bg-progress-tier-group-${levelInfo.tierGroup}`)} />
-                             <p className="text-xs text-right text-muted-foreground">{tierProgressPercentage.toFixed(0)}% Complete</p>
                         </div>
                         {tier.tierEntryBonus && tier.tierEntryBonus > 0 && (
                             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
