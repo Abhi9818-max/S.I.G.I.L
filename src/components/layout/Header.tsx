@@ -56,10 +56,8 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const mobileMenuLinks = [
     ...navLinks,
-    { href: "/echoes", label: "Echoes", icon: Share2 },
     { isSeparator: true },
     { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/widget", label: "Widget", icon: AppWindow },
     { href: "/test-api", label: "Test API", icon: Server },
   ];
 
