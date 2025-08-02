@@ -13,6 +13,7 @@ import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, BookOpen, Star, CheckCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 
 export default function TierDetailPage() {
     const params = useParams();
@@ -35,6 +36,19 @@ export default function TierDetailPage() {
     }
 
     const levelsInTier = LEVEL_NAMES.slice(tier.minLevel - 1, tier.maxLevel);
+
+    const calculateTierProgress = () => {
+        if (!levelInfo) return 0;
+        if (levelInfo.currentLevel > tier.maxLevel) return 100;
+        if (levelInfo.currentLevel < tier.minLevel) return 0;
+
+        const levelsInThisTier = tier.maxLevel - tier.minLevel + 1;
+        const levelsCompletedInThisTier = levelInfo.currentLevel - tier.minLevel + 1;
+        
+        return (levelsCompletedInThisTier / levelsInThisTier) * 100;
+    }
+
+    const tierProgressPercentage = calculateTierProgress();
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -68,6 +82,11 @@ export default function TierDetailPage() {
                         <blockquote className="border-l-4 border-primary pl-4 italic text-lg text-foreground/80">
                            "{tier.welcomeMessage}"
                         </blockquote>
+                        <div className="mt-6 space-y-2">
+                            <p className="text-sm text-muted-foreground">Tier Progress</p>
+                            <Progress value={tierProgressPercentage} indicatorClassName={cn(levelInfo && `bg-progress-tier-group-${levelInfo.tierGroup}`)} />
+                             <p className="text-xs text-right text-muted-foreground">{tierProgressPercentage.toFixed(0)}% Complete</p>
+                        </div>
                         {tier.tierEntryBonus && tier.tierEntryBonus > 0 && (
                             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                                 <p className="font-semibold flex items-center gap-2"><Star className="h-5 w-5 text-yellow-400"/>Tier Entry Bonus</p>
