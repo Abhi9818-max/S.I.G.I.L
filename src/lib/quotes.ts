@@ -272,7 +272,7 @@ export const QUOTES: Quote[] = [
   {
     text: "Nothing is impossible, the word itself says 'I'm possible'!",
     author: "Audrey Hepburn",
-    category: "Inspiration",
+    category: "Inspiration"
   },
   {
     text: "You can't use up creativity. The more you use, the more you have.",
@@ -493,6 +493,16 @@ export const QUOTES: Quote[] = [
     author: "Buddha",
     category: "Wisdom",
   },
+  {
+    text: "The first principle is that you must not fool yourself and you are the easiest person to fool.",
+    author: "Richard P. Feynman",
+    category: "Wisdom",
+  },
+  {
+    text: "Never attribute to malice that which is adequately explained by stupidity.",
+    author: "Hanlon's Razor",
+    category: "Wisdom",
+  },
 
   // Perseverance
   {
@@ -601,6 +611,11 @@ export const QUOTES: Quote[] = [
     text: "War is peace. Freedom is slavery. Ignorance is strength.",
     author: "George Orwell, 1984",
     category: "Banned Books",
+  },
+  {
+    text: "It's a beautiful thing, the destruction of words.",
+    author: "George Orwell, 1984",
+    category: "Banned Books"
   },
   {
     text: "So it goes.",
@@ -727,6 +742,16 @@ export const QUOTES: Quote[] = [
   {
     text: "We don't make mistakes, just happy little accidents.",
     author: "Bob Ross",
+    category: "Humor",
+  },
+  {
+    text: "Go to Heaven for the climate, Hell for the company.",
+    author: "Mark Twain",
+    category: "Humor",
+  },
+  {
+    text: "The difference between stupidity and genius is that genius has its limits.",
+    author: "Albert Einstein",
     category: "Humor",
   },
 ];
