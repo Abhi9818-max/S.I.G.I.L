@@ -211,17 +211,17 @@ export default function SettingsPage() {
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <Card className="shadow-lg w-full max-w-2xl mx-auto">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <SettingsIcon className="h-6 w-6 text-primary" />
-              <CardTitle>Settings</CardTitle>
+        <div className="w-full max-w-2xl mx-auto">
+            <div className="p-6">
+                <div className="flex items-center gap-2">
+                <SettingsIcon className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-semibold leading-none tracking-tight">Settings</h1>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                Manage your application data and settings.
+                </p>
             </div>
-            <CardDescription>
-              Manage your application data and settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8">
+            <div className="p-6 pt-0 space-y-8">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile</TabsTrigger>
@@ -397,9 +397,8 @@ export default function SettingsPage() {
                 </div>
               </TabsContent>
             </Tabs>
-
-          </CardContent>
-        </Card>
+            </div>
+        </div>
       </main>
     </div>
     <AvatarSelectionDialog
