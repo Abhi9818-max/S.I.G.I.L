@@ -3,7 +3,6 @@
 
 import React, { useState } from 'react';
 import Header from '@/components/layout/Header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
@@ -109,15 +108,14 @@ const FriendsContent = () => {
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-8">
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <UserSearch className="h-6 w-6 text-primary" />
-                                    <CardTitle>Find Friends</CardTitle>
-                                </div>
-                                <CardDescription>Search for other users by their exact username to connect.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <UserSearch className="h-6 w-6 text-primary" />
+                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Search for other users by their exact username to connect.</p>
+                            
+                            <div className="space-y-3">
                                 <div className="flex gap-2">
                                     <Input
                                         placeholder="Enter username..."
@@ -152,55 +150,52 @@ const FriendsContent = () => {
                                         )}
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                         
-                        <Card>
-                            <CardHeader>
-                                 <div className="flex items-center gap-2">
-                                    <Users className="h-6 w-6 text-primary" />
-                                    <CardTitle>Your Friends</CardTitle>
-                                </div>
-                                <CardDescription>View your connected friends and their progress.</CardDescription>
-                            </CardHeader>
-                             <CardContent>
-                                {friends.length === 0 ? (
-                                    <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {friends.map(friend => (
-                                            <Link href={`/friends/${friend.uid}`} key={friend.uid}>
-                                                <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar>
-                                                            <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                            <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                                        </Avatar>
-                                                        <span className="font-medium">{friend.username}</span>
-                                                    </div>
+                        <div className="space-y-4">
+                             <div className="flex items-center gap-2">
+                                <Users className="h-6 w-6 text-primary" />
+                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                            </div>
+                            <p className="text-sm text-muted-foreground">View your connected friends and their progress.</p>
+                            
+                            {friends.length === 0 ? (
+                                <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {friends.map(friend => (
+                                        <Link href={`/friends/${friend.uid}`} key={friend.uid}>
+                                            <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar>
+                                                        <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                        <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="font-medium">{friend.username}</span>
                                                 </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-8">
-                         <Card>
+                         <div className="p-4 border rounded-lg">
                              <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
                                 <AccordionItem value="item-1" className="border-b-0">
-                                   <CardHeader className="p-0">
-                                        <AccordionTrigger className="p-6">
-                                            <CardTitle>Requests</CardTitle>
+                                   <div className="p-0">
+                                        <AccordionTrigger className="p-2 -m-2">
+                                            <h2 className="text-xl font-semibold leading-none tracking-tight">Requests</h2>
                                         </AccordionTrigger>
-                                   </CardHeader>
+                                   </div>
                                    <AccordionContent>
-                                       <CardDescription className="px-6 pb-4">
+                                       <p className="text-sm text-muted-foreground pt-4 pb-4">
                                             Manage your friend requests.
-                                       </CardDescription>
-                                       <CardContent className="flex justify-around items-center pt-2">
+                                       </p>
+                                       <div className="flex justify-around items-center pt-2">
                                           <Popover>
                                               <PopoverTrigger asChild>
                                                   <Button variant="outline" className="relative">
@@ -281,11 +276,11 @@ const FriendsContent = () => {
                                                   </div>
                                               </PopoverContent>
                                           </Popover>
-                                      </CardContent>
+                                      </div>
                                    </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
-                        </Card>
+                        </div>
                     </div>
                 </div>
             </main>
