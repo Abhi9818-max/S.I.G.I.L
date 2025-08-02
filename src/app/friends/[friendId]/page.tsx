@@ -139,21 +139,21 @@ const FriendProfileContent = () => {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Friends
                 </Button>
-                <Card>
-                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                <div className="p-6 md:p-0">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                         <Avatar className="h-16 w-16 md:h-20 md:w-20">
                             <AvatarImage src={friendAvatar} />
                             <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="flex-grow">
-                            <CardTitle className="text-2xl md:text-3xl">{friendData.username}</CardTitle>
-                            <CardDescription>Viewing a snapshot of their progress.</CardDescription>
+                            <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                            <p className="text-muted-foreground">Viewing a snapshot of their progress.</p>
                         </div>
                         <div className="w-full md:w-auto">
                             <LevelIndicator levelInfo={friendLevelInfo} />
                         </div>
-                    </CardHeader>
-                </Card>
+                    </div>
+                </div>
                 <StatsPanel
                     records={friendRecords}
                     taskDefinitions={friendTasks}
@@ -161,73 +161,61 @@ const FriendProfileContent = () => {
                     freezeCrystals={friendData.freezeCrystals || 0}
                 />
 
-                <Card>
-                    <CardHeader>
-                         <div className="flex items-center gap-2">
-                           <ListChecks className="h-6 w-6 text-primary" />
-                           <CardTitle>Pacts</CardTitle>
-                        </div>
-                        <CardDescription>A look at {friendData.username}'s current pacts.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <PactList items={friendPacts} isEditable={false} />
-                    </CardContent>
-                </Card>
+                <div className="p-6 md:p-0">
+                    <div className="flex items-center gap-2 mb-2">
+                       <ListChecks className="h-6 w-6 text-primary" />
+                       <h2 className="text-2xl font-semibold">Pacts</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">A look at {friendData.username}'s current pacts.</p>
+                   <PactList items={friendPacts} isEditable={false} />
+                </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Daily Breakdown</CardTitle>
-                        <CardDescription>A look at their time allocation for today and yesterday.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Tabs defaultValue="today" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="today">Today</TabsTrigger>
-                                <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="today" className="mt-4">
-                                <DailyTimeBreakdownChart
-                                    date={today}
-                                    records={friendRecords}
-                                    taskDefinitions={friendTasks}
-                                    hideFooter={true}
-                                />
-                            </TabsContent>
-                            <TabsContent value="yesterday" className="mt-4">
-                                <DailyTimeBreakdownChart
-                                    date={yesterday}
-                                    records={friendRecords}
-                                    taskDefinitions={friendTasks}
-                                    hideFooter={true}
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    </CardContent>
-                </Card>
+                <div className="p-6 md:p-0">
+                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                    <p className="text-sm text-muted-foreground mb-4">A look at their time allocation for today and yesterday.</p>
+                    <Tabs defaultValue="today" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="today">Today</TabsTrigger>
+                            <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="today" className="mt-4">
+                            <DailyTimeBreakdownChart
+                                date={today}
+                                records={friendRecords}
+                                taskDefinitions={friendTasks}
+                                hideFooter={true}
+                            />
+                        </TabsContent>
+                        <TabsContent value="yesterday" className="mt-4">
+                            <DailyTimeBreakdownChart
+                                date={yesterday}
+                                records={friendRecords}
+                                taskDefinitions={friendTasks}
+                                hideFooter={true}
+                            />
+                        </TabsContent>
+                    </Tabs>
+                </div>
                 
                 <TaskComparisonChart friendData={friendData} />
                 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Contribution Graph</CardTitle>
-                        <CardDescription>A full overview of their activity.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <TaskFilterBar
-                            taskDefinitions={friendTasks}
-                            selectedTaskId={selectedTaskFilterId}
-                            onSelectTask={setSelectedTaskFilterId}
-                        />
-                        <ContributionGraph 
-                            year={new Date().getFullYear()}
-                            onDayClick={() => {}} 
-                            selectedTaskFilterId={selectedTaskFilterId}
-                            records={friendRecords} 
-                            taskDefinitions={friendTasks}
-                            displayMode="full"
-                        />
-                    </CardContent>
-                </Card>
+                <div className="p-6 md:p-0">
+                    <h2 className="text-2xl font-semibold">Contribution Graph</h2>
+                    <p className="text-sm text-muted-foreground mb-4">A full overview of their activity.</p>
+                    <TaskFilterBar
+                        taskDefinitions={friendTasks}
+                        selectedTaskId={selectedTaskFilterId}
+                        onSelectTask={setSelectedTaskFilterId}
+                    />
+                    <ContributionGraph 
+                        year={new Date().getFullYear()}
+                        onDayClick={() => {}} 
+                        selectedTaskFilterId={selectedTaskFilterId}
+                        records={friendRecords} 
+                        taskDefinitions={friendTasks}
+                        displayMode="full"
+                    />
+                </div>
             </main>
         </div>
     );
