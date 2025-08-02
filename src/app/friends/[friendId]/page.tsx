@@ -167,7 +167,7 @@ const FriendProfileContent = () => {
                    <PactList items={friendPacts} isEditable={false} />
                 </div>
 
-                <div className="p-6 md:p-0">
+                <div className="p-4 rounded-lg bg-muted/40">
                     <Tabs defaultValue="today" className="w-full">
                         <div className="flex items-center justify-between mb-4">
                              <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
