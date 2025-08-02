@@ -154,17 +154,17 @@ export default function HighGoalsPage() {
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-        <Card className="shadow-lg w-full max-w-4xl mx-auto">
-          <CardHeader>
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="p-6">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
-              <CardTitle>High Goals</CardTitle>
+              <h1 className="text-2xl font-semibold leading-none tracking-tight">High Goals</h1>
             </div>
-            <CardDescription>
+            <p className="text-sm text-muted-foreground mt-2">
               Define your long-term objectives. Set a target for a specific task over a custom period to track your biggest ambitions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-6 pt-0">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 border rounded-lg bg-muted/30">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">{editingGoal ? 'Edit High Goal' : 'Create New High Goal'}</h3>
@@ -222,10 +222,10 @@ export default function HighGoalsPage() {
               
               <Button type="submit" className="w-full">{editingGoal ? 'Save Changes' : 'Create Goal'}</Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
         
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-4xl mx-auto px-6">
           {highGoals.length === 0 ? (
             <div className="text-center text-muted-foreground py-10">
               <p>No high goals set yet.</p>
