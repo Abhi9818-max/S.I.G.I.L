@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { BookOpen, Star } from 'lucide-react';
 import Image from 'next/image';
 import { TIER_INFO } from '@/lib/config';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface LevelDetailsModalProps {
   isOpen: boolean;
@@ -60,8 +61,9 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        {tierIndex !== -1 && (
+      <DialogContent className="sm:max-w-md p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+           {tierIndex !== -1 && (
             <div className="relative mx-auto -mt-2 p-4">
               <Image
                 src={`/tiers/tier-${tierIndex + 1}.png`}
@@ -72,7 +74,6 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
               />
             </div>
         )}
-        <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-2xl">
             <span className="text-4xl">{tierIcon}</span>
             <span>{tierName}</span>
@@ -82,40 +83,42 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-semibold text-lg">Level {currentLevel}: {levelName}</h4>
-            <p className="text-sm text-muted-foreground">Your current standing in the S.I.G.I.L. system.</p>
-          </div>
+        <ScrollArea className="max-h-[calc(100vh-300px)]">
+          <div className="space-y-4 p-6">
+            <div>
+              <h4 className="font-semibold text-lg">Level {currentLevel}: {levelName}</h4>
+              <p className="text-sm text-muted-foreground">Your current standing in the S.I.G.I.L. system.</p>
+            </div>
 
-          <div>
-            <h4 className="font-semibold text-md mb-2">Progress to Next Level</h4>
-            {isMaxLevel ? (
-              <p className={cn("font-semibold text-lg", progressColorClass.replace('bg-', 'text-'))}>Max Level Reached!</p>
-            ) : (
-              <>
-                <Progress value={progressPercentage} className="h-4" indicatorClassName={progressColorClass} />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{valueTowardsNextLevel.toLocaleString()} XP</span>
-                  <span>{pointsForNextLevel?.toLocaleString()} XP</span>
-                </div>
-                 <p className="text-center text-sm mt-1">{progressPercentage.toFixed(1)}% complete</p>
-              </>
-            )}
-          </div>
-          
-          <Separator />
+            <div>
+              <h4 className="font-semibold text-md mb-2">Progress to Next Level</h4>
+              {isMaxLevel ? (
+                <p className={cn("font-semibold text-lg", progressColorClass.replace('bg-', 'text-'))}>Max Level Reached!</p>
+              ) : (
+                <>
+                  <Progress value={progressPercentage} className="h-4" indicatorClassName={progressColorClass} />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>{valueTowardsNextLevel.toLocaleString()} XP</span>
+                    <span>{pointsForNextLevel?.toLocaleString()} XP</span>
+                  </div>
+                  <p className="text-center text-sm mt-1">{progressPercentage.toFixed(1)}% complete</p>
+                </>
+              )}
+            </div>
+            
+            <Separator />
 
-          <div>
-            <h4 className="font-semibold text-md mb-2">Statistics</h4>
-            <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Total XP Earned:</span>
-                <span className="font-bold text-lg text-primary">{totalAccumulatedValue.toLocaleString()}</span>
+            <div>
+              <h4 className="font-semibold text-md mb-2">Statistics</h4>
+              <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Total XP Earned:</span>
+                  <span className="font-bold text-lg text-primary">{totalAccumulatedValue.toLocaleString()}</span>
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 border-t">
           <Button asChild className="w-full" variant="outline" onClick={() => onOpenChange(false)}>
             <Link href="/tiers">
                 <Star className="mr-2 h-4 w-4" />
