@@ -252,23 +252,23 @@ export default function TodoPage() {
         onManageTasksClick={() => {}}
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <Card className="shadow-lg w-full max-w-2xl mx-auto">
-          <CardHeader>
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="p-6">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <ListChecks className="h-6 w-6 text-primary" />
-                    <CardTitle>{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</CardTitle>
+                    <h1 className="text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
                 </div>
                  <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
                     <RotateCcw className="mr-2 h-4 w-4" />
                     View {view === 'today' ? 'Yesterday' : 'Today'}
                 </Button>
             </div>
-             <CardDescription>
+             <p className="text-sm text-muted-foreground mt-2">
               {view === 'today' ? "" : "Review and finalize yesterday's tasks."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-6 pt-0">
             {displayedPacts.length === 0 ? (
                 <>
                     {view === 'today' && (
@@ -304,8 +304,8 @@ export default function TodoPage() {
                     )}
                 </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
         S.I.G.I.L. Pacts &copy; {currentYear}
