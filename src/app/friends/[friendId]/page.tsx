@@ -169,8 +169,7 @@ const FriendProfileContent = () => {
 
                 <div className="p-6 md:p-0">
                     <Tabs defaultValue="today" className="w-full">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                        <div className="flex justify-end items-center mb-4">
                              <TabsList>
                                 <TabsTrigger value="today">Today</TabsTrigger>
                                 <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
