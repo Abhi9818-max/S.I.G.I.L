@@ -140,6 +140,26 @@ const RecordModal: React.FC<RecordModalProps> = ({
   if (!isOpen) return null;
 
   const titleDate = selectedDate ? format(parseISO(selectedDate), 'MMMM d, yyyy') : 'New Record';
+  
+  const watchedTaskType = form.watch('taskType');
+  const getUnitLabel = (taskId: string | undefined): string => {
+    if (!taskId) return 'Record Value';
+    const task = getTaskDefinitionById(taskId);
+    if (!task || !task.unit) return 'Value';
+    
+    switch (task.unit) {
+      case 'custom':
+        return task.customUnitName || 'Value';
+      case 'count':
+      case 'generic':
+        return 'Value';
+      default:
+        // Capitalize first letter
+        return task.unit.charAt(0).toUpperCase() + task.unit.slice(1);
+    }
+  };
+
+  const unitLabel = getUnitLabel(watchedTaskType);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -224,14 +244,14 @@ const RecordModal: React.FC<RecordModalProps> = ({
                 />
 
               <div>
-                <Label htmlFor="value">Record Value</Label>
+                <Label htmlFor="value">{unitLabel}</Label>
                 <Input
                   id="value"
                   type="number"
                   step="any"
                   className="mt-1"
                   {...form.register('value')}
-                  placeholder="e.g., hours, reps, quantity"
+                  placeholder="e.g., 5, 30, 1.5"
                 />
                 {form.formState.errors.value && (
                   <p className="text-sm text-destructive mt-1">{form.formState.errors.value.message}</p>
