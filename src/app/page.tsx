@@ -164,27 +164,24 @@ export default function HomePage() {
                     <TodoListCard />
                 </div>
             )}
-            {dashboardSettings.showProgressChart && (
-                <div className={cn(
-                    "animate-fade-in-up",
-                    dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3"
-                )} style={{ animationDelay: '200ms' }}>
-                    <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
-                </div>
-            )}
-        </div>
+            <div className={cn("p-4 border rounded-lg bg-muted/20 space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
+                {dashboardSettings.showProgressChart && (
+                  <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
+                )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-             {dashboardSettings.showAISuggestions && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-                    <AISuggestionsCard />
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                   {dashboardSettings.showAISuggestions && (
+                      <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                          <AISuggestionsCard />
+                      </div>
+                  )}
+                  {dashboardSettings.showTimeBreakdownChart && (
+                      <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                          <DailyTimeBreakdownChart />
+                      </div>
+                  )}
                 </div>
-            )}
-            {dashboardSettings.showTimeBreakdownChart && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-                    <DailyTimeBreakdownChart />
-                </div>
-            )}
+            </div>
         </div>
 
       </main>
