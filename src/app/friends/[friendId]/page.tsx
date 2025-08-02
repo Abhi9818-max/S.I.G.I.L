@@ -139,15 +139,17 @@ export default function FriendProfilePage() {
                     Back to Friends
                 </Button>
                 <div className="p-6 md:p-0">
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                        <Avatar className="h-16 w-16 md:h-20 md:w-20">
-                            <AvatarImage src={friendAvatar} />
-                            <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-grow">
-                            <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                    <div className="flex flex-row items-center justify-between gap-4">
+                         <div className="flex items-center gap-4">
+                            <Avatar className="h-16 w-16 md:h-20 md:w-20">
+                                <AvatarImage src={friendAvatar} />
+                                <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-grow">
+                                <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                            </div>
                         </div>
-                        <div className="w-full md:w-auto">
+                        <div className="w-auto">
                             <LevelIndicator levelInfo={friendLevelInfo} />
                         </div>
                     </div>
@@ -168,35 +170,35 @@ export default function FriendProfilePage() {
                 </div>
 
                 <div className="p-4 rounded-lg bg-muted/40">
-                    <Tabs defaultValue="today" className="w-full">
-                        <div className="flex items-center justify-between mb-4">
-                             <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                        <Tabs defaultValue="today" className="w-auto">
                             <TabsList>
                                 <TabsTrigger value="today">Today</TabsTrigger>
                                 <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                             </TabsList>
-                        </div>
-                        <TabsContent value="today">
-                            <DailyTimeBreakdownChart
-                                date={today}
-                                records={friendRecords}
-                                taskDefinitions={friendTasks}
-                                hideFooter={true}
-                                hideDescription={true}
-                                hideTitle={true}
-                            />
-                        </TabsContent>
-                        <TabsContent value="yesterday">
-                            <DailyTimeBreakdownChart
-                                date={yesterday}
-                                records={friendRecords}
-                                taskDefinitions={friendTasks}
-                                hideFooter={true}
-                                hideDescription={true}
-                                hideTitle={true}
-                            />
-                        </TabsContent>
-                    </Tabs>
+                            <TabsContent value="today" className="mt-4">
+                                <DailyTimeBreakdownChart
+                                    date={today}
+                                    records={friendRecords}
+                                    taskDefinitions={friendTasks}
+                                    hideFooter={true}
+                                    hideDescription={true}
+                                    hideTitle={true}
+                                />
+                            </TabsContent>
+                            <TabsContent value="yesterday" className="mt-4">
+                                <DailyTimeBreakdownChart
+                                    date={yesterday}
+                                    records={friendRecords}
+                                    taskDefinitions={friendTasks}
+                                    hideFooter={true}
+                                    hideDescription={true}
+                                    hideTitle={true}
+                                />
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
                 
                 <TaskComparisonChart friendData={friendData} />
