@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
-import { TIER_INFO } from '@/lib/config';
+import { TIER_INFO, LEVEL_NAMES } from '@/lib/config';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, BookOpen, Star } from 'lucide-react';
+import { ArrowLeft, BookOpen, Star, CheckCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export default function TierDetailPage() {
     const params = useParams();
@@ -32,6 +33,8 @@ export default function TierDetailPage() {
         }
         return <div className="min-h-screen flex items-center justify-center">Loading tier...</div>;
     }
+
+    const levelsInTier = LEVEL_NAMES.slice(tier.minLevel - 1, tier.maxLevel);
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -71,6 +74,33 @@ export default function TierDetailPage() {
                                 <p className="text-muted-foreground text-sm">Upon reaching this tier, you are awarded <span className="font-bold text-primary">{tier.tierEntryBonus}</span> bonus XP to honor your progress.</p>
                             </div>
                         )}
+                    </CardContent>
+
+                    <Separator className="my-6" />
+
+                    <CardContent>
+                        <h3 className="text-xl font-semibold mb-4 text-primary">Levels in this Tier</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {levelsInTier.map((levelName, index) => {
+                                const levelNumber = tier.minLevel + index;
+                                const isCurrentUserLevel = levelInfo?.currentLevel === levelNumber;
+                                return (
+                                    <div
+                                        key={levelName}
+                                        className={cn(
+                                            "p-3 rounded-lg flex items-center gap-2 transition-all",
+                                            isCurrentUserLevel ? "bg-primary/20 border border-primary/50 font-bold" : "bg-muted/50"
+                                        )}
+                                    >
+                                        {isCurrentUserLevel && <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />}
+                                        <div className="flex-grow">
+                                          <span className="text-muted-foreground mr-2 text-xs">Lv. {levelNumber}</span>
+                                          <span className="text-sm">{levelName}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </CardContent>
                 </Card>
             </main>
