@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, onSnapshot, writeBatch, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData } from '@/types';
@@ -29,52 +29,46 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
     const [friends, setFriends] = useState<Friend[]>([]);
 
-    useEffect(() => {
+    const fetchFriendsAndRequests = useCallback(async () => {
         if (!user) return;
 
-        // Listen for incoming friend requests
+        // Fetch incoming friend requests
         const incomingQuery = query(collection(db, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
-        const unsubscribeIncoming = onSnapshot(incomingQuery, (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
-            setIncomingRequests(requests);
-        });
+        const incomingSnapshot = await getDocs(incomingQuery);
+        const incoming = incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
+        setIncomingRequests(incoming);
 
-        // Listen for sent/pending friend requests
+        // Fetch sent/pending friend requests
         const pendingQuery = query(collection(db, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
-        const unsubscribePending = onSnapshot(pendingQuery, (snapshot) => {
-            const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
-            setPendingRequests(requests);
-        });
+        const pendingSnapshot = await getDocs(pendingQuery);
+        const pending = pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
+        setPendingRequests(pending);
         
-        // Listen for friends and fetch their full, up-to-date data
+        // Fetch friends list
         const friendsQuery = collection(db, `users/${user.uid}/friends`);
-        const unsubscribeFriends = onSnapshot(friendsQuery, async (snapshot) => {
-            const friendsListPromises = snapshot.docs.map(async (friendDoc) => {
-                const friendId = friendDoc.id;
-                const userDocRef = doc(db, 'users', friendId);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const friendUserData = userDocSnap.data() as UserData;
-                    return {
-                        uid: friendId,
-                        username: friendUserData.username,
-                        photoURL: friendUserData.photoURL || null,
-                        since: friendDoc.data().since,
-                    };
-                }
-                return null;
-            });
-            
-            const friendsList = (await Promise.all(friendsListPromises)).filter(Boolean) as Friend[];
-            setFriends(friendsList);
+        const friendsSnapshot = await getDocs(friendsQuery);
+        const friendsListPromises = friendsSnapshot.docs.map(async (friendDoc) => {
+            const friendId = friendDoc.id;
+            const userDocRef = doc(db, 'users', friendId);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const friendUserData = userDocSnap.data() as UserData;
+                return {
+                    uid: friendId,
+                    username: friendUserData.username,
+                    photoURL: friendUserData.photoURL || null,
+                    since: friendDoc.data().since,
+                };
+            }
+            return null;
         });
-
-        return () => {
-            unsubscribeIncoming();
-            unsubscribePending();
-            unsubscribeFriends();
-        };
+        const friendsList = (await Promise.all(friendsListPromises)).filter(Boolean) as Friend[];
+        setFriends(friendsList);
     }, [user]);
+
+    useEffect(() => {
+        fetchFriendsAndRequests();
+    }, [fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
         const usersRef = collection(db, 'users');
@@ -117,7 +111,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(requestRef, newRequest);
-    }, [user]);
+        await fetchFriendsAndRequests(); // Re-fetch to update pending list
+    }, [user, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
         if (!user || !userData) {
@@ -159,25 +154,28 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         try {
             await batch.commit();
+            await fetchFriendsAndRequests(); // Re-fetch to update lists
             toast({ title: 'Friend Added', description: `You are now friends with ${request.senderUsername}.` });
         } catch (error) {
             console.error("Failed to accept friend request:", error);
             toast({ title: 'Error', description: 'Could not accept the friend request.', variant: 'destructive' });
         }
 
-    }, [user, userData, toast]);
+    }, [user, userData, toast, fetchFriendsAndRequests]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
+        await fetchFriendsAndRequests(); // Re-fetch
         toast({ title: 'Request Declined', variant: 'destructive' });
-    }, [toast]);
+    }, [toast, fetchFriendsAndRequests]);
     
     const cancelFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
+        await fetchFriendsAndRequests(); // Re-fetch
         toast({ title: 'Request Cancelled' });
-    }, [toast]);
+    }, [toast, fetchFriendsAndRequests]);
     
     const getFriendData = useCallback(async (friendId: string): Promise<UserData | null> => {
         if (!user) return null;

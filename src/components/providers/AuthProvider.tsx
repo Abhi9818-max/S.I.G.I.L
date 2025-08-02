@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, type User, updateProfile } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { UserData } from '@/types';
@@ -45,22 +45,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [auth]);
 
   useEffect(() => {
-      if (user) {
-          const docRef = doc(db, 'users', user.uid);
-          const unsubscribe = onSnapshot(docRef, (docSnap) => {
-              if (docSnap.exists()) {
-                  setUserData(docSnap.data() as UserData);
-              } else {
-                  // This case can happen briefly if a user is created but the doc hasn't been written yet.
-                  setUserData(null);
-              }
-              setIsUserDataLoaded(true);
-          });
-          return () => unsubscribe();
-      } else {
-          setUserData(null);
-          setIsUserDataLoaded(false);
-      }
+    const fetchUserData = async () => {
+        if (user) {
+            const docRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setUserData(docSnap.data() as UserData);
+            } else {
+                setUserData(null);
+            }
+            setIsUserDataLoaded(true);
+        } else {
+            setUserData(null);
+            setIsUserDataLoaded(false);
+        }
+    };
+    fetchUserData();
   }, [user]);
 
   useEffect(() => {
