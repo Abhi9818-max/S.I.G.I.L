@@ -108,15 +108,15 @@ export default function ConstellationsPage() {
         onManageTasksClick={() => {}}
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <Card className="shadow-lg w-full max-w-4xl mx-auto">
-          <CardHeader>
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="p-6">
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary" />
-              <CardTitle>Constellations of Skill</CardTitle>
+              <h1 className="text-2xl font-semibold leading-none tracking-tight">Constellations of Skill</h1>
             </div>
-            <CardDescription>Spend Skill Points (SP) earned from tasks to unlock permanent nodes. Currently, unlocking skills is foundational; passive bonuses will be activated in a future update.</CardDescription>
-          </CardHeader>
-          <CardContent>
+            <p className="text-sm text-muted-foreground mt-2">Spend Skill Points (SP) earned from tasks to unlock permanent nodes. Currently, unlocking skills is foundational; passive bonuses will be activated in a future update.</p>
+          </div>
+          <div className="p-6 pt-0">
             {constellations.length === 0 ? (
               <div className="text-center text-muted-foreground py-10">
                 <p>No constellations available.</p>
@@ -158,8 +158,8 @@ export default function ConstellationsPage() {
                   })}
                 </Tabs>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
         S.I.G.I.L. Constellations &copy; {currentYear}
