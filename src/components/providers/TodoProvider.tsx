@@ -44,49 +44,57 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Load from Firebase on auth state change
   useEffect(() => {
     if (isUserDataLoaded && userData) {
-      const allStoredItems = userData.todoItems || [];
-      
-      let processedItems = [...allStoredItems];
-      let penaltiesApplied = false;
+        const allStoredItems = userData.todoItems || [];
+        const itemsToUpdate: TodoItem[] = [];
+        let penaltiesApplied = false;
 
-      processedItems = allStoredItems.map(item => {
-        if (!item.completed && !item.penaltyApplied && item.dueDate) {
-          const dueDate = startOfDay(parseISO(item.dueDate));
-          if (isPast(dueDate)) {
-            penaltiesApplied = true;
-            return applyPenalty(item);
-          }
+        const processedItems = allStoredItems.map(item => {
+            if (!item.completed && !item.penaltyApplied && item.dueDate) {
+                const dueDate = startOfDay(parseISO(item.dueDate));
+                if (isPast(dueDate)) {
+                    penaltiesApplied = true;
+                    // Mark for update instead of calling state-modifying function directly
+                    const updatedItem = { ...item, penaltyApplied: true };
+                    itemsToUpdate.push(updatedItem);
+                    return updatedItem;
+                }
+            }
+            return item;
+        });
+
+        if (penaltiesApplied) {
+            let totalPenalty = 0;
+            const updatedItemsMap = new Map(itemsToUpdate.map(item => [item.id, item]));
+            
+            const finalItems = allStoredItems.map(item => updatedItemsMap.get(item.id) || item);
+            
+            itemsToUpdate.forEach(item => {
+                if(item.penalty && item.penalty > 0) {
+                    totalPenalty += item.penalty;
+                }
+            });
+
+            if (totalPenalty > 0) {
+                userRecords.deductBonusPoints(totalPenalty);
+                toast({
+                    title: "Pacts Judged",
+                    description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP.`,
+                    variant: "destructive",
+                    duration: 7000,
+                });
+            }
+            
+            // Save all updated items back to the DB at once.
+            userRecords.updateUserDataInDb({ todoItems: finalItems });
+            setTodoItems(finalItems);
+        } else {
+            setTodoItems(allStoredItems);
         }
-        return item;
-      });
-
-      if (penaltiesApplied) {
-         toast({
-            title: "Pacts Judged",
-            description: `Incomplete pacts from previous days have been penalized.`,
-            variant: "destructive",
-            duration: 7000,
-          });
-      }
-      
-      const yesterday = subDays(new Date(), 1);
-      const relevantItems = processedItems.filter(item => {
-        try {
-          const itemDate = new Date(item.createdAt);
-          return isToday(itemDate) || isYesterday(itemDate);
-        } catch (e) { return false; }
-      });
-      
-      setTodoItems(relevantItems);
-      // If penalties were applied, we need to save the updated items back to the DB.
-      if (penaltiesApplied) {
-          userRecords.updateUserDataInDb({ todoItems: processedItems });
-      }
 
     } else if (isUserDataLoaded) {
-      setTodoItems([]);
+        setTodoItems([]);
     }
-  }, [userData, isUserDataLoaded, applyPenalty, toast, userRecords.updateUserDataInDb]);
+}, [userData, isUserDataLoaded, userRecords.deductBonusPoints, userRecords.updateUserDataInDb, toast]);
 
 
   const addTodoItem = useCallback((text: string, dueDate?: string, penalty?: number) => {
@@ -111,42 +119,52 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const toggleTodoItem = useCallback((id: string) => {
     setTodoItems(prevItems => {
+        let itemToUpdate: TodoItem | undefined;
         const newItems = prevItems.map(item => {
             if (item.id === id) {
-              const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate)));
-              
-              if (isOverdue && !item.penaltyApplied) {
-                const updatedItemWithPenalty = applyPenalty(item);
-                return { ...updatedItemWithPenalty, completed: !item.completed };
-              }
-              
-              return { ...item, completed: !item.completed };
+                itemToUpdate = { ...item, completed: !item.completed };
+                return itemToUpdate;
             }
             return item;
         });
+
+        if (itemToUpdate) {
+            const isOverdue = itemToUpdate.dueDate && !itemToUpdate.completed && isPast(startOfDay(new Date(itemToUpdate.dueDate)));
+            if (isOverdue && !itemToUpdate.penaltyApplied) {
+                applyPenalty(itemToUpdate);
+            }
+        }
+
         userRecords.updateUserDataInDb({ todoItems: newItems });
         return newItems;
     });
   }, [applyPenalty, userRecords.updateUserDataInDb]);
 
   const deleteTodoItem = useCallback((id: string) => {
-    const item = todoItems.find(i => i.id === id);
-    if (!item || !isToday(new Date(item.createdAt))) return;
-
     setTodoItems(prevItems => {
         const newItems = prevItems.filter(i => i.id !== id);
         userRecords.updateUserDataInDb({ todoItems: newItems });
         return newItems;
     });
-  }, [todoItems, userRecords.updateUserDataInDb]);
+  }, [userRecords.updateUserDataInDb]);
 
   const getTodoItemById = useCallback((id: string): TodoItem | undefined => {
     return todoItems.find(item => item.id === id);
   }, [todoItems]);
 
+  const displayedPacts = todoItems.filter(item => {
+      try {
+        const itemDate = new Date(item.createdAt);
+        return isToday(itemDate) || isYesterday(itemDate);
+      } catch (e) {
+        return false;
+      }
+  });
+
+
   return (
     <TodoContext.Provider value={{ 
-      todoItems, 
+      todoItems: displayedPacts,
       addTodoItem, 
       toggleTodoItem, 
       deleteTodoItem,
