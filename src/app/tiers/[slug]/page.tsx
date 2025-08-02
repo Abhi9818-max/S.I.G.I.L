@@ -43,7 +43,7 @@ export default function TierDetailPage() {
         if (levelInfo.currentLevel < tier.minLevel) return 0;
 
         const levelsInThisTier = tier.maxLevel - tier.minLevel + 1;
-        const levelsCompletedInThisTier = levelInfo.currentLevel - tier.minLevel + 1;
+        const levelsCompletedInThisTier = levelInfo.currentLevel - tier.minLevel;
         
         return (levelsCompletedInThisTier / levelsInThisTier) * 100;
     }
@@ -60,12 +60,13 @@ export default function TierDetailPage() {
                 </Button>
                 
                 <Card className="max-w-4xl mx-auto shadow-xl overflow-hidden">
-                    <div className="aspect-[2/1] relative w-full">
+                    <div className="relative w-full">
                         <Image
                             src={`/tiers/tier-${tierIndex + 1}.png`}
                             alt={`Image for ${tier.name}`}
-                            fill
-                            className="object-cover"
+                            width={1200}
+                            height={600}
+                            className="w-full h-auto"
                             unoptimized
                         />
                     </div>
