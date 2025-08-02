@@ -155,7 +155,7 @@ export default function HighGoalsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="p-6">
+          <div className="p-6 md:p-0">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">High Goals</h1>
@@ -164,9 +164,9 @@ export default function HighGoalsPage() {
               Define your long-term objectives. Set a target for a specific task over a custom period to track your biggest ambitions.
             </p>
           </div>
-          <div className="p-6 pt-0">
+          <div className="p-6 md:p-0 pt-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 border rounded-lg bg-muted/30">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                 <h3 className="text-lg font-medium">{editingGoal ? 'Edit High Goal' : 'Create New High Goal'}</h3>
                 {editingGoal && (
                   <Button variant="outline" size="sm" onClick={() => handleSetEditing(null)}>
@@ -225,7 +225,7 @@ export default function HighGoalsPage() {
           </div>
         </div>
         
-        <div className="space-y-4 max-w-4xl mx-auto px-6">
+        <div className="space-y-4 max-w-4xl mx-auto px-6 md:px-0">
           {highGoals.length === 0 ? (
             <div className="text-center text-muted-foreground py-10">
               <p>No high goals set yet.</p>

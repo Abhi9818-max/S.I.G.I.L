@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useTodos } from '@/components/providers/TodoProvider';
 import { ListChecks, Trash2, CalendarIcon, CalendarDays, ShieldAlert, PlusCircle, RotateCcw } from 'lucide-react';
 import Header from '@/components/layout/Header';
@@ -253,7 +252,7 @@ export default function TodoPage() {
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-2xl mx-auto">
-          <div className="p-6">
+          <div className="p-6 md:p-0">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <ListChecks className="h-6 w-6 text-primary" />
@@ -268,7 +267,7 @@ export default function TodoPage() {
               {view === 'today' ? "" : "Review and finalize yesterday's tasks."}
             </p>
           </div>
-          <div className="p-6 pt-0">
+          <div className="p-6 md:p-0 pt-6">
             {displayedPacts.length === 0 ? (
                 <>
                     {view === 'today' && (

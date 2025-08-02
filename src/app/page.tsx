@@ -158,16 +158,16 @@ export default function HomePage() {
             </>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {dashboardSettings.showTodoList && (
-                <div className="md:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <div className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                     <TodoListCard />
                 </div>
             )}
             {dashboardSettings.showProgressChart && (
                 <div className={cn(
                     "animate-fade-in-up",
-                    dashboardSettings.showTodoList ? "md:col-span-2" : "md:col-span-3"
+                    dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3"
                 )} style={{ animationDelay: '200ms' }}>
                     <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
                 </div>

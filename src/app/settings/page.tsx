@@ -6,7 +6,6 @@ import React, { useState, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -212,7 +211,7 @@ export default function SettingsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-2xl mx-auto">
-            <div className="p-6">
+            <div className="p-6 md:p-0">
                 <div className="flex items-center gap-2">
                 <SettingsIcon className="h-6 w-6 text-primary" />
                 <h1 className="text-2xl font-semibold leading-none tracking-tight">Settings</h1>
@@ -221,7 +220,7 @@ export default function SettingsPage() {
                 Manage your application data and settings.
                 </p>
             </div>
-            <div className="p-6 pt-0 space-y-8">
+            <div className="p-6 md:p-0 pt-6 space-y-8">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile</TabsTrigger>
@@ -233,7 +232,7 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-primary">Profile Information</h3>
                   <div className="p-4 border rounded-lg space-y-4">
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                         <Avatar className="h-24 w-24">
                           <AvatarImage src={userAvatar} alt={userData?.username}/>
                           <AvatarFallback className="text-3xl">
@@ -357,7 +356,7 @@ export default function SettingsPage() {
                                     <Download className="mr-2 h-4 w-4"/>
                                     Export Data
                                 </Button>
-                                <Label htmlFor="import-file" className={cn("w-full", buttonVariants())}>
+                                <Label htmlFor="import-file" className={cn("w-full cursor-pointer", buttonVariants())}>
                                     <Upload className="mr-2 h-4 w-4"/>
                                     Import Data
                                 </Label>

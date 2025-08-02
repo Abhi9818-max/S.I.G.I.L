@@ -71,15 +71,15 @@ export default function TierDetailPage() {
                     </div>
                     <div className="p-6">
                         <div className="flex items-center gap-4">
-                            <span className="text-5xl">{tier.icon}</span>
+                            <span className="text-4xl md:text-5xl">{tier.icon}</span>
                             <div>
-                                <h2 className="text-3xl font-semibold leading-none tracking-tight">{tier.name}</h2>
+                                <h2 className="text-2xl md:text-3xl font-semibold leading-none tracking-tight">{tier.name}</h2>
                                 <p className="text-sm text-muted-foreground">Levels {tier.minLevel} - {tier.maxLevel}</p>
                             </div>
                         </div>
                     </div>
                     <div className="p-6 pt-0">
-                        <blockquote className="border-l-4 border-primary pl-4 italic text-lg text-foreground/80">
+                        <blockquote className="border-l-4 border-primary pl-4 italic text-base md:text-lg text-foreground/80">
                            "{tier.welcomeMessage}"
                         </blockquote>
                         <div className="mt-6 space-y-2">

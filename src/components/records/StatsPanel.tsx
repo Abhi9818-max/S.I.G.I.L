@@ -251,7 +251,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
                 <CardContent>
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex flex-col">
-                            <p className="text-xs text-muted-foreground">Active days in</p>
+                            <p className="text-xs text-muted-foreground">Active days</p>
                             <p className="text-xs text-muted-foreground">last {dashboardSettings.consistencyDays} days</p>
                         </div>
                         <PerformanceCircle percentage={consistency} size={60} strokeWidth={6} />

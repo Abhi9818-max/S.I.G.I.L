@@ -114,20 +114,20 @@ const FriendsContent = () => {
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <Input
                                         placeholder="Enter username..."
                                         value={usernameQuery}
                                         onChange={(e) => setUsernameQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                     />
-                                    <Button onClick={handleSearch} disabled={isLoadingSearch}>
+                                    <Button onClick={handleSearch} disabled={isLoadingSearch} className="w-full sm:w-auto">
                                         {isLoadingSearch ? "Searching..." : "Search"}
                                     </Button>
                                 </div>
                                 {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                                 {searchedUser && (
-                                    <div className="mt-4 p-4 border rounded-lg flex items-center justify-between bg-muted/50">
+                                    <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={searchedUser.photoURL || getAvatarForId(searchedUser.uid)} />
@@ -151,39 +151,37 @@ const FriendsContent = () => {
                             </div>
                         </div>
                         
-                        <div className="space-y-4">
-                             <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="friends-list">
-                                    <AccordionTrigger>
-                                        <div className="flex items-center gap-2">
-                                            <Users className="h-6 w-6 text-primary" />
-                                            <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        {friends.length === 0 ? (
-                                            <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                                        ) : (
-                                            <div className="space-y-3 pt-4">
-                                                {friends.map(friend => (
-                                                    <Link href={`/friends/${friend.uid}`} key={friend.uid}>
-                                                        <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar>
-                                                                    <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                                    <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="font-medium">{friend.username}</span>
-                                                            </div>
+                        <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="friends-list">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-6 w-6 text-primary" />
+                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {friends.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                                    ) : (
+                                        <div className="space-y-3 pt-4">
+                                            {friends.map(friend => (
+                                                <Link href={`/friends/${friend.uid}`} key={friend.uid}>
+                                                    <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar>
+                                                                <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                                <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="font-medium">{friend.username}</span>
                                                         </div>
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </AccordionContent>
-                                </AccordionItem>
-                             </Accordion>
-                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </div>
 
                     <div className="space-y-8">

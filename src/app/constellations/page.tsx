@@ -109,14 +109,14 @@ export default function ConstellationsPage() {
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="p-6">
+          <div className="p-6 md:p-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Constellations of Skill</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-2">Spend Skill Points (SP) earned from tasks to unlock permanent nodes. Currently, unlocking skills is foundational; passive bonuses will be activated in a future update.</p>
           </div>
-          <div className="p-6 pt-0">
+          <div className="p-6 md:p-0 pt-6">
             {constellations.length === 0 ? (
               <div className="text-center text-muted-foreground py-10">
                 <p>No constellations available.</p>

@@ -139,12 +139,12 @@ const FriendProfileContent = () => {
                 </Button>
                 <Card>
                     <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-4">
-                        <Avatar className="h-20 w-20">
+                        <Avatar className="h-16 w-16 md:h-20 md:w-20">
                             <AvatarImage src={friendAvatar} />
                             <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="flex-grow">
-                            <CardTitle className="text-3xl">{friendData.username}</CardTitle>
+                            <CardTitle className="text-2xl md:text-3xl">{friendData.username}</CardTitle>
                             <CardDescription>Viewing a snapshot of their progress.</CardDescription>
                         </div>
                         <div className="w-full md:w-auto">
