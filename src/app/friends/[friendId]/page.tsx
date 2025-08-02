@@ -4,7 +4,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, ListChecks } from 'lucide-react';
@@ -181,6 +180,7 @@ const FriendProfileContent = () => {
                                 records={friendRecords}
                                 taskDefinitions={friendTasks}
                                 hideFooter={true}
+                                hideDescription={true}
                             />
                         </TabsContent>
                         <TabsContent value="yesterday" className="mt-4">
@@ -189,6 +189,7 @@ const FriendProfileContent = () => {
                                 records={friendRecords}
                                 taskDefinitions={friendTasks}
                                 hideFooter={true}
+                                hideDescription={true}
                             />
                         </TabsContent>
                     </Tabs>

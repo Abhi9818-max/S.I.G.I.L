@@ -21,6 +21,7 @@ import { ScrollArea } from '../ui/scroll-area';
 interface DailyTimeBreakdownChartProps {
   date?: Date;
   hideFooter?: boolean;
+  hideDescription?: boolean;
   records?: RecordEntry[];
   taskDefinitions?: TaskDefinition[];
 }
@@ -84,7 +85,7 @@ const getDailyTimeBreakdown = (
 };
 
 
-const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
+const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, hideDescription = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
     const userRecordsContext = useUserRecords();
     const { dashboardSettings } = useSettings();
     
@@ -218,7 +219,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
                     <Clock className="h-6 w-6 text-accent" />
                     <h2 className="text-2xl font-semibold leading-none tracking-tight">{chartTitle}</h2>
                 </div>
-                <p className="text-sm text-muted-foreground">{chartDescription}</p>
+                {!hideDescription && <p className="text-sm text-muted-foreground">{chartDescription}</p>}
             </div>
             
             <div className="h-[300px] w-full relative">
