@@ -62,7 +62,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 flex flex-col max-h-[90vh]">
-        <DialogHeader className="p-6 pb-4 border-b">
+        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
            {tierIndex !== -1 && (
             <div className="relative mx-auto -mt-2 p-4">
               <Image
@@ -83,8 +83,8 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="space-y-4 p-6 pt-0">
+        <ScrollArea className="flex-grow overflow-y-auto">
+          <div className="space-y-4 p-6">
             <div>
               <h4 className="font-semibold text-lg">Level {currentLevel}: {levelName}</h4>
               <p className="text-sm text-muted-foreground">Your current standing in the S.I.G.I.L. system.</p>
