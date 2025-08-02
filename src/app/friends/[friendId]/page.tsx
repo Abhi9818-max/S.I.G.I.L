@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, ListChecks } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { FriendProvider, useFriends } from '@/components/providers/FriendProvider';
@@ -23,6 +23,7 @@ import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay } from 'd
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
+import PactList from '@/components/todo/PactList';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -122,6 +123,7 @@ const FriendProfileContent = () => {
     const friendBonusPoints = friendData.bonusPoints || 0;
     const totalExperience = friendRecords.reduce((sum, r) => sum + r.value, 0) + friendBonusPoints;
     const friendLevelInfo = calculateUserLevelInfo(totalExperience);
+    const friendPacts = friendData.todoItems || [];
 
     const avatarNumber = (simpleHash(friendId) % 12) + 1;
     const friendAvatar = friendData.photoURL || `/avatars/avatar${avatarNumber}.jpeg`;
@@ -158,6 +160,19 @@ const FriendProfileContent = () => {
                     highGoals={friendData.highGoals || []}
                     freezeCrystals={friendData.freezeCrystals || 0}
                 />
+
+                <Card>
+                    <CardHeader>
+                         <div className="flex items-center gap-2">
+                           <ListChecks className="h-6 w-6 text-primary" />
+                           <CardTitle>Pacts</CardTitle>
+                        </div>
+                        <CardDescription>A look at {friendData.username}'s current pacts.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <PactList items={friendPacts} isEditable={false} />
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>

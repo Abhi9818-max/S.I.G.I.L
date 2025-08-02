@@ -4,10 +4,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { ListChecks, Trash2, CalendarIcon, CalendarDays, ShieldAlert, PlusCircle, RotateCcw } from 'lucide-react';
+import { ListChecks, CalendarIcon, PlusCircle, RotateCcw } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
@@ -16,7 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, isPast, startOfDay, isToday, isYesterday } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import type { TodoItem } from '@/types';
+import PactList from '@/components/todo/PactList';
 
 const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate, newPenalty, setNewPenalty }: any) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -115,78 +114,6 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
   );
 };
 
-
-const PactList = ({ items, toggleTodoItem, deleteTodoItem, isEditable }: { items: TodoItem[], toggleTodoItem: (id: string) => void, deleteTodoItem: (id: string) => void, isEditable: boolean }) => {
-  return (
-    <ul className="space-y-3">
-    {items.map((item) => {
-        const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate)));
-        return (
-        <li
-            key={item.id}
-            className="flex items-start gap-3 p-3 border rounded-md bg-card hover:bg-muted/50 transition-colors"
-        >
-            <Checkbox
-                id={`todo-${item.id}`}
-                checked={item.completed}
-                onCheckedChange={() => toggleTodoItem(item.id)}
-                aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
-                className="mt-1"
-                disabled={!isEditable}
-            />
-            <div className="flex-grow">
-            <label
-                htmlFor={`todo-${item.id}`}
-                className={cn(
-                "cursor-pointer text-sm font-medium",
-                item.completed && "line-through text-muted-foreground"
-                )}
-            >
-                {item.text}
-            </label>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                {item.dueDate && (
-                <div className={cn(
-                    "text-xs flex items-center",
-                    isOverdue ? "text-destructive" : "text-muted-foreground"
-                    )}
-                >
-                    <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                    Due: {format(new Date(item.dueDate), "MMM d, yyyy")}
-                    {isOverdue && <span className="ml-1 font-semibold">(Overdue)</span>}
-                </div>
-                )}
-                {item.penalty && item.penalty > 0 && (
-                    <div className={cn(
-                        "text-xs flex items-center",
-                        isOverdue ? "text-destructive" : "text-muted-foreground"
-                    )}
-                    >
-                        <ShieldAlert className="h-3.5 w-3.5 mr-1" />
-                        Pact Penalty: {item.penalty} XP
-                    </div>
-                )}
-            </div>
-            </div>
-            {isEditable && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
-                    onClick={() => deleteTodoItem(item.id)}
-                    aria-label={`Delete task: ${item.text}`}
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            )}
-        </li>
-        );
-    })}
-    </ul>
-  );
-}
-
-
 export default function TodoPage() {
   const [newItemText, setNewItemText] = useState('');
   const [newDueDate, setNewDueDate] = useState<Date | undefined>();
@@ -264,24 +191,12 @@ export default function TodoPage() {
                 </Button>
             </div>
              <p className="text-sm text-muted-foreground mt-2">
-              {view === 'today' ? "" : "Review and finalize yesterday's tasks."}
+              {view === 'today' ? "What promises will you keep today?" : "Review and finalize yesterday's tasks."}
             </p>
           </div>
           <div className="p-6 md:p-0 pt-6">
-            {displayedPacts.length === 0 ? (
-                <>
-                    {view === 'today' && (
-                        <div className="mb-6">
-                            <AddPactForm {...addPactFormProps} />
-                        </div>
-                    )}
-                    <p className="text-center text-muted-foreground py-4">
-                      {view === 'today' 
-                        ? "No pacts for today yet. Add one to get started!"
-                        : "No pacts were created yesterday."
-                      }
-                    </p>
-                </>
+            {displayedPacts.length === 0 && view !== 'today' ? (
+              <p className="text-center text-muted-foreground py-4">No pacts were created yesterday.</p>
             ) : (
                 <div className="space-y-6">
                     <ScrollArea className="h-[400px] pr-3">
@@ -291,10 +206,11 @@ export default function TodoPage() {
                           deleteTodoItem={deleteTodoItem}
                           isEditable={view === 'today'}
                         />
+                         {displayedPacts.length === 0 && view === 'today' && (
+                            <p className="text-center text-muted-foreground py-4">No pacts for today yet.</p>
+                        )}
                     </ScrollArea>
-
                     <Separator />
-                    
                     {view === 'today' && (
                         <div>
                         <h4 className="text-sm font-medium text-muted-foreground mb-4">Add a New Pact</h4>
