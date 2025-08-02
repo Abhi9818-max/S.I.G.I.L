@@ -5,7 +5,7 @@ import type { TodoItem } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useToast } from '@/hooks/use-toast';
-import { isPast, startOfDay, format, parseISO, isToday, isYesterday, subDays } from 'date-fns';
+import { isPast, startOfDay, format, parseISO, isToday, isYesterday } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,61 +21,32 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
-  const userRecords = useUserRecords();
-  const { userData, isUserDataLoaded } = useAuth();
+  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
   const { toast } = useToast();
 
-  const applyPenalty = useCallback((item: TodoItem): TodoItem => {
-    // Only apply penalty if it's defined, positive, and not already applied
-    if (item.penalty && item.penalty > 0 && userRecords.deductBonusPoints && !item.penaltyApplied) {
-      userRecords.deductBonusPoints(item.penalty);
-      toast({
-        title: "Pact Broken",
-        description: `Your pact "${item.text}" was not honored in time. A penalty of ${item.penalty} XP has been deducted.`,
-        variant: "destructive",
-        duration: 7000,
-      });
-      return { ...item, penaltyApplied: true };
-    }
-    // If there's no penalty to apply, just return the item as-is.
-    return item;
-  }, [userRecords, toast]);
-
-  // Load from Firebase on auth state change
+  // Load initial data and handle penalties on mount
   useEffect(() => {
     if (isUserDataLoaded && userData) {
       const allStoredItems = userData.todoItems || [];
-      
-      const itemsToUpdate: TodoItem[] = [];
-      let penaltiesApplied = false;
+      let totalPenalty = 0;
+      let itemsChanged = false;
 
       const processedItems = allStoredItems.map(item => {
-        if (!item.completed && !item.penaltyApplied && item.dueDate) {
-          const dueDate = startOfDay(parseISO(item.dueDate));
-          if (isPast(dueDate)) {
-            penaltiesApplied = true;
-            const updatedItem = { ...item, penaltyApplied: true };
-            itemsToUpdate.push(updatedItem);
-            return updatedItem;
+        if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
+          if (item.penalty && item.penalty > 0) {
+            totalPenalty += item.penalty;
           }
+          itemsChanged = true;
+          return { ...item, penaltyApplied: true };
         }
         return item;
       });
 
-      if (penaltiesApplied) {
-        let totalPenalty = 0;
-        const updatedItemsMap = new Map(itemsToUpdate.map(item => [item.id, item]));
-        
-        const finalItems = allStoredItems.map(item => updatedItemsMap.get(item.id) || item);
-        
-        itemsToUpdate.forEach(item => {
-          if (item.penalty && item.penalty > 0) {
-            totalPenalty += item.penalty;
-          }
-        });
+      setTodoItems(processedItems);
 
+      if (itemsChanged) {
         if (totalPenalty > 0) {
-          userRecords.deductBonusPoints(totalPenalty);
+          deductBonusPoints(totalPenalty);
           toast({
             title: "Pacts Judged",
             description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP.`,
@@ -83,20 +54,15 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             duration: 7000,
           });
         }
-        
-        userRecords.updateUserDataInDb({ todoItems: finalItems });
-        setTodoItems(finalItems);
-      } else {
-        setTodoItems(allStoredItems);
+        // Save the updated penalty status
+        updateUserDataInDb({ todoItems: processedItems });
       }
-
     } else if (isUserDataLoaded) {
       setTodoItems([]);
     }
-  }, [userData, isUserDataLoaded, userRecords.deductBonusPoints, userRecords.updateUserDataInDb, toast]);
+  }, [userData, isUserDataLoaded, deductBonusPoints, updateUserDataInDb, toast]);
 
-
-  const addTodoItem = useCallback((text: string, dueDate?: string, penalty?: number) => {
+  const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;
     
     const newItem: TodoItem = {
@@ -109,44 +75,27 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       penaltyApplied: false,
     };
 
-    setTodoItems(prevItems => {
-        const newItems = [newItem, ...prevItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        // Save to DB immediately without waiting for an effect
-        userRecords.updateUserDataInDb({ todoItems: newItems });
-        return newItems;
+    const newItems = [newItem, ...todoItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setTodoItems(newItems);
+    updateUserDataInDb({ todoItems: newItems });
+  };
+
+  const toggleTodoItem = (id: string) => {
+    const newItems = todoItems.map(item => {
+      if (item.id === id) {
+        return { ...item, completed: !item.completed };
+      }
+      return item;
     });
-  }, [userRecords.updateUserDataInDb]);
+    setTodoItems(newItems);
+    updateUserDataInDb({ todoItems: newItems });
+  };
 
-  const toggleTodoItem = useCallback((id: string) => {
-    setTodoItems(prevItems => {
-        let itemToUpdate: TodoItem | undefined;
-        const newItems = prevItems.map(item => {
-            if (item.id === id) {
-                itemToUpdate = { ...item, completed: !item.completed };
-                return itemToUpdate;
-            }
-            return item;
-        });
-
-        if (itemToUpdate) {
-            const isOverdue = itemToUpdate.dueDate && !itemToUpdate.completed && isPast(startOfDay(new Date(itemToUpdate.dueDate)));
-            if (isOverdue && !itemToUpdate.penaltyApplied) {
-                applyPenalty(itemToUpdate);
-            }
-        }
-
-        userRecords.updateUserDataInDb({ todoItems: newItems });
-        return newItems;
-    });
-  }, [applyPenalty, userRecords.updateUserDataInDb]);
-
-  const deleteTodoItem = useCallback((id: string) => {
-    setTodoItems(prevItems => {
-        const newItems = prevItems.filter(i => i.id !== id);
-        userRecords.updateUserDataInDb({ todoItems: newItems });
-        return newItems;
-    });
-  }, [userRecords.updateUserDataInDb]);
+  const deleteTodoItem = (id: string) => {
+    const newItems = todoItems.filter(i => i.id !== id);
+    setTodoItems(newItems);
+    updateUserDataInDb({ todoItems: newItems });
+  };
 
   const getTodoItemById = useCallback((id: string): TodoItem | undefined => {
     return todoItems.find(item => item.id === id);
