@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { FriendProvider, useFriends } from '@/components/providers/FriendProvider';
+import { useFriends } from '@/components/providers/FriendProvider';
 import type { SearchedUser, FriendRequest } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,7 +36,7 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
-const FriendsContent = () => {
+export default function FriendsPage() {
     const { user } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
     const {
@@ -285,13 +285,3 @@ const FriendsContent = () => {
         </div>
     );
 };
-
-export default function FriendsPage() {
-    return (
-        <FriendProvider>
-            <FriendsContent />
-        </FriendProvider>
-    )
-}
-
-    

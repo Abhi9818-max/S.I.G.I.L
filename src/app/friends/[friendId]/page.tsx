@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, ListChecks } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { FriendProvider, useFriends } from '@/components/providers/FriendProvider';
+import { useFriends } from '@/components/providers/FriendProvider';
 import type { UserData, Friend, RecordEntry, TaskDefinition } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,7 +35,7 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
-const FriendProfileContent = () => {
+export default function FriendProfilePage() {
     const params = useParams();
     const router = useRouter();
     const friendId = params.friendId as string;
@@ -221,11 +221,3 @@ const FriendProfileContent = () => {
         </div>
     );
 };
-
-export default function FriendProfilePage() {
-    return (
-        <FriendProvider>
-            <FriendProfileContent />
-        </FriendProvider>
-    );
-}

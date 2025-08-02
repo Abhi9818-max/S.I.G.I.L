@@ -42,14 +42,14 @@ export default function RootLayout({
         <AuthProvider>
           <SettingsProvider>
             <TooltipProvider delayDuration={100}>
-              <UserRecordsProvider>
-                <FriendProvider>
-                  <TodoProvider>
-                    {children}
-                    <Toaster />
-                  </TodoProvider>
-                </FriendProvider>
-              </UserRecordsProvider>
+              <FriendProvider>
+                <UserRecordsProvider>
+                    <TodoProvider>
+                      {children}
+                      <Toaster />
+                    </TodoProvider>
+                </UserRecordsProvider>
+              </FriendProvider>
             </TooltipProvider>
           </SettingsProvider>
         </AuthProvider>
