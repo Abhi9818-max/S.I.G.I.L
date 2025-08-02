@@ -56,19 +56,15 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
 
     if (!comparisonData || comparisonData.length === 0) {
         return (
-             <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <BarChart className="h-6 w-6 text-primary" />
-                        <CardTitle>Task Comparison</CardTitle>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                        No shared tasks with data to compare.
-                    </div>
-                </CardContent>
-            </Card>
+             <div className="p-6 md:p-0">
+                <div className="flex items-center gap-2 mb-4">
+                    <BarChart className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-semibold">Task Comparison</h2>
+                </div>
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground bg-muted/30 rounded-lg">
+                    No shared tasks with data to compare.
+                </div>
+            </div>
         );
     }
     
@@ -79,15 +75,13 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
     const userColor = "hsl(var(--primary))";
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <BarChart className="h-6 w-6 text-primary" />
-                    <CardTitle>Task Comparison</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
+        <div className="p-6 md:p-0">
+            <div className="flex items-center gap-2 mb-4">
+                <BarChart className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-semibold">Task Comparison</h2>
+            </div>
+            <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={comparisonData}>
                         <PolarGrid />
                         <PolarAngleAxis dataKey="task" />
@@ -109,8 +103,8 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                         <Legend />
                     </RadarChart>
                 </ResponsiveContainer>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 };
 
