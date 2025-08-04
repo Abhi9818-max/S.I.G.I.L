@@ -92,7 +92,7 @@ export default function HomePage() {
         }
       }
     }
-  }, [currentLevelInfo, toast, userRecords.awardTierEntryBonus]);
+  }, [currentLevelInfo, toast, userRecords]);
 
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
@@ -163,7 +163,7 @@ export default function HomePage() {
                     <TodoListCard />
                 </div>
             )}
-            <div className={cn("p-4 border rounded-lg bg-muted/20 space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
+            <div className={cn("space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
                 {dashboardSettings.showProgressChart && (
                   <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
                 )}
