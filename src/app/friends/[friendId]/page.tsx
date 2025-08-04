@@ -72,38 +72,6 @@ export default function FriendProfilePage() {
         fetchFriendData();
     }, [friendId, getFriendData, router]);
 
-    const friendStats = useMemo(() => {
-        if (!friendData) return { streak: 0, consistency: 0, aggregate: 0, highGoal: null, highGoalProgress: 0 };
-        
-        const friendRecords = friendData.records || [];
-        const friendTasks = friendData.taskDefinitions || [];
-        
-        // Aggregate
-        const today = new Date();
-        const startDate = subDays(today, 29);
-        const aggregate = friendRecords
-            .filter(r => new Date(r.date) >= startDate && new Date(r.date) <= today)
-            .reduce((sum, r) => sum + r.value, 0);
-
-        // Consistency
-        const recordDates = new Set(friendRecords.map(r => r.date));
-        const activeDays = Array.from(recordDates).filter(d => new Date(d) >= startDate && new Date(d) <= today).length;
-        const consistency = Math.round((activeDays / 30) * 100);
-
-        // Streak
-        let streak = 0;
-        let currentDate = startOfDay(new Date());
-        if (!recordDates.has(currentDate.toISOString().split('T')[0])) {
-            currentDate = subDays(currentDate, 1);
-        }
-        while (recordDates.has(currentDate.toISOString().split('T')[0])) {
-            streak++;
-            currentDate = subDays(currentDate, 1);
-        }
-
-        return { streak, consistency, aggregate, highGoal: null, highGoalProgress: 0 };
-    }, [friendData]);
-
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading friend's profile...</div>;
     }
@@ -157,12 +125,7 @@ export default function FriendProfilePage() {
                         </div>
                     </div>
                 </div>
-                <StatsPanel
-                    records={friendRecords}
-                    taskDefinitions={friendTasks}
-                    highGoals={friendData.highGoals || []}
-                    freezeCrystals={friendData.freezeCrystals || 0}
-                />
+                <StatsPanel friendData={friendData} />
 
                 <div className="p-6 md:p-0">
                     <div className="flex items-center gap-2 mb-2">

@@ -27,21 +27,23 @@ const ContributionGraph: React.FC<ContributionGraphProps> = ({
   records: recordsProp,
   taskDefinitions: taskDefinitionsProp,
 }) => {
-  const userRecords = useUserRecords();
+  const userRecordsContext = useUserRecords();
   const [clientToday, setClientToday] = React.useState<Date | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null); 
   const monthColumnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Use passed props if available, otherwise use context
-  const records = recordsProp || userRecords.records;
-  const taskDefinitions = taskDefinitionsProp || userRecords.taskDefinitions;
+  const records = recordsProp ?? userRecordsContext.records;
+  const taskDefinitions = taskDefinitionsProp ?? userRecordsContext.taskDefinitions;
 
   useEffect(() => {
     setClientToday(new Date()); 
   }, []);
 
   const monthlyGraphData: MonthColumn[] = React.useMemo(() => {
-    if (!clientToday || taskDefinitions.length === 0) return [];
+    if (!clientToday) return [];
+    // Ensure we don't try to render a graph if there are no task definitions at all
+    if (taskDefinitions.length === 0) return [];
     return getMonthlyGraphData(records, taskDefinitions, selectedTaskFilterId, clientToday, displayMode, year); 
   }, [records, taskDefinitions, clientToday, selectedTaskFilterId, displayMode, year]);
 
@@ -68,14 +70,18 @@ const ContributionGraph: React.FC<ContributionGraphProps> = ({
     }
   }, [monthlyGraphData, clientToday, displayMode, year]); 
 
-  if (!clientToday || (monthlyGraphData.length === 0 && taskDefinitions.length > 0)) {
+  if (!clientToday) {
     return <div className="p-4 text-center text-muted-foreground">Loading graph data...</div>;
   }
+  
   if (taskDefinitions.length === 0) {
       return <div className="p-4 text-center text-muted-foreground">Please define tasks in 'Manage Tasks' to see the graph.</div>;
   }
 
-  const firstMonthData = monthlyGraphData[0];
+  if (monthlyGraphData.length === 0) {
+    return <div className="p-4 text-center text-muted-foreground">No records to display for this period.</div>;
+  }
+
 
   return (
     <div className="flex gap-x-5 sm:gap-x-8">

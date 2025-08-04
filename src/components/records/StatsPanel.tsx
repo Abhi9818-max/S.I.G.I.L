@@ -11,32 +11,27 @@ import PerformanceCircle from './PerformanceCircle';
 import { Flame, Snowflake, TrendingUp, ShieldCheck, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { RecordEntry, TaskDefinition, HighGoal } from '@/types';
+import type { RecordEntry, TaskDefinition, HighGoal, UserData } from '@/types';
 
 interface StatsPanelProps {
   selectedTaskFilterId?: string | null;
-  // Optional props to override context for friend profiles
-  records?: RecordEntry[];
-  taskDefinitions?: TaskDefinition[];
-  highGoals?: HighGoal[];
-  freezeCrystals?: number;
+  friendData?: UserData; // If this is provided, we are in "friend view"
 }
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ 
   selectedTaskFilterId,
-  records: recordsProp,
-  taskDefinitions: taskDefinitionsProp,
-  highGoals: highGoalsProp,
-  freezeCrystals: freezeCrystalsProp
+  friendData
 }) => {
   const userRecordsContext = useUserRecords();
   const { dashboardSettings } = useSettings();
 
-  // Use props if provided, otherwise fall back to context
-  const records = recordsProp !== undefined ? recordsProp : userRecordsContext.records;
-  const taskDefinitions = taskDefinitionsProp !== undefined ? taskDefinitionsProp : userRecordsContext.taskDefinitions;
-  const highGoals = highGoalsProp !== undefined ? highGoalsProp : userRecordsContext.highGoals;
-  const freezeCrystals = freezeCrystalsProp !== undefined ? freezeCrystalsProp : userRecordsContext.freezeCrystals;
+  const isFriendProfile = !!friendData;
+
+  // Use friend's data if provided, otherwise fall back to context for the current user
+  const records = friendData?.records ?? userRecordsContext.records;
+  const taskDefinitions = friendData?.taskDefinitions ?? userRecordsContext.taskDefinitions;
+  const highGoals = friendData?.highGoals ?? userRecordsContext.highGoals;
+  const freezeCrystals = friendData?.freezeCrystals ?? userRecordsContext.freezeCrystals;
 
   const getTaskDefinitionById = useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);
@@ -156,8 +151,6 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
     return relevantGoals.sort((a, b) => parseISO(a.endDate).getTime() - parseISO(b.endDate).getTime())[0];
   }, [highGoals, selectedTaskFilterId]);
 
-  const isFriendProfile = recordsProp !== undefined;
-  
   const visibleCards = [
     isFriendProfile || dashboardSettings.showTotalLast30Days,
     isFriendProfile || dashboardSettings.showCurrentStreak,
@@ -165,7 +158,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
     isFriendProfile ? !!activeHighGoal : dashboardSettings.showHighGoalStat && !!activeHighGoal,
   ].filter(Boolean).length;
 
-  if (visibleCards === 0) {
+  if (visibleCards === 0 && !isFriendProfile) {
     return null;
   }
   
