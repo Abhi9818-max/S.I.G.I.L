@@ -59,9 +59,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     if (!auth) {
-      setLoading(false);
+      if (!isFirebaseConfigured) setLoading(false);
       return;
     }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -204,7 +205,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userDocRef = doc(db, 'users', newUser.uid);
         await setDoc(userDocRef, initialUserData);
 
-        // Manually update state after successful creation
+        // Manually update state after successful creation to avoid race conditions
         setUser(newUser);
         setUserData(initialUserData);
         setIsUserDataLoaded(true);
@@ -221,7 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return false;
     }
-  }, [auth, toast, router]);
+  }, [auth, db, toast, router]);
 
   const continueAsGuest = useCallback(() => {
     sessionStorage.setItem(GUEST_KEY, 'true');
@@ -288,5 +289,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
-    
