@@ -39,11 +39,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
       return;
     }
-    if (!firebaseAuth) {
-        setLoading(false);
-        return;
-    }
-    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
     });
@@ -130,7 +127,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username: username,
         username_lowercase: username.toLowerCase(),
         photoURL: null,
-        // Other fields will be initialized with defaults by UserRecordsProvider
       };
       await setDoc(userDocRef, initialUserData);
 
@@ -141,7 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error.code === 'auth/email-already-in-use') {
         toast({ title: 'Setup Failed', description: 'This username is already taken.', variant: 'destructive' });
       } else {
-        toast({ title: 'Setup Failed', description: 'Could not create account. Please try again.', variant: 'destructive' });
+        toast({ title: 'Setup Failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
         console.error("Setup error:", error);
       }
       return false;
