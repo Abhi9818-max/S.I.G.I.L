@@ -80,7 +80,7 @@ interface UserRecordsContextType {
   getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined;
   getStatsForCompletedWeek: (weekOffset: number, taskId?: string | null) => WeeklyProgressStats | null;
   getWeeklyAggregatesForChart: (numberOfWeeks: number, taskId?: string | null) => AggregatedTimeDataPoint[];
-  getUserLevelInfo: () => UserLevelInfo;
+  getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
   deductBonusPoints: (penalty: number) => void;
@@ -110,32 +110,40 @@ interface UserRecordsContextType {
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
 
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isUserDataLoaded } = useAuth();
+  const { user, userData: authUserData, isUserDataLoaded } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadUserData = async () => {
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-          setUserData(docSnap.data() as UserData);
-        }
+    if (isUserDataLoaded) {
+      if (authUserData) {
+        // If auth provider has data (e.g. from new user creation), use it.
+        // Also ensure defaults for any potentially missing fields.
+        const defaultData: Partial<UserData> = {
+          records: [],
+          taskDefinitions: DEFAULT_TASK_DEFINITIONS.map(task => ({ ...task, id: task.id || uuidv4() })),
+          bonusPoints: 0,
+          unlockedAchievements: [],
+          spentSkillPoints: {},
+          unlockedSkills: [],
+          freezeCrystals: 0,
+          awardedStreakMilestones: {},
+          highGoals: [],
+          todoItems: [],
+        };
+        setUserData({ ...defaultData, ...authUserData });
       } else {
         setUserData(null);
       }
-    };
-    if (isUserDataLoaded) {
-      loadUserData();
     }
-  }, [user, isUserDataLoaded]);
+  }, [authUserData, isUserDataLoaded]);
 
   const records = useMemo(() => userData?.records || [], [userData]);
   const taskDefinitions = useMemo(() => {
     if (userData?.taskDefinitions && userData.taskDefinitions.length > 0) {
       return userData.taskDefinitions;
     }
+    // Return default tasks if user has no tasks defined yet (new user)
     return DEFAULT_TASK_DEFINITIONS.map(task => ({ ...task, id: task.id || uuidv4() }));
   }, [userData]);
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
@@ -148,7 +156,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (user) {
-        setUserData(prevData => ({ ...(prevData || {}), ...dataToUpdate } as UserData));
+        setUserData(prevData => {
+            const newDbState = { ...(prevData || {}), ...dataToUpdate };
+            return newDbState as UserData;
+        });
 
       const userDocRef = doc(db, 'users', user.uid);
       try {
@@ -391,11 +402,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return records.reduce((sum, record) => sum + (Number(record.value) || 0), 0);
   }, [records]);
 
-  const getUserLevelInfo = useCallback((): UserLevelInfo => {
+  const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
+    if (!isUserDataLoaded) return null;
     const sumOfRecordValues = getTotalBaseRecordValue();
     const totalExperience = sumOfRecordValues + totalBonusPoints;
     return calculateUserLevelInfo(totalExperience);
-  }, [getTotalBaseRecordValue, totalBonusPoints]);
+  }, [getTotalBaseRecordValue, totalBonusPoints, isUserDataLoaded]);
 
   const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
@@ -538,8 +550,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   // Achievement Check
   useEffect(() => {
-    if (!isUserDataLoaded) return;
+    if (!isUserDataLoaded || !userData) return;
     const levelInfo = getUserLevelInfo();
+    if (!levelInfo) return;
+
     const streaks: Record<string, number> = {};
     taskDefinitions.forEach(task => {
         streaks[task.id] = getCurrentStreak(task.id);
@@ -564,7 +578,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const updatedAchievements = [...new Set([...unlockedAchievements, ...newlyUnlocked])];
       updateUserDataInDb({ unlockedAchievements: updatedAchievements });
     }
-  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb]);
+  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb, userData]);
 
   // High Goal Functions
   const addHighGoal = useCallback((goalData: Omit<HighGoal, 'id'>) => {
@@ -589,7 +603,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   
   // Streak milestone rewards check
   useEffect(() => {
-    if (!isUserDataLoaded || !user) return;
+    if (!isUserDataLoaded || !user || !userData) return;
     const newMilestones: Record<string, number[]> = {};
     let crystalsAwarded = 0;
 
@@ -618,7 +632,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         description: `Your dedication has rewarded you with ${crystalsAwarded} Freeze Crystal${crystalsAwarded > 1 ? 's' : ''}!`
       });
     }
-  }, [records, taskDefinitions, awardedStreakMilestones, freezeCrystals, isUserDataLoaded, user, getCurrentStreak, updateUserDataInDb, toast]);
+  }, [records, taskDefinitions, awardedStreakMilestones, freezeCrystals, isUserDataLoaded, user, getCurrentStreak, updateUserDataInDb, toast, userData]);
 
 
   const contextValue = useMemo(() => ({

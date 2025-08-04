@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
     const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
@@ -50,11 +50,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const fetchUserData = async () => {
         if (user) {
+            setIsUserDataLoaded(false); // Reset loading state
             const docRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
             } else {
+                // This might happen for a brief moment for new users.
+                // The setupCredentials function should handle creating the initial doc.
                 setUserData(null);
             }
             setIsUserDataLoaded(true);
@@ -69,27 +72,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   useEffect(() => {
-    if (!loading) {
-      const isAuthPage = pathname === '/login';
-       if (!isFirebaseConfigured) {
-        if (!isAuthPage) router.push('/login');
-        return;
-      }
-      if (!user && !isAuthPage) {
-        router.push('/login');
-      } else if (user && isAuthPage) {
-        router.push('/');
-      }
+    if (loading) return;
+    
+    const isAuthPage = pathname === '/login';
+
+    if (!isFirebaseConfigured) {
+      if (!isAuthPage) router.push('/login');
+      return;
     }
+
+    if (!user) {
+      if (!isAuthPage) router.push('/login');
+    } else { // User is logged in
+      if (isAuthPage) router.push('/');
+    }
+
   }, [user, loading, pathname, router]);
 
+
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-     if (!firebaseAuth) return false;
+    if (!firebaseAuth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
       await signInWithEmailAndPassword(firebaseAuth, email, password);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
-      router.push('/');
       return true;
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
@@ -100,13 +106,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [router, toast]);
+  }, [toast]);
 
   const logout = useCallback(async () => {
     if (!firebaseAuth) return;
     try {
       await signOut(firebaseAuth);
-      // No need to clear local states as they will be cleared by the effect
       router.push('/login');
     } catch (error) {
       console.error("Logout failed:", error);
@@ -127,11 +132,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username: username,
         username_lowercase: username.toLowerCase(),
         photoURL: null,
+        records: [],
+        taskDefinitions: [],
+        bonusPoints: 0,
+        unlockedAchievements: [],
+        spentSkillPoints: {},
+        unlockedSkills: [],
+        freezeCrystals: 0,
+        awardedStreakMilestones: {},
+        highGoals: [],
+        todoItems: [],
       };
       await setDoc(userDocRef, initialUserData);
 
+      // Manually update local state to avoid race conditions with useEffect
+      setUser(userCredential.user);
+      setUserData(initialUserData);
+      setIsUserDataLoaded(true);
+
       toast({ title: 'Account Created!', description: 'Welcome to S.I.G.I.L.' });
-      router.push('/');
       return true;
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
@@ -142,7 +161,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [router, toast]);
+  }, [toast]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
     if (!user) {
@@ -158,6 +177,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Update Firestore document
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
+
+        // Update local state
+        setUserData(prev => prev ? ({ ...prev, photoURL }) : null);
 
         toast({ title: "Avatar Updated", description: "Your new avatar has been saved." });
         return url;
