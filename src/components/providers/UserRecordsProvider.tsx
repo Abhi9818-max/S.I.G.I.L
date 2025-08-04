@@ -110,7 +110,7 @@ interface UserRecordsContextType {
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
 
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userData: authUserData, isUserDataLoaded } = useAuth();
+  const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
 
@@ -137,6 +137,14 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const highGoals = useMemo(() => userData?.highGoals || [], [userData]);
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
+    if (isGuest) {
+      const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+      const updatedGuestData = { ...guestData, ...dataToUpdate };
+      localStorage.setItem('guest-userData', JSON.stringify(updatedGuestData));
+      setUserData(updatedGuestData);
+      return;
+    }
+    
     if (user) {
         setUserData(prevData => {
             const newState = { ...(prevData || {}), ...dataToUpdate };
@@ -153,7 +161,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         console.error("Error updating user data in DB:", error);
       }
     }
-  }, [user]);
+  }, [user, isGuest]);
 
   const getTaskDefinitionById = useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);

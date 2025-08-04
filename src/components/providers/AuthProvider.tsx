@@ -11,13 +11,16 @@ import type { UserData } from '@/types';
 import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
 
 const FAKE_DOMAIN = 'sigil.local';
+const GUEST_KEY = 'sigil-guest-mode';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isGuest: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   setupCredentials: (username: string, password: string) => Promise<boolean>;
+  continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   userData: UserData | null;
   loading: boolean;
@@ -31,12 +34,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
   const auth = firebaseAuth;
 
   useEffect(() => {
+    const isGuestSession = sessionStorage.getItem(GUEST_KEY) === 'true';
+    if (isGuestSession) {
+      setIsGuest(true);
+      setLoading(false);
+      return;
+    }
+    
     if (!auth) {
       setLoading(false);
       return;
@@ -50,7 +61,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const fetchUserData = async () => {
-        if (user) {
+        if (isGuest) {
+            setIsUserDataLoaded(false);
+            const guestDataString = localStorage.getItem('guest-userData');
+            if (guestDataString) {
+                setUserData(JSON.parse(guestDataString));
+            } else {
+                 const initialGuestData: UserData = {
+                    username: "Guest",
+                    photoURL: null,
+                    records: [],
+                    taskDefinitions: DEFAULT_TASK_DEFINITIONS,
+                    bonusPoints: 0,
+                    unlockedAchievements: [],
+                    spentSkillPoints: {},
+                    unlockedSkills: [],
+                    freezeCrystals: 0,
+                    awardedStreakMilestones: {},
+                    highGoals: [],
+                    todoItems: [],
+                    dashboardSettings: undefined,
+                };
+                setUserData(initialGuestData);
+                localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
+            }
+            setIsUserDataLoaded(true);
+        } else if (user) {
             setIsUserDataLoaded(false);
             const docRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(docRef);
@@ -65,28 +101,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsUserDataLoaded(false);
         }
     };
-    if (isFirebaseConfigured) {
+    if (isFirebaseConfigured || isGuest) {
       fetchUserData();
     }
-  }, [user]);
+  }, [user, isGuest]);
 
   useEffect(() => {
     if (loading) return;
     
     const isAuthPage = pathname === '/login';
 
-    if (!auth) {
-      if (!isAuthPage) router.push('/login');
-      return;
-    }
-
-    if (!user) {
+    if (!isGuest && !user) {
       if (!isAuthPage) router.push('/login');
     } else {
       if (isAuthPage) router.push('/');
     }
 
-  }, [user, loading, pathname, router, auth]);
+  }, [user, isGuest, loading, pathname, router]);
 
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
@@ -108,6 +139,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [auth, toast]);
 
   const logout = useCallback(async () => {
+    if (isGuest) {
+      sessionStorage.removeItem(GUEST_KEY);
+      setIsGuest(false);
+      setUserData(null);
+      router.push('/login');
+      return;
+    }
+
     if (!auth) return;
     try {
       await signOut(auth);
@@ -116,7 +155,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error("Logout failed:", error);
       toast({ title: 'Logout Failed', description: 'Could not log you out. Please try again.', variant: 'destructive' });
     }
-  }, [auth, router, toast]);
+  }, [auth, router, toast, isGuest]);
 
   const setupCredentials = useCallback(async (username: string, password: string): Promise<boolean> => {
     if (!auth) return false;
@@ -161,8 +200,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
   }, [auth, toast]);
+
+  const continueAsGuest = useCallback(() => {
+    sessionStorage.setItem(GUEST_KEY, 'true');
+    setIsGuest(true);
+    router.push('/');
+  }, [router]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
+    if (isGuest) {
+      setUserData(prev => prev ? ({ ...prev, photoURL: url }) : null);
+      const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+      guestData.photoURL = url;
+      localStorage.setItem('guest-userData', JSON.stringify(guestData));
+      toast({ title: "Avatar Updated", description: "Your new avatar has been saved for this session." });
+      return url;
+    }
+
     if (!user || !auth) {
         toast({ title: "Not Authenticated", description: "You must be logged in to update your avatar.", variant: "destructive" });
         return null;
@@ -185,10 +239,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: "Update Failed", description: "Could not update your avatar.", variant: "destructive" });
         return null;
     }
-  }, [user, auth, toast]);
+  }, [user, auth, toast, isGuest]);
 
 
-  if (loading || (!user && pathname !== '/login' && isFirebaseConfigured)) {
+  if (loading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
           <div className="text-primary">Loading S.I.G.I.L...</div>
@@ -197,7 +251,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, setupCredentials, updateProfilePicture, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );

@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TrendingUp, KeyRound, User } from 'lucide-react';
+import { TrendingUp, KeyRound, User, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from '@/components/ui/separator';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -27,7 +28,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 type SetupForm = z.infer<typeof setupSchema>;
 
 export default function LoginPage() {
-  const { login, setupCredentials, loading } = useAuth();
+  const { login, setupCredentials, loading, continueAsGuest } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   const loginForm = useForm<LoginForm>({
@@ -136,6 +137,19 @@ export default function LoginPage() {
                       </form>
                 </TabsContent>
             </Tabs>
+
+            <div className="relative py-4">
+              <Separator />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 bg-card text-xs text-muted-foreground">
+                OR
+              </div>
+            </div>
+
+            <Button variant="secondary" className="w-full" onClick={continueAsGuest}>
+                <Users className="mr-2 h-4 w-4" />
+                Continue as Guest
+            </Button>
+            <p className="text-xs text-center text-muted-foreground mt-2">Guest data is stored locally and will be lost if you clear your browser data.</p>
         </CardContent>
       </Card>
     </div>
