@@ -1,13 +1,11 @@
 // src/lib/firebase.ts
-
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
-
-// 🔐 Your Firebase config should be in environment variables
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,30 +16,28 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// 🚀 Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+// Check if Firebase config is populated
+export const isFirebaseConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key';
 
-
-// 📊 Set up analytics safely (won’t crash on server)
+// Initialize Firebase
+let app: FirebaseApp | undefined;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 let analytics: ReturnType<typeof getAnalytics> | null = null;
 
-if (typeof window !== 'undefined') {
-    isSupported().then((enabled) => {
-      if (enabled) {
-        analytics = getAnalytics(app);
-      }
-    });
+if (isFirebaseConfigured) {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    if (typeof window !== 'undefined') {
+        isSupported().then((enabled) => {
+            if (enabled) {
+                analytics = getAnalytics(app);
+            }
+        });
+    }
 }
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-
-// 🧠 Export the app and other Firebase services
 export { app, analytics, auth, db, storage };

@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { usePathname, useRouter } from 'next/navigation';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, type User, updateProfile } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth as firebaseAuth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { UserData } from '@/types';
 
@@ -33,16 +33,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
-  const auth = getAuth();
-
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!isFirebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+    if (!firebaseAuth) {
+        setLoading(false);
+        return;
+    }
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
       setUser(user);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [auth]);
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -60,12 +66,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsUserDataLoaded(false);
         }
     };
-    fetchUserData();
+    if (isFirebaseConfigured) {
+      fetchUserData();
+    }
   }, [user]);
 
   useEffect(() => {
     if (!loading) {
       const isAuthPage = pathname === '/login';
+       if (!isFirebaseConfigured) {
+        if (!isAuthPage) router.push('/login');
+        return;
+      }
       if (!user && !isAuthPage) {
         router.push('/login');
       } else if (user && isAuthPage) {
@@ -75,9 +87,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, loading, pathname, router]);
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+     if (!firebaseAuth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
       router.push('/');
       return true;
@@ -90,23 +103,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [auth, router, toast]);
+  }, [router, toast]);
 
   const logout = useCallback(async () => {
+    if (!firebaseAuth) return;
     try {
-      await signOut(auth);
+      await signOut(firebaseAuth);
       // No need to clear local states as they will be cleared by the effect
       router.push('/login');
     } catch (error) {
       console.error("Logout failed:", error);
       toast({ title: 'Logout Failed', description: 'Could not log you out. Please try again.', variant: 'destructive' });
     }
-  }, [auth, router, toast]);
+  }, [router, toast]);
 
   const setupCredentials = useCallback(async (username: string, password: string): Promise<boolean> => {
+    if (!firebaseAuth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       
       await updateProfile(userCredential.user, { displayName: username });
 
@@ -131,7 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [auth, router, toast]);
+  }, [router, toast]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
     if (!user) {
@@ -159,7 +174,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, toast]);
 
 
-  if (loading || (!user && pathname !== '/login')) {
+  if (loading || (!user && pathname !== '/login' && isFirebaseConfigured)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
           <div className="text-primary">Loading S.I.G.I.L...</div>
