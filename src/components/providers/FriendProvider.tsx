@@ -67,8 +67,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     useEffect(() => {
-        fetchFriendsAndRequests();
-    }, [fetchFriendsAndRequests]);
+        if (user) {
+            fetchFriendsAndRequests();
+        }
+    }, [user, fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
         const usersRef = collection(db, 'users');
@@ -90,20 +92,24 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const sendFriendRequest = useCallback(async (recipientId: string, recipientUsername: string) => {
-        if (!user || !user.displayName) throw new Error("You must be logged in to send requests.");
+        if (!user || !userData) throw new Error("You must be logged in to send requests.");
         if (user.uid === recipientId) throw new Error("You cannot send a request to yourself.");
 
         const requestId = `${user.uid}_${recipientId}`;
+        const reverseRequestId = `${recipientId}_${user.uid}`;
         const requestRef = doc(db, 'friend_requests', requestId);
+        const reverseRequestRef = doc(db, 'friend_requests', reverseRequestId);
+        
         const requestSnap = await getDoc(requestRef);
+        const reverseRequestSnap = await getDoc(reverseRequestRef);
 
-        if (requestSnap.exists()) {
+        if (requestSnap.exists() || reverseRequestSnap.exists()) {
             throw new Error("Friend request already sent or exists.");
         }
 
         const newRequest: Omit<FriendRequest, 'id'> = {
             senderId: user.uid,
-            senderUsername: user.displayName,
+            senderUsername: userData.username,
             recipientId: recipientId,
             recipientUsername: recipientUsername,
             status: 'pending',
@@ -112,7 +118,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         await setDoc(requestRef, newRequest);
         await fetchFriendsAndRequests(); // Re-fetch to update pending list
-    }, [user, fetchFriendsAndRequests]);
+    }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
         if (!user || !userData) {
@@ -121,14 +127,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
         const batch = writeBatch(db);
         
-        // Fetch full UserData for both users to ensure all info is available
         const senderDataDoc = await getDoc(doc(db, 'users', request.senderId));
         if (!senderDataDoc.exists()) {
             toast({ title: 'Error', description: 'Could not find the user who sent the request.', variant: 'destructive' });
             return;
         }
         const senderData = senderDataDoc.data() as UserData;
-        const currentUserData = userData; // We already have this from useAuth
+        const currentUserData = userData;
 
         // Add sender to current user's friend list
         const currentUserFriendRef = doc(db, `users/${user.uid}/friends`, request.senderId);
@@ -154,7 +159,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         try {
             await batch.commit();
-            await fetchFriendsAndRequests(); // Re-fetch to update lists
+            await fetchFriendsAndRequests();
             toast({ title: 'Friend Added', description: `You are now friends with ${request.senderUsername}.` });
         } catch (error) {
             console.error("Failed to accept friend request:", error);
@@ -166,14 +171,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
-        await fetchFriendsAndRequests(); // Re-fetch
+        await fetchFriendsAndRequests();
         toast({ title: 'Request Declined', variant: 'destructive' });
     }, [toast, fetchFriendsAndRequests]);
     
     const cancelFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
-        await fetchFriendsAndRequests(); // Re-fetch
+        await fetchFriendsAndRequests();
         toast({ title: 'Request Cancelled' });
     }, [toast, fetchFriendsAndRequests]);
     
