@@ -169,7 +169,6 @@ export default function SettingsPage() {
       { key: 'showTodoList', label: 'Pacts Card', category: 'Main' },
       { key: 'showProgressChart', label: 'Progress Chart', category: 'Main' },
       { key: 'showTimeBreakdownChart', label: 'Daily Time Breakdown', category: 'Main' },
-      { key: 'showAISuggestions', label: 'AI Coach Card', category: 'Main' },
   ];
 
   const statComponents: { key: keyof DashboardSettings, label: string, hasDaysInput?: keyof DashboardSettings }[] = [

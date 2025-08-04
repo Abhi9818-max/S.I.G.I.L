@@ -19,7 +19,6 @@ const defaultSettings: DashboardSettings = {
   showContributionGraph: true,
   showTodoList: true,
   showProgressChart: true,
-  showAISuggestions: true,
   showTimeBreakdownChart: true,
   pieChartLabelFormat: 'percentage',
 };

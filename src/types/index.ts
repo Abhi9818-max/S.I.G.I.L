@@ -174,7 +174,6 @@ export interface DashboardSettings {
   showContributionGraph: boolean;
   showTodoList: boolean;
   showProgressChart: boolean;
-  showAISuggestions: boolean;
   showTimeBreakdownChart: boolean;
   pieChartLabelFormat?: 'percentage' | 'time';
 }

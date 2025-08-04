@@ -20,7 +20,6 @@ import { TIER_INFO } from '@/lib/config';
 import type { Quote } from '@/lib/quotes';
 import { QUOTES } from '@/lib/quotes';
 import TodoListCard from '@/components/todo/TodoListCard';
-import AISuggestionsCard from '@/components/records/AISuggestionsCard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Calendar } from 'lucide-react';
@@ -169,12 +168,7 @@ export default function HomePage() {
                   <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
                 )}
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                   {dashboardSettings.showAISuggestions && (
-                      <div className="animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-                          <AISuggestionsCard />
-                      </div>
-                  )}
+                <div className="grid grid-cols-1 gap-6">
                   {dashboardSettings.showTimeBreakdownChart && (
                       <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                           <DailyTimeBreakdownChart />
