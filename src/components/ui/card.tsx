@@ -5,16 +5,44 @@ import { cn } from "@/lib/utils"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, style, ...props }, ref) => {
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+
+    const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - left - width / 2;
+    const y = e.clientY - top - height / 2;
+
+    const rotateX = (-y / height) * 20; // Max rotation 10 degrees
+    const rotateY = (x / width) * 20;  // Max rotation 10 degrees
+
+    cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+    cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+  };
+
+  const handleMouseLeave = () => {
+    if (!cardRef.current) return;
+    cardRef.current.style.setProperty('--rotate-x', '0deg');
+    cardRef.current.style.setProperty('--rotate-y', '0deg');
+  };
+  
+  return (
+    <div
+      ref={ref}
+      className={cn("card-3d", className)}
+    >
+      <div 
+        ref={cardRef}
+        className="card-3d-content h-full w-full rounded-lg border bg-card text-card-foreground"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        {...props}
+      />
+    </div>
+  )
+});
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<

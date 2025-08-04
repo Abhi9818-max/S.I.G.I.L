@@ -134,4 +134,21 @@
       box-shadow: 0 0 0 0 hsl(var(--foreground) / 0);
     }
   }
+  
+  .card-3d {
+      transform-style: preserve-3d;
+      perspective: 1000px;
+  }
+  
+  .card-3d-content {
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .card-3d:hover .card-3d-content {
+      transform: rotateY(var(--rotate-y, 0)) rotateX(var(--rotate-x, 0)) translateZ(25px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2), 
+                  0 6px 6px rgba(0,0,0,0.23), 
+                  /* Add a glow based on primary color */
+                  0 0 40px -10px hsl(var(--primary) / 0.5); 
+  }
 }
