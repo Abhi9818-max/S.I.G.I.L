@@ -121,31 +121,18 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
-        if (!user) {
+        if (!user || !userData) {
             toast({ title: 'Error', description: 'You must be logged in.', variant: 'destructive' });
             return;
         }
 
         const batch = writeBatch(db);
 
-        // Fetch fresh data for both users to ensure it's up to date
-        const senderDataDoc = await getDoc(doc(db, 'users', request.senderId));
-        const currentUserDataDoc = await getDoc(doc(db, 'users', user.uid));
-
-        if (!senderDataDoc.exists() || !currentUserDataDoc.exists()) {
-            toast({ title: 'Error', description: 'Could not find user data for one or both users.', variant: 'destructive' });
-            return;
-        }
-        
-        const senderData = senderDataDoc.data() as UserData;
-        const currentUserData = currentUserDataDoc.data() as UserData;
-
         // Add sender to current user's friend list
         const currentUserFriendRef = doc(db, `users/${user.uid}/friends`, request.senderId);
         batch.set(currentUserFriendRef, { 
             uid: request.senderId, 
-            username: senderData.username, 
-            photoURL: senderData.photoURL || null,
+            username: request.senderUsername, 
             since: new Date().toISOString() 
         });
 
@@ -153,8 +140,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const senderFriendRef = doc(db, `users/${request.senderId}/friends`, user.uid);
         batch.set(senderFriendRef, { 
             uid: user.uid, 
-            username: currentUserData.username, 
-            photoURL: currentUserData.photoURL || null,
+            username: userData.username, 
             since: new Date().toISOString() 
         });
         
@@ -171,7 +157,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             toast({ title: 'Error', description: 'Could not accept the friend request.', variant: 'destructive' });
         }
 
-    }, [user, toast, fetchFriendsAndRequests]);
+    }, [user, userData, toast, fetchFriendsAndRequests]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
