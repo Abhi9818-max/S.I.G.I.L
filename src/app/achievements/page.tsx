@@ -89,12 +89,17 @@ export default function AchievementsPage() {
           <div className="p-6 md:p-0 pt-6">
             <TooltipProvider>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ACHIEVEMENTS.map(ach => (
-                  <AchievementCard
+                {ACHIEVEMENTS.map((ach, index) => (
+                  <div
                     key={ach.id}
-                    achievement={ach}
-                    isUnlocked={unlockedAchievements.includes(ach.id)}
-                  />
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <AchievementCard
+                      achievement={ach}
+                      isUnlocked={unlockedAchievements.includes(ach.id)}
+                    />
+                  </div>
                 ))}
               </div>
             </TooltipProvider>

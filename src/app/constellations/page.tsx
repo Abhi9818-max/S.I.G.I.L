@@ -141,15 +141,20 @@ export default function ConstellationsPage() {
                         </div>
                         <ScrollArea className="h-[60vh] md:h-[calc(100vh-450px)] pr-4">
                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {constellation.nodes.map(skill => (
-                                <SkillCard 
-                                    key={skill.id}
-                                    skill={skill}
-                                    taskColor={constellation.taskColor}
-                                    availablePoints={availablePoints}
-                                    isUnlocked={isSkillUnlocked(skill.id)}
-                                    onUnlock={() => handleUnlockSkill(skill.id, constellation.taskId, skill.cost, skill.name)}
-                                />
+                            {constellation.nodes.map((skill, index) => (
+                                <div
+                                  key={skill.id}
+                                  className="animate-fade-in-up"
+                                  style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                  <SkillCard 
+                                      skill={skill}
+                                      taskColor={constellation.taskColor}
+                                      availablePoints={availablePoints}
+                                      isUnlocked={isSkillUnlocked(skill.id)}
+                                      onUnlock={() => handleUnlockSkill(skill.id, constellation.taskId, skill.cost, skill.name)}
+                                  />
+                                </div>
                             ))}
                            </div>
                         </ScrollArea>

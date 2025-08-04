@@ -77,7 +77,12 @@ export default function TiersPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {TIER_INFO.map((tier, index) => (
-                        <Link href={`/tiers/${tier.slug}`} key={tier.slug} passHref>
+                      <div
+                        key={tier.slug}
+                        className="animate-fade-in-up"
+                        style={{ animationDelay: `${index * 75}ms` }}
+                      >
+                        <Link href={`/tiers/${tier.slug}`} passHref>
                            <div onClick={() => handleCardClick(tier.slug)}>
                                 <TierCard 
                                     tier={tier} 
@@ -88,6 +93,7 @@ export default function TiersPage() {
                                 />
                            </div>
                         </Link>
+                      </div>
                     ))}
                 </div>
 

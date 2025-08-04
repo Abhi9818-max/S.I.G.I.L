@@ -164,18 +164,24 @@ export default function FriendsPage() {
                                         <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                                     ) : (
                                         <div className="space-y-3 pt-4">
-                                            {friends.map(friend => (
-                                                <Link href={`/friends/${friend.uid}`} key={friend.uid}>
-                                                    <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar>
-                                                                <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                                <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                                            </Avatar>
-                                                            <span className="font-medium">{friend.username}</span>
-                                                        </div>
-                                                    </div>
-                                                </Link>
+                                            {friends.map((friend, index) => (
+                                                <div
+                                                  key={friend.uid}
+                                                  className="animate-fade-in-up"
+                                                  style={{ animationDelay: `${index * 50}ms` }}
+                                                >
+                                                  <Link href={`/friends/${friend.uid}`}>
+                                                      <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                          <div className="flex items-center gap-3">
+                                                              <Avatar>
+                                                                  <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                                  <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                              </Avatar>
+                                                              <span className="font-medium">{friend.username}</span>
+                                                          </div>
+                                                      </div>
+                                                  </Link>
+                                                </div>
                                             ))}
                                         </div>
                                     )}

@@ -232,51 +232,57 @@ export default function HighGoalsPage() {
               <p className="text-sm">Use the form above to create your first long-term objective.</p>
             </div>
           ) : (
-            highGoals.map(goal => {
+            highGoals.map((goal, index) => {
               const task = getTaskDefinitionById(goal.taskId);
               const progress = getHighGoalProgress(goal);
               const percentage = Math.min((progress / goal.targetValue) * 100, 100);
               const unit = getUnitLabelForTask(goal.taskId);
               
               return (
-                <Card key={goal.id} className="shadow-lg">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="flex items-center gap-2" style={{ color: task?.color }}>
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: task?.color }}></div>
-                          {goal.name}
-                        </CardTitle>
-                        <CardDescription>Task: {task?.name || 'Unknown'} | Target: {goal.targetValue.toLocaleString()} {unit}</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetEditing(goal)}><Edit className="h-4 w-4" /></Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>This action will permanently delete your high goal "{goal.name}".</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => deleteHighGoal(goal.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                     <div className="space-y-2">
-                        <Progress value={percentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: task?.color}} />
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                            <span>{progress.toLocaleString()} / {goal.targetValue.toLocaleString()} ({percentage.toFixed(1)}%)</span>
-                            <span>{format(parseISO(goal.startDate), 'MMM d, yyyy')} - {format(parseISO(goal.endDate), 'MMM d, yyyy')}</span>
+                <div
+                  key={goal.id}
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <Card className="shadow-lg">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="flex items-center gap-2" style={{ color: task?.color }}>
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: task?.color }}></div>
+                            {goal.name}
+                          </CardTitle>
+                          <CardDescription>Task: {task?.name || 'Unknown'} | Target: {goal.targetValue.toLocaleString()} {unit}</CardDescription>
                         </div>
-                     </div>
-                  </CardContent>
-                </Card>
+                        <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSetEditing(goal)}><Edit className="h-4 w-4" /></Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>This action will permanently delete your high goal "{goal.name}".</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteHighGoal(goal.id)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                       <div className="space-y-2">
+                          <Progress value={percentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: task?.color}} />
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                              <span>{progress.toLocaleString()} / {goal.targetValue.toLocaleString()} ({percentage.toFixed(1)}%)</span>
+                              <span>{format(parseISO(goal.startDate), 'MMM d, yyyy')} - {format(parseISO(goal.endDate), 'MMM d, yyyy')}</span>
+                          </div>
+                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
               )
             })
           )}
