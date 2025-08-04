@@ -38,16 +38,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
-  const [auth, setAuth] = useState<Auth | null>(null);
-
-
-  useEffect(() => {
-    if (isFirebaseConfigured) {
-      setAuth(firebaseAuth);
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  const auth = isFirebaseConfigured ? firebaseAuth : null;
 
 
   useEffect(() => {
@@ -59,7 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     if (!auth) {
-      if (!isFirebaseConfigured) setLoading(false);
+      setLoading(false);
       return;
     }
 
@@ -91,7 +82,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     awardedStreakMilestones: {},
                     highGoals: [],
                     todoItems: [],
-                    dashboardSettings: undefined,
                 };
                 setUserData(initialGuestData);
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
@@ -104,8 +94,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
             } else {
-                // This case can happen for a newly created user before their doc is set.
-                // We will set it during the setupCredentials flow.
                 setUserData(null);
             }
             setIsUserDataLoaded(true);
@@ -114,9 +102,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsUserDataLoaded(false);
         }
     };
-    if (isFirebaseConfigured || isGuest) {
-      fetchUserData();
-    }
+    fetchUserData();
   }, [user, isGuest]);
 
   useEffect(() => {
@@ -199,13 +185,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             awardedStreakMilestones: {},
             highGoals: [],
             todoItems: [],
-            dashboardSettings: undefined,
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
         await setDoc(userDocRef, initialUserData);
 
-        // Manually update state after successful creation to avoid race conditions
         setUser(newUser);
         setUserData(initialUserData);
         setIsUserDataLoaded(true);

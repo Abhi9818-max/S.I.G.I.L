@@ -182,7 +182,7 @@ export interface DashboardSettings {
 export interface UserData {
     username: string;
     username_lowercase?: string; // For case-insensitive search
-    photoURL?: string; // Add photoURL for profile pictures
+    photoURL?: string | null;
     records?: RecordEntry[];
     taskDefinitions?: TaskDefinition[];
     bonusPoints?: number;
@@ -216,6 +216,6 @@ export interface FriendRequest {
 export interface Friend {
     uid: string;
     username: string;
-    photoURL?: string;
+    photoURL?: string | null;
     since: string;
 }

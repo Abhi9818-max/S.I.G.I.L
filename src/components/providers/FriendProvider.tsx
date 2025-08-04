@@ -56,7 +56,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 return {
                     uid: friendId,
                     username: friendUserData.username,
-                    photoURL: friendUserData.photoURL || null,
+                    photoURL: friendUserData.photoURL,
                     since: friendDoc.data().since,
                 };
             }

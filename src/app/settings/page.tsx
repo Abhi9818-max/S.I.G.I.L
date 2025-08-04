@@ -198,7 +198,7 @@ export default function SettingsPage() {
   const getAvatarForId = (id: string | undefined) => {
       if (!id) return '';
       const avatarNumber = (simpleHash(id) % 12) + 1;
-      return `/avatars/avatar-${avatarNumber}.jpeg`;
+      return `/avatars/avatar${avatarNumber}.jpeg`;
   }
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);

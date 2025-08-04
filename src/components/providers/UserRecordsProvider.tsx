@@ -125,7 +125,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (userData?.taskDefinitions && userData.taskDefinitions.length > 0) {
       return userData.taskDefinitions;
     }
-    // Return default tasks if user has no tasks defined yet (new user)
     return DEFAULT_TASK_DEFINITIONS;
   }, [userData]);
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
@@ -138,7 +137,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (isGuest) {
-      const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+      const guestDataString = localStorage.getItem('guest-userData');
+      const guestData = guestDataString ? JSON.parse(guestDataString) : {};
       const updatedGuestData = { ...guestData, ...dataToUpdate };
       localStorage.setItem('guest-userData', JSON.stringify(updatedGuestData));
       setUserData(updatedGuestData);
@@ -147,7 +147,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     if (user) {
         setUserData(prevData => {
-            const newState = { ...(prevData || {}), ...dataToUpdate };
+            const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
             return newState as UserData;
         });
 
@@ -549,7 +549,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         streaks[task.id] = getCurrentStreak(task.id);
     });
     const unlockedSkillCount = unlockedSkills.length;
-    let loreEntryCount = 0; // Lore is disabled, so this will be 0
+    let loreEntryCount = 0;
 
     const context = { levelInfo, streaks, unlockedSkillCount, loreEntryCount };
     
