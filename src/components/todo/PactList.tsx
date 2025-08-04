@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { ListChecks, Trash2, CalendarDays, ShieldAlert } from 'lucide-react';
@@ -18,6 +18,16 @@ interface PactListProps {
 }
 
 const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoItem, isEditable, title }) => {
+  const [completedPact, setCompletedPact] = useState<string | null>(null);
+
+  const handleToggle = (id: string) => {
+    if (toggleTodoItem) {
+        toggleTodoItem(id);
+        setCompletedPact(id);
+        setTimeout(() => setCompletedPact(null), 800); // Duration of the animation
+    }
+  }
+
   if (items.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-4">
@@ -39,7 +49,7 @@ const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoIt
             <Checkbox
               id={`todo-${item.id}`}
               checked={item.completed}
-              onCheckedChange={() => isEditable && toggleTodoItem && toggleTodoItem(item.id)}
+              onCheckedChange={() => isEditable && handleToggle(item.id)}
               aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
               className="mt-1"
               disabled={!isEditable}
@@ -48,8 +58,9 @@ const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoIt
               <label
                 htmlFor={`todo-${item.id}`}
                 className={cn(
-                  "cursor-pointer text-sm font-medium",
-                  item.completed && "line-through text-muted-foreground"
+                  "cursor-pointer text-sm font-medium transition-all",
+                  item.completed && "line-through text-muted-foreground",
+                  completedPact === item.id && 'text-pulse-and-fade'
                 )}
               >
                 {item.text}

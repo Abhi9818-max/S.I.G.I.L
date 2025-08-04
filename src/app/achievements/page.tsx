@@ -10,50 +10,61 @@ import { cn } from '@/lib/utils';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const AchievementCard = ({ achievement, isUnlocked }: { achievement: typeof ACHIEVEMENTS[0], isUnlocked: boolean }) => {
+const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achievement: typeof ACHIEVEMENTS[0], isUnlocked: boolean, newlyUnlocked: boolean }) => {
   const Icon = achievement.icon;
   const showDetails = isUnlocked || !achievement.isSecret;
 
   return (
-    <Card className={cn(
-      "transition-all duration-300",
-      isUnlocked ? 'bg-primary/10 border-primary/50' : 'bg-card'
-    )}>
-      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+    <div className={cn("relative perspective-1000", newlyUnlocked && 'animate-flip-in')}>
         <div className={cn(
-          "p-2 rounded-lg",
-          isUnlocked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+        "transition-all duration-300 transform-style-3d w-full h-full",
         )}>
-          {isUnlocked ? <Icon className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+            <Card className={cn(
+            "transition-all duration-300 w-full h-full backface-hidden",
+            isUnlocked ? 'bg-primary/10 border-primary/50' : 'bg-card'
+            )}>
+            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                <div className={cn(
+                "p-2 rounded-lg",
+                isUnlocked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>
+                {isUnlocked ? <Icon className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+                </div>
+                <div>
+                <CardTitle className={cn("text-md", !showDetails && "italic text-muted-foreground")}>
+                    {showDetails ? achievement.name : "Secret Achievement"}
+                </CardTitle>
+                <CardDescription className={cn(
+                    "text-xs",
+                    isUnlocked ? "text-primary/80" : "text-muted-foreground"
+                    )}
+                >
+                    {achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}
+                </CardDescription>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">
+                {showDetails ? achievement.description : "Unlock this achievement to reveal its details."}
+                </p>
+            </CardContent>
+            </Card>
         </div>
-        <div>
-          <CardTitle className={cn("text-md", !showDetails && "italic text-muted-foreground")}>
-            {showDetails ? achievement.name : "Secret Achievement"}
-          </CardTitle>
-          <CardDescription className={cn(
-              "text-xs",
-              isUnlocked ? "text-primary/80" : "text-muted-foreground"
-            )}
-          >
-            {achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          {showDetails ? achievement.description : "Unlock this achievement to reveal its details."}
-        </p>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 
 export default function AchievementsPage() {
-  const { getUserLevelInfo, unlockedAchievements } = useUserRecords();
+  const { getUserLevelInfo, unlockedAchievements, newlyUnlockedAchievements, clearNewlyUnlockedAchievements } = useUserRecords();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
+    // Clear the newly unlocked list after animations have had a chance to play
+    const timer = setTimeout(() => {
+        clearNewlyUnlockedAchievements();
+    }, 2000); // 2 seconds delay
+    return () => clearTimeout(timer);
   }, []);
 
   const levelInfo = getUserLevelInfo();
@@ -98,6 +109,7 @@ export default function AchievementsPage() {
                     <AchievementCard
                       achievement={ach}
                       isUnlocked={unlockedAchievements.includes(ach.id)}
+                      newlyUnlocked={newlyUnlockedAchievements.includes(ach.id)}
                     />
                   </div>
                 ))}

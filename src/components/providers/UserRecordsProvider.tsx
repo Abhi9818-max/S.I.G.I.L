@@ -99,6 +99,8 @@ interface UserRecordsContextType {
   useFreezeCrystal: () => void;
   // Achievements
   unlockedAchievements: string[];
+  newlyUnlockedAchievements: string[];
+  clearNewlyUnlockedAchievements: () => void;
   // High Goals
   highGoals: HighGoal[];
   addHighGoal: (goal: Omit<HighGoal, 'id'>) => void;
@@ -112,6 +114,7 @@ const UserRecordsContext = React.createContext<UserRecordsContextType | undefine
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -537,6 +540,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     return result;
   }, [getRecordsByDate, taskDefinitions, getTaskDefinitionById]);
+  
+  const clearNewlyUnlockedAchievements = useCallback(() => {
+    setNewlyUnlockedAchievements([]);
+  }, []);
 
   // Achievement Check
   useEffect(() => {
@@ -553,10 +560,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const context = { levelInfo, streaks, unlockedSkillCount, loreEntryCount };
     
-    const newlyUnlocked: string[] = [];
+    const justUnlocked: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
       if (!unlockedAchievements.includes(ach.id) && ach.check(context)) {
-        newlyUnlocked.push(ach.id);
+        justUnlocked.push(ach.id);
         toast({
           title: `🏆 Achievement Unlocked!`,
           description: ach.name,
@@ -564,8 +571,9 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     });
 
-    if (newlyUnlocked.length > 0) {
-      const updatedAchievements = [...new Set([...unlockedAchievements, ...newlyUnlocked])];
+    if (justUnlocked.length > 0) {
+      setNewlyUnlockedAchievements(prev => [...new Set([...prev, ...justUnlocked])]);
+      const updatedAchievements = [...new Set([...unlockedAchievements, ...justUnlocked])];
       updateUserDataInDb({ unlockedAchievements: updatedAchievements });
     }
   }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb, userData]);
@@ -659,6 +667,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     freezeCrystals,
     useFreezeCrystal,
     unlockedAchievements,
+    newlyUnlockedAchievements,
+    clearNewlyUnlockedAchievements,
     highGoals,
     addHighGoal,
     updateHighGoal,
@@ -698,6 +708,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       freezeCrystals,
       useFreezeCrystal,
       unlockedAchievements,
+      newlyUnlockedAchievements,
+      clearNewlyUnlockedAchievements,
       highGoals,
       addHighGoal,
       updateHighGoal,
