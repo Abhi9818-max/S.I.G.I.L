@@ -15,8 +15,8 @@ const Card = React.forwardRef<
     const x = e.clientX - left - width / 2;
     const y = e.clientY - top - height / 2;
 
-    const rotateX = (-y / height) * 20; // Max rotation 10 degrees
-    const rotateY = (x / width) * 20;  // Max rotation 10 degrees
+    const rotateX = (-y / height) * 10; // Max rotation 5 degrees
+    const rotateY = (x / width) * 10;  // Max rotation 5 degrees
 
     cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
     cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
