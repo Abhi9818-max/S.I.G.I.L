@@ -128,7 +128,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!auth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Force user state update before redirection
+      setUser(userCredential.user);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
       router.push('/');
       return true;
