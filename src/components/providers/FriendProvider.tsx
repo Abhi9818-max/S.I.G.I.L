@@ -121,19 +121,24 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
-        if (!user || !userData) {
+        if (!user) {
             toast({ title: 'Error', description: 'You must be logged in.', variant: 'destructive' });
             return;
         }
+
         const batch = writeBatch(db);
-        
+
+        // Fetch fresh data for both users to ensure it's up to date
         const senderDataDoc = await getDoc(doc(db, 'users', request.senderId));
-        if (!senderDataDoc.exists()) {
-            toast({ title: 'Error', description: 'Could not find the user who sent the request.', variant: 'destructive' });
+        const currentUserDataDoc = await getDoc(doc(db, 'users', user.uid));
+
+        if (!senderDataDoc.exists() || !currentUserDataDoc.exists()) {
+            toast({ title: 'Error', description: 'Could not find user data for one or both users.', variant: 'destructive' });
             return;
         }
+        
         const senderData = senderDataDoc.data() as UserData;
-        const currentUserData = userData;
+        const currentUserData = currentUserDataDoc.data() as UserData;
 
         // Add sender to current user's friend list
         const currentUserFriendRef = doc(db, `users/${user.uid}/friends`, request.senderId);
@@ -166,7 +171,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             toast({ title: 'Error', description: 'Could not accept the friend request.', variant: 'destructive' });
         }
 
-    }, [user, userData, toast, fetchFriendsAndRequests]);
+    }, [user, toast, fetchFriendsAndRequests]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         const requestRef = doc(db, 'friend_requests', requestId);
