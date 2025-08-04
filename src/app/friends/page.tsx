@@ -37,7 +37,7 @@ const simpleHash = (s: string) => {
 };
 
 export default function FriendsPage() {
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
     const {
         searchUser,
@@ -57,7 +57,7 @@ export default function FriendsPage() {
     const { toast } = useToast();
 
     const handleSearch = async () => {
-        if (!usernameQuery.trim() || usernameQuery.trim() === user?.displayName) {
+        if (!usernameQuery.trim() || usernameQuery.trim() === userData?.username) {
             setSearchMessage("Please enter a valid username other than your own.");
             setSearchedUser(null);
             return;

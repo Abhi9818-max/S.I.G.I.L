@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, BarChart } from 'lucide-react';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip } from 'recharts';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import type { UserData, TaskDefinition } from '@/types';
@@ -24,7 +24,6 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
         const friendTasks = friendData.taskDefinitions || [];
         const friendRecords = friendData.records || [];
 
-        // Combine all unique task definitions from both users
         const allTaskDefinitions = new Map<string, TaskDefinition>();
         [...currentUserTasks, ...friendTasks].forEach(task => {
             if (!allTaskDefinitions.has(task.id)) {
@@ -41,7 +40,6 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                 .filter(r => r.taskType === task.id)
                 .reduce((sum, r) => sum + r.value, 0);
             
-            // Only include tasks where at least one person has data
             if(currentUserTotal === 0 && friendUserTotal === 0) return null;
 
             return {
@@ -86,6 +84,10 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                         <PolarGrid />
                         <PolarAngleAxis dataKey="task" />
                         <PolarRadiusAxis angle={30} domain={[0, maxVal > 0 ? 'auto' : 100]} tick={false} axisLine={false} />
+                        <Tooltip contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            borderColor: 'hsl(var(--border))'
+                        }}/>
                         <Radar 
                           name="You" 
                           dataKey="You" 
