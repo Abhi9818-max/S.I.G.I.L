@@ -38,7 +38,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
-  const auth = firebaseAuth;
+  const [auth, setAuth] = useState<Auth | null>(null);
+
+
+  useEffect(() => {
+    if (isFirebaseConfigured) {
+      setAuth(firebaseAuth);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     const isGuestSession = sessionStorage.getItem(GUEST_KEY) === 'true';
@@ -93,6 +103,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
             } else {
+                // This case can happen for a newly created user before their doc is set.
+                // We will set it during the setupCredentials flow.
                 setUserData(null);
             }
             setIsUserDataLoaded(true);
@@ -111,6 +123,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const isAuthPage = pathname === '/login';
 
+    if (!isFirebaseConfigured && !isGuest && !isAuthPage) {
+        router.push('/login');
+        return;
+    }
+
     if (!isGuest && !user) {
       if (!isAuthPage) router.push('/login');
     } else {
@@ -126,6 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
+      router.push('/');
       return true;
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
@@ -136,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [auth, toast]);
+  }, [auth, toast, router]);
 
   const logout = useCallback(async () => {
     if (isGuest) {
@@ -158,48 +176,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [auth, router, toast, isGuest]);
 
   const setupCredentials = useCallback(async (username: string, password: string): Promise<boolean> => {
-    if (!auth) return false;
+    if (!auth || !db) return false;
     try {
-      const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      await updateProfile(userCredential.user, { displayName: username });
+        const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUser = userCredential.user;
 
-      const userDocRef = doc(db, 'users', userCredential.user.uid);
-      const initialUserData: UserData = {
-        username: username,
-        username_lowercase: username.toLowerCase(),
-        photoURL: null,
-        records: [],
-        taskDefinitions: DEFAULT_TASK_DEFINITIONS,
-        bonusPoints: 0,
-        unlockedAchievements: [],
-        spentSkillPoints: {},
-        unlockedSkills: [],
-        freezeCrystals: 0,
-        awardedStreakMilestones: {},
-        highGoals: [],
-        todoItems: [],
-        dashboardSettings: undefined,
-      };
-      await setDoc(userDocRef, initialUserData);
-      
-      setUser(userCredential.user);
-      setUserData(initialUserData);
-      setIsUserDataLoaded(true);
+        await updateProfile(newUser, { displayName: username });
 
-      toast({ title: 'Account Created!', description: 'Welcome to S.I.G.I.L.' });
-      return true;
+        const initialUserData: UserData = {
+            username: username,
+            username_lowercase: username.toLowerCase(),
+            photoURL: null,
+            records: [],
+            taskDefinitions: DEFAULT_TASK_DEFINITIONS,
+            bonusPoints: 0,
+            unlockedAchievements: [],
+            spentSkillPoints: {},
+            unlockedSkills: [],
+            freezeCrystals: 0,
+            awardedStreakMilestones: {},
+            highGoals: [],
+            todoItems: [],
+            dashboardSettings: undefined,
+        };
+
+        const userDocRef = doc(db, 'users', newUser.uid);
+        await setDoc(userDocRef, initialUserData);
+
+        // Manually update state after successful creation
+        setUser(newUser);
+        setUserData(initialUserData);
+        setIsUserDataLoaded(true);
+
+        toast({ title: 'Account Created!', description: 'Welcome to S.I.G.I.L.' });
+        router.push('/');
+        return true;
     } catch (error: any) {
-      if (error.code === 'auth/email-already-in-use') {
-        toast({ title: 'Setup Failed', description: 'This username is already taken.', variant: 'destructive' });
-      } else {
-        toast({ title: 'Setup Failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
-        console.error("Setup error:", error);
-      }
-      return false;
+        if (error.code === 'auth/email-already-in-use') {
+            toast({ title: 'Setup Failed', description: 'This username is already taken.', variant: 'destructive' });
+        } else {
+            toast({ title: 'Setup Failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+            console.error("Setup error:", error);
+        }
+        return false;
     }
-  }, [auth, toast]);
+  }, [auth, toast, router]);
 
   const continueAsGuest = useCallback(() => {
     sessionStorage.setItem(GUEST_KEY, 'true');
@@ -217,14 +239,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return url;
     }
 
-    if (!user || !auth) {
+    if (!user || !auth || !db) {
         toast({ title: "Not Authenticated", description: "You must be logged in to update your avatar.", variant: "destructive" });
         return null;
     }
 
     try {
         const photoURL = url || null;
-        await updateProfile(auth.currentUser!, { photoURL });
+        if(auth.currentUser){
+           await updateProfile(auth.currentUser, { photoURL });
+        }
         
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
@@ -239,7 +263,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: "Update Failed", description: "Could not update your avatar.", variant: "destructive" });
         return null;
     }
-  }, [user, auth, toast, isGuest]);
+  }, [user, auth, toast, isGuest, db]);
 
 
   if (loading && pathname !== '/login') {
