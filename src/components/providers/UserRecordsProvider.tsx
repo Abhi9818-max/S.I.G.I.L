@@ -36,10 +36,10 @@ import { useToast } from "@/hooks/use-toast";
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
   if (obj === null || obj === undefined) {
-    return null;
+    return undefined; // Return undefined to be filtered out
   }
   if (Array.isArray(obj)) {
-    return obj.map(removeUndefinedValues).filter(v => v !== null && v !== undefined);
+    return obj.map(removeUndefinedValues).filter(v => v !== undefined);
   }
   if (typeof obj === 'object' && !(obj instanceof Date)) {
     const newObj: { [key: string]: any } = {};
@@ -48,14 +48,14 @@ const removeUndefinedValues = (obj: any): any => {
         const value = obj[key];
         if (value !== undefined) {
           const sanitizedValue = removeUndefinedValues(value);
-          if (sanitizedValue !== null && sanitizedValue !== undefined) {
+          if (sanitizedValue !== undefined) {
             newObj[key] = sanitizedValue;
           }
         }
       }
     }
-    // Return null if the object becomes empty after cleaning
-    return Object.keys(newObj).length > 0 ? newObj : null;
+    // Return undefined if the object becomes empty after cleaning
+    return Object.keys(newObj).length > 0 ? newObj : undefined;
   }
   return obj;
 };
@@ -116,25 +116,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     if (isUserDataLoaded) {
-      if (authUserData) {
-        // If auth provider has data (e.g. from new user creation), use it.
-        // Also ensure defaults for any potentially missing fields.
-        const defaultData: Partial<UserData> = {
-          records: [],
-          taskDefinitions: DEFAULT_TASK_DEFINITIONS.map(task => ({ ...task, id: task.id || uuidv4() })),
-          bonusPoints: 0,
-          unlockedAchievements: [],
-          spentSkillPoints: {},
-          unlockedSkills: [],
-          freezeCrystals: 0,
-          awardedStreakMilestones: {},
-          highGoals: [],
-          todoItems: [],
-        };
-        setUserData({ ...defaultData, ...authUserData });
-      } else {
-        setUserData(null);
-      }
+        setUserData(authUserData);
     }
   }, [authUserData, isUserDataLoaded]);
 
@@ -144,7 +126,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return userData.taskDefinitions;
     }
     // Return default tasks if user has no tasks defined yet (new user)
-    return DEFAULT_TASK_DEFINITIONS.map(task => ({ ...task, id: task.id || uuidv4() }));
+    return DEFAULT_TASK_DEFINITIONS;
   }, [userData]);
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
   const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);
@@ -157,8 +139,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (user) {
         setUserData(prevData => {
-            const newDbState = { ...(prevData || {}), ...dataToUpdate };
-            return newDbState as UserData;
+            const newState = { ...(prevData || {}), ...dataToUpdate };
+            return newState as UserData;
         });
 
       const userDocRef = doc(db, 'users', user.uid);

@@ -8,6 +8,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth as firebaseAuth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { UserData } from '@/types';
+import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
 
 const FAKE_DOMAIN = 'sigil.local';
 
@@ -33,31 +34,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const auth = firebaseAuth;
 
   useEffect(() => {
-    if (!isFirebaseConfigured) {
+    if (!auth) {
       setLoading(false);
       return;
     }
-    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   useEffect(() => {
     const fetchUserData = async () => {
         if (user) {
-            setIsUserDataLoaded(false); // Reset loading state
+            setIsUserDataLoaded(false);
             const docRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
             } else {
-                // This might happen for a brief moment for new users.
-                // The setupCredentials function should handle creating the initial doc.
                 setUserData(null);
             }
             setIsUserDataLoaded(true);
@@ -76,25 +75,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const isAuthPage = pathname === '/login';
 
-    if (!isFirebaseConfigured) {
+    if (!auth) {
       if (!isAuthPage) router.push('/login');
       return;
     }
 
     if (!user) {
       if (!isAuthPage) router.push('/login');
-    } else { // User is logged in
+    } else {
       if (isAuthPage) router.push('/');
     }
 
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname, router, auth]);
 
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    if (!firebaseAuth) return false;
+    if (!auth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
       return true;
     } catch (error: any) {
@@ -106,24 +105,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [toast]);
+  }, [auth, toast]);
 
   const logout = useCallback(async () => {
-    if (!firebaseAuth) return;
+    if (!auth) return;
     try {
-      await signOut(firebaseAuth);
+      await signOut(auth);
       router.push('/login');
     } catch (error) {
       console.error("Logout failed:", error);
       toast({ title: 'Logout Failed', description: 'Could not log you out. Please try again.', variant: 'destructive' });
     }
-  }, [router, toast]);
+  }, [auth, router, toast]);
 
   const setupCredentials = useCallback(async (username: string, password: string): Promise<boolean> => {
-    if (!firebaseAuth) return false;
+    if (!auth) return false;
     try {
       const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
-      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       await updateProfile(userCredential.user, { displayName: username });
 
@@ -133,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username_lowercase: username.toLowerCase(),
         photoURL: null,
         records: [],
-        taskDefinitions: [],
+        taskDefinitions: DEFAULT_TASK_DEFINITIONS,
         bonusPoints: 0,
         unlockedAchievements: [],
         spentSkillPoints: {},
@@ -142,10 +141,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         awardedStreakMilestones: {},
         highGoals: [],
         todoItems: [],
+        dashboardSettings: undefined,
       };
       await setDoc(userDocRef, initialUserData);
-
-      // Manually update local state to avoid race conditions with useEffect
+      
       setUser(userCredential.user);
       setUserData(initialUserData);
       setIsUserDataLoaded(true);
@@ -161,25 +160,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return false;
     }
-  }, [toast]);
+  }, [auth, toast]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
-    if (!user) {
+    if (!user || !auth) {
         toast({ title: "Not Authenticated", description: "You must be logged in to update your avatar.", variant: "destructive" });
         return null;
     }
 
     try {
         const photoURL = url || null;
-        // Update auth profile
-        await updateProfile(user, { photoURL });
+        await updateProfile(auth.currentUser!, { photoURL });
         
-        // Update Firestore document
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
 
-        // Update local state
-        setUserData(prev => prev ? ({ ...prev, photoURL }) : null);
+        setUserData(prev => prev ? ({ ...prev, photoURL: url }) : null);
 
         toast({ title: "Avatar Updated", description: "Your new avatar has been saved." });
         return url;
@@ -189,7 +185,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: "Update Failed", description: "Could not update your avatar.", variant: "destructive" });
         return null;
     }
-  }, [user, toast]);
+  }, [user, auth, toast]);
 
 
   if (loading || (!user && pathname !== '/login' && isFirebaseConfigured)) {
