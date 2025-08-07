@@ -28,6 +28,7 @@ import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownCh
 import { useAuth } from '@/components/providers/AuthProvider';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
+const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
 
 export default function HomePage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
@@ -49,8 +50,25 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-    setQuote(randomQuote);
+    const todayStr = new Date().toISOString().split('T')[0];
+    let storedQuoteData;
+    try {
+      storedQuoteData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_QUOTE_KEY) || 'null');
+    } catch (e) {
+      storedQuoteData = null;
+    }
+
+    if (storedQuoteData && storedQuoteData.date === todayStr) {
+      setQuote(storedQuoteData.quote);
+    } else {
+      const newQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+      setQuote(newQuote);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_QUOTE_KEY, JSON.stringify({ date: todayStr, quote: newQuote }));
+      } catch (error) {
+        console.error("Failed to save daily quote to localStorage:", error);
+      }
+    }
   }, []);
 
   useEffect(() => {
