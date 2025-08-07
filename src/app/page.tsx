@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -53,7 +52,8 @@ export default function HomePage() {
     const todayStr = new Date().toISOString().split('T')[0];
     let storedQuoteData;
     try {
-      storedQuoteData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_QUOTE_KEY) || 'null');
+      const item = localStorage.getItem(LOCAL_STORAGE_QUOTE_KEY);
+      storedQuoteData = item ? JSON.parse(item) : null;
     } catch (e) {
       storedQuoteData = null;
     }
