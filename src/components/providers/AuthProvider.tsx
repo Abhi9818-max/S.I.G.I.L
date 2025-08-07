@@ -150,6 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       sessionStorage.removeItem(GUEST_KEY);
       setIsGuest(false);
       setUserData(null);
+      setIsUserDataLoaded(false);
       router.push('/login');
       return;
     }
