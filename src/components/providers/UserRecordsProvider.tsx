@@ -29,6 +29,7 @@ import {
   isSameDay,
   getDay,
   isWithinInterval,
+  addDays,
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +81,7 @@ interface UserRecordsContextType {
   getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined;
   getStatsForCompletedWeek: (weekOffset: number, taskId?: string | null) => WeeklyProgressStats | null;
   getWeeklyAggregatesForChart: (numberOfWeeks: number, taskId?: string | null) => AggregatedTimeDataPoint[];
-  getDailyAggregatesForChart: (numberOfDays: number, taskId?: string | null) => AggregatedTimeDataPoint[];
+  getDailyAggregatesForChart: (taskId?: string | null) => AggregatedTimeDataPoint[];
   getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
@@ -392,18 +393,19 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return data;
   }, [records, getAggregateSum]);
 
-  const getDailyAggregatesForChart = useCallback((numberOfDays: number, taskId?: string | null): AggregatedTimeDataPoint[] => {
+  const getDailyAggregatesForChart = useCallback((taskId?: string | null): AggregatedTimeDataPoint[] => {
     if (records.length === 0) return [];
     const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday as start of the week
     const data: AggregatedTimeDataPoint[] = [];
 
-    for (let i = numberOfDays - 1; i >= 0; i--) {
-        const date = subDays(today, i);
-        const sum = getAggregateSum(date, date, taskId);
-        data.push({
-            date: format(date, 'E'), // Format as 'Mon', 'Tue', etc.
-            value: sum,
-        });
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(weekStart, i);
+      const sum = getAggregateSum(date, date, taskId);
+      data.push({
+        date: format(date, 'E'), // Format as 'Mon', 'Tue', etc.
+        value: sum,
+      });
     }
     return data;
   }, [records, getAggregateSum]);

@@ -44,12 +44,13 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
     return selectedTaskFilterId ? getTaskDefinitionById(selectedTaskFilterId) : null;
   }, [selectedTaskFilterId, getTaskDefinitionById]);
   
-  const chartTitle = task ? `${task.name} Progress` : "Recent Activity";
+  const chartTitle = task ? `${task.name} Progress` : "Weekly Activity";
   const defaultChartColor = "hsl(var(--primary))";
 
   useEffect(() => {
     setIsLoading(true);
-    const data = getDailyAggregatesForChart(7, selectedTaskFilterId);
+    // The function now always returns the current week's data.
+    const data = getDailyAggregatesForChart(selectedTaskFilterId);
     setChartData(data);
     setIsLoading(false);
   }, [selectedTaskFilterId, getDailyAggregatesForChart]);
@@ -94,7 +95,7 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <TrendingUp className="h-6 w-6 text-accent" />
           <CardTitle>{chartTitle}</CardTitle>
         </div>
-        <CardDescription>Total daily values over the last 7 days.</CardDescription>
+        <CardDescription>Total daily values for the current week.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -135,7 +136,6 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => value.substring(0,3)}
                 className="text-xs"
               />
               <YAxis
