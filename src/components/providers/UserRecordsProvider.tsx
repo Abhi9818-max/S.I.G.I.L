@@ -80,6 +80,7 @@ interface UserRecordsContextType {
   getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined;
   getStatsForCompletedWeek: (weekOffset: number, taskId?: string | null) => WeeklyProgressStats | null;
   getWeeklyAggregatesForChart: (numberOfWeeks: number, taskId?: string | null) => AggregatedTimeDataPoint[];
+  getDailyAggregatesForChart: (numberOfDays: number, taskId?: string | null) => AggregatedTimeDataPoint[];
   getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
@@ -391,6 +392,22 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return data;
   }, [records, getAggregateSum]);
 
+  const getDailyAggregatesForChart = useCallback((numberOfDays: number, taskId?: string | null): AggregatedTimeDataPoint[] => {
+    if (records.length === 0) return [];
+    const today = new Date();
+    const data: AggregatedTimeDataPoint[] = [];
+
+    for (let i = numberOfDays - 1; i >= 0; i--) {
+        const date = subDays(today, i);
+        const sum = getAggregateSum(date, date, taskId);
+        data.push({
+            date: format(date, 'E'), // Format as 'Mon', 'Tue', etc.
+            value: sum,
+        });
+    }
+    return data;
+  }, [records, getAggregateSum]);
+
   const getTotalBaseRecordValue = useCallback((): number => {
     return records.reduce((sum, record) => sum + (Number(record.value) || 0), 0);
   }, [records]);
@@ -652,6 +669,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     getTaskDefinitionById,
     getStatsForCompletedWeek,
     getWeeklyAggregatesForChart,
+    getDailyAggregatesForChart,
     getUserLevelInfo,
     totalBonusPoints,
     awardTierEntryBonus,
@@ -693,6 +711,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       getTaskDefinitionById,
       getStatsForCompletedWeek,
       getWeeklyAggregatesForChart,
+      getDailyAggregatesForChart,
       getUserLevelInfo,
       totalBonusPoints,
       awardTierEntryBonus,

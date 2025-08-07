@@ -11,7 +11,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from "@/components/ui/chart";
-import { LineChart, CartesianGrid, XAxis, YAxis, Line } from 'recharts';
+import { AreaChart, CartesianGrid, XAxis, YAxis, Area, DotProps } from 'recharts';
 import type { AggregatedTimeDataPoint } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,8 +19,24 @@ interface ProgressOverTimeChartProps {
   selectedTaskFilterId: string | null;
 }
 
+const CustomDot: React.FC<DotProps & { stroke: string }> = (props) => {
+  const { cx, cy, stroke } = props;
+
+  if (cx === null || cy === null) {
+    return null;
+  }
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={6} fill={stroke} />
+      <circle cx={cx} cy={cy} r={3} fill="hsl(var(--background))" />
+    </g>
+  );
+};
+
+
 const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedTaskFilterId }) => {
-  const { getWeeklyAggregatesForChart, taskDefinitions } = useUserRecords();
+  const { getDailyAggregatesForChart, taskDefinitions } = useUserRecords();
   const [chartData, setChartData] = useState<AggregatedTimeDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,15 +44,15 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
     return selectedTaskFilterId ? taskDefinitions.find(t => t.id === selectedTaskFilterId) : null;
   }, [selectedTaskFilterId, taskDefinitions]);
   
-  const chartTitle = task ? `${task.name} Progress` : "Overall Progress";
+  const chartTitle = task ? `${task.name} Progress` : "Recent Activity";
   const defaultChartColor = "hsl(var(--primary))";
 
   useEffect(() => {
     setIsLoading(true);
-    const data = getWeeklyAggregatesForChart(12, selectedTaskFilterId);
+    const data = getDailyAggregatesForChart(7, selectedTaskFilterId);
     setChartData(data);
     setIsLoading(false);
-  }, [selectedTaskFilterId, getWeeklyAggregatesForChart]);
+  }, [selectedTaskFilterId, getDailyAggregatesForChart]);
 
   const chartConfig = useMemo(() => {
     let color = defaultChartColor;
@@ -62,7 +78,7 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <TrendingUp className="h-6 w-6 text-accent" />
           <CardTitle>{chartTitle}</CardTitle>
         </div>
-        <CardDescription>Total weekly values over the last 12 weeks.</CardDescription>
+        <CardDescription>Total daily values over the last 7 days.</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -73,7 +89,7 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">Not enough data to display chart.</p>
         ) : (
           <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-            <LineChart
+            <AreaChart
               accessibilityLayer
               data={chartData}
               margin={{
@@ -83,13 +99,27 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
                 bottom: 5,
               }}
             >
+              <defs>
+                <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                        offset="5%"
+                        stopColor="var(--color-value)"
+                        stopOpacity={0.4}
+                    />
+                    <stop
+                        offset="95%"
+                        stopColor="var(--color-value)"
+                        stopOpacity={0.1}
+                    />
+                </linearGradient>
+              </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => value}
+                tickFormatter={(value) => value.substring(0,3)}
                 className="text-xs"
               />
               <YAxis
@@ -100,18 +130,20 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
                 width={30}
               />
               <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
+                cursor={true}
+                content={<ChartTooltipContent indicator="line" />}
               />
-              <Line
+              <Area
                 dataKey="value"
                 type="monotone"
+                fill="url(#fillValue)"
                 stroke={`var(--color-value)`}
                 strokeWidth={2}
-                dot={true}
+                dot={<CustomDot stroke={`var(--color-value)`}/>}
+                activeDot={<CustomDot stroke={`var(--color-value)`}/>}
                 name={chartConfig.value.label}
               />
-            </LineChart>
+            </AreaChart>
           </ChartContainer>
         )}
       </CardContent>
