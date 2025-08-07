@@ -11,8 +11,8 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from "@/components/ui/chart";
-import { AreaChart, CartesianGrid, XAxis, YAxis, Area, DotProps } from 'recharts';
-import type { AggregatedTimeDataPoint } from '@/types';
+import { AreaChart, CartesianGrid, XAxis, YAxis, Area, DotProps, Tooltip as RechartsTooltip } from 'recharts';
+import type { AggregatedTimeDataPoint, TaskDefinition } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProgressOverTimeChartProps {
@@ -36,13 +36,13 @@ const CustomDot: React.FC<DotProps & { stroke: string }> = (props) => {
 
 
 const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedTaskFilterId }) => {
-  const { getDailyAggregatesForChart, taskDefinitions } = useUserRecords();
+  const { getDailyAggregatesForChart, getTaskDefinitionById } = useUserRecords();
   const [chartData, setChartData] = useState<AggregatedTimeDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const task = useMemo(() => {
-    return selectedTaskFilterId ? taskDefinitions.find(t => t.id === selectedTaskFilterId) : null;
-  }, [selectedTaskFilterId, taskDefinitions]);
+    return selectedTaskFilterId ? getTaskDefinitionById(selectedTaskFilterId) : null;
+  }, [selectedTaskFilterId, getTaskDefinitionById]);
   
   const chartTitle = task ? `${task.name} Progress` : "Recent Activity";
   const defaultChartColor = "hsl(var(--primary))";
@@ -68,8 +68,24 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
         color: color,
       },
     } satisfies ChartConfig;
-  }, [task, defaultChartColor]);
+  }, [task]);
 
+  const yAxisTicks = useMemo(() => {
+    if (task?.intensityThresholds && task.intensityThresholds.length === 4) {
+      const maxValueInChart = Math.max(...chartData.map(d => d.value), 0);
+      const thresholds = [...task.intensityThresholds];
+      
+      // If the max value in the chart is higher than the highest threshold, add it to the scale
+      if (maxValueInChart > thresholds[thresholds.length - 1]) {
+        // Add a rounded-up tick to give some space at the top
+        const topTick = Math.ceil(maxValueInChart / 5) * 5;
+        thresholds.push(topTick);
+      }
+      
+      return [0, ...thresholds];
+    }
+    return undefined; // Let Recharts decide the ticks
+  }, [task, chartData]);
 
   return (
     <Card className="shadow-lg">
@@ -85,8 +101,8 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <div className="h-[250px] w-full">
             <Skeleton className="h-full w-full" />
           </div>
-        ) : chartData.length === 0 ? (
-          <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">Not enough data to display chart.</p>
+        ) : chartData.length === 0 || chartData.every(d => d.value === 0) ? (
+          <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">No recent data to display chart.</p>
         ) : (
           <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
             <AreaChart
@@ -128,8 +144,10 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
                 tickMargin={8}
                 className="text-xs"
                 width={30}
+                ticks={yAxisTicks}
+                domain={yAxisTicks ? [0, 'dataMax + 5'] : [0, 'auto']}
               />
-              <ChartTooltip
+              <RechartsTooltip
                 cursor={true}
                 content={<ChartTooltipContent indicator="line" />}
               />
