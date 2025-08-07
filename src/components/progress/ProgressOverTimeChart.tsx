@@ -49,7 +49,7 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
   }, [selectedTaskFilterId, getTaskDefinitionById]);
   
   const chartTitle = useMemo(() => {
-    const taskName = task ? `${task.name} Progress` : "Activity";
+    const taskName = task ? `${task.name} Progress` : "Progress";
     const rangeName = timeRange.charAt(0).toUpperCase() + timeRange.slice(1);
     return `${rangeName} ${taskName}`;
   }, [task, timeRange]);
