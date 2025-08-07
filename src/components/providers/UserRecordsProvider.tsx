@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -30,6 +30,9 @@ import {
   getDay,
   isWithinInterval,
   addDays,
+  subMonths,
+  eachWeekOfInterval,
+  eachMonthOfInterval,
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
@@ -80,8 +83,7 @@ interface UserRecordsContextType {
   deleteTaskDefinition: (taskId: string) => void;
   getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined;
   getStatsForCompletedWeek: (weekOffset: number, taskId?: string | null) => WeeklyProgressStats | null;
-  getWeeklyAggregatesForChart: (numberOfWeeks: number, taskId?: string | null) => AggregatedTimeDataPoint[];
-  getDailyAggregatesForChart: (taskId?: string | null) => AggregatedTimeDataPoint[];
+  getAggregatesForChart: (timeRange: ProgressChartTimeRange, taskId: string | null) => AggregatedTimeDataPoint[];
   getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
@@ -372,43 +374,78 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   }, [records, getAggregateSum]);
 
-  const getWeeklyAggregatesForChart = useCallback((numberOfWeeks: number, taskId?: string | null): AggregatedTimeDataPoint[] => {
+  const getAggregatesForChart = useCallback((timeRange: ProgressChartTimeRange, taskId: string | null): AggregatedTimeDataPoint[] => {
     if (records.length === 0) return [];
     const today = new Date();
-    const data: AggregatedTimeDataPoint[] = [];
-    const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    
+    const getIntervalAndFormat = () => {
+        switch (timeRange) {
+            case 'monthly':
+                return {
+                    interval: { start: subDays(today, 29), end: today },
+                    eachFn: eachDayOfInterval,
+                    formatFn: (d: Date) => format(d, 'd'),
+                    subFormatFn: (d: Date) => format(d, 'MMM')
+                };
+            case 'quarterly':
+                return {
+                    interval: { start: subMonths(today, 3), end: today },
+                    eachFn: (interval: Interval) => eachWeekOfInterval(interval, { weekStartsOn: 1 }),
+                    formatFn: (d: Date) => format(d, 'd'),
+                    subFormatFn: (d: Date) => format(d, 'MMM')
+                };
+            case 'biannually':
+                 return {
+                    interval: { start: subMonths(today, 6), end: today },
+                    eachFn: (interval: Interval) => eachWeekOfInterval(interval, { weekStartsOn: 1 }),
+                    formatFn: (d: Date) => format(d, 'd'),
+                    subFormatFn: (d: Date) => format(d, 'MMM')
+                };
+            case 'yearly':
+                return {
+                    interval: { start: subMonths(today, 12), end: today },
+                    eachFn: eachMonthOfInterval,
+                    formatFn: (d: Date) => format(d, 'MMM'),
+                    subFormatFn: (d: Date) => format(d, 'yyyy')
+                };
+            case 'weekly':
+            default:
+                const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+                return {
+                    interval: { start: weekStart, end: addDays(weekStart, 6) },
+                    eachFn: eachDayOfInterval,
+                    formatFn: (d: Date) => format(d, 'E'),
+                    subFormatFn: (d: Date) => ''
+                };
+        }
+    };
 
-    for (let i = numberOfWeeks -1; i >= 0; i--) {
-      const weekStartDate = subWeeks(currentWeekStart, i);
-      if (weekStartDate > today && !isSameDay(weekStartDate, startOfWeek(today, {weekStartsOn:1}))) continue;
+    const { interval, eachFn, formatFn, subFormatFn } = getIntervalAndFormat();
+    
+    return eachFn(interval).map((date, index, arr) => {
+        let endDate = date;
+        if (timeRange === 'quarterly' || timeRange === 'biannually') {
+            endDate = endOfWeek(date, { weekStartsOn: 1 });
+        } else if (timeRange === 'yearly') {
+            endDate = endOfYear(date);
+        }
 
-      const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 });
-      const sum = getAggregateSum(weekStartDate, (weekEndDate > today ? today : weekEndDate), taskId);
+        const sum = getAggregateSum(date, endDate, taskId);
+        
+        let dateLabel = formatFn(date);
+        const prevDate = arr[index - 1];
+        if (prevDate && subFormatFn(prevDate) !== subFormatFn(date)) {
+            dateLabel = `${subFormatFn(date)} ${dateLabel}`;
+        } else if (index === 0) {
+            dateLabel = `${subFormatFn(date)} ${dateLabel}`;
+        }
 
-      data.push({
-        date: format(weekStartDate, 'MMM d'),
-        value: sum,
-      });
-    }
-    return data;
-  }, [records, getAggregateSum]);
-
-  const getDailyAggregatesForChart = useCallback((taskId?: string | null): AggregatedTimeDataPoint[] => {
-    if (records.length === 0) return [];
-    const today = new Date();
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday as start of the week
-    const data: AggregatedTimeDataPoint[] = [];
-
-    for (let i = 0; i < 7; i++) {
-      const date = addDays(weekStart, i);
-      const sum = getAggregateSum(date, date, taskId);
-      data.push({
-        date: format(date, 'E'), // Format as 'Mon', 'Tue', etc.
-        value: sum,
-      });
-    }
-    return data;
-  }, [records, getAggregateSum]);
+        return {
+            date: dateLabel.trim(),
+            value: sum
+        };
+    });
+}, [records, getAggregateSum]);
 
   const getTotalBaseRecordValue = useCallback((): number => {
     return records.reduce((sum, record) => sum + (Number(record.value) || 0), 0);
@@ -670,8 +707,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     deleteTaskDefinition,
     getTaskDefinitionById,
     getStatsForCompletedWeek,
-    getWeeklyAggregatesForChart,
-    getDailyAggregatesForChart,
+    getAggregatesForChart,
     getUserLevelInfo,
     totalBonusPoints,
     awardTierEntryBonus,
@@ -712,8 +748,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       deleteTaskDefinition,
       getTaskDefinitionById,
       getStatsForCompletedWeek,
-      getWeeklyAggregatesForChart,
-      getDailyAggregatesForChart,
+      getAggregatesForChart,
       getUserLevelInfo,
       totalBonusPoints,
       awardTierEntryBonus,

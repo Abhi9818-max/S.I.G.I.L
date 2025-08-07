@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -320,24 +320,40 @@ export default function SettingsPage() {
                           <PieChart className="h-4 w-4"/>
                           Chart Display
                         </h4>
-                         <div className="space-y-3 pl-2">
-                          <div>
-                            <Label className="font-normal">Time Pie Chart Labels</Label>
-                            <RadioGroup 
-                              value={dashboardSettings.pieChartLabelFormat || 'percentage'}
-                              onValueChange={(value: 'percentage' | 'time') => updateDashboardSetting('pieChartLabelFormat', value)}
-                              className="mt-2"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="percentage" id="r-percent" />
-                                <Label htmlFor="r-percent" className="font-normal">Percentage</Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="time" id="r-time" />
-                                <Label htmlFor="r-time" className="font-normal">Time (HH:MM)</Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
+                         <div className="space-y-4 pl-2">
+                            <div>
+                                <Label className="font-normal">Progress Chart Time Range</Label>
+                                <RadioGroup 
+                                    value={dashboardSettings.progressChartTimeRange || 'weekly'}
+                                    onValueChange={(value: ProgressChartTimeRange) => updateDashboardSetting('progressChartTimeRange', value)}
+                                    className="mt-2 grid grid-cols-2 gap-2"
+                                >
+                                    {(['weekly', 'monthly', 'quarterly', 'biannually', 'yearly'] as ProgressChartTimeRange[]).map(range => (
+                                        <div className="flex items-center space-x-2" key={range}>
+                                            <RadioGroupItem value={range} id={`r-${range}`} />
+                                            <Label htmlFor={`r-${range}`} className="font-normal capitalize">{range}</Label>
+                                        </div>
+                                    ))}
+                                </RadioGroup>
+                            </div>
+                            <Separator />
+                            <div>
+                                <Label className="font-normal">Time Pie Chart Labels</Label>
+                                <RadioGroup 
+                                    value={dashboardSettings.pieChartLabelFormat || 'percentage'}
+                                    onValueChange={(value: 'percentage' | 'time') => updateDashboardSetting('pieChartLabelFormat', value)}
+                                    className="mt-2"
+                                >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="percentage" id="r-percent" />
+                                    <Label htmlFor="r-percent" className="font-normal">Percentage</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="time" id="r-time" />
+                                    <Label htmlFor="r-time" className="font-normal">Time (HH:MM)</Label>
+                                </div>
+                                </RadioGroup>
+                            </div>
                         </div>
                       </div>
                   </div>

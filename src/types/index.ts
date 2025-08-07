@@ -51,6 +51,7 @@ export interface AggregatedTimeDataPoint {
   value: number;
   [key: string]: any; // For additional properties like task-specific values if doing stacked charts
 }
+export type ProgressChartTimeRange = 'weekly' | 'monthly' | 'quarterly' | 'biannually' | 'yearly';
 
 export interface WeeklyProgressStats {
   total: number;
@@ -174,6 +175,7 @@ export interface DashboardSettings {
   showContributionGraph: boolean;
   showTodoList: boolean;
   showProgressChart: boolean;
+  progressChartTimeRange: ProgressChartTimeRange;
   showTimeBreakdownChart: boolean;
   pieChartLabelFormat?: 'percentage' | 'time';
 }

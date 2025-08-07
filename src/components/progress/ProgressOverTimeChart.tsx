@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TrendingUp } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import {
   ChartContainer,
   ChartTooltip,
@@ -12,7 +13,7 @@ import {
   type ChartConfig
 } from "@/components/ui/chart";
 import { AreaChart, CartesianGrid, XAxis, YAxis, Area, DotProps, Tooltip as RechartsTooltip } from 'recharts';
-import type { AggregatedTimeDataPoint, TaskDefinition } from '@/types';
+import type { AggregatedTimeDataPoint, TaskDefinition, ProgressChartTimeRange } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProgressOverTimeChartProps {
@@ -36,24 +37,31 @@ const CustomDot: React.FC<DotProps & { stroke: string }> = (props) => {
 
 
 const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedTaskFilterId }) => {
-  const { getDailyAggregatesForChart, getTaskDefinitionById } = useUserRecords();
+  const { getAggregatesForChart, getTaskDefinitionById } = useUserRecords();
+  const { dashboardSettings } = useSettings();
   const [chartData, setChartData] = useState<AggregatedTimeDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const timeRange = dashboardSettings.progressChartTimeRange || 'weekly';
 
   const task = useMemo(() => {
     return selectedTaskFilterId ? getTaskDefinitionById(selectedTaskFilterId) : null;
   }, [selectedTaskFilterId, getTaskDefinitionById]);
   
-  const chartTitle = task ? `${task.name} Progress` : "Weekly Activity";
+  const chartTitle = useMemo(() => {
+    const taskName = task ? `${task.name} Progress` : "Activity";
+    const rangeName = timeRange.charAt(0).toUpperCase() + timeRange.slice(1);
+    return `${rangeName} ${taskName}`;
+  }, [task, timeRange]);
+
   const defaultChartColor = "hsl(var(--primary))";
 
   useEffect(() => {
     setIsLoading(true);
-    // The function now always returns the current week's data.
-    const data = getDailyAggregatesForChart(selectedTaskFilterId);
+    const data = getAggregatesForChart(timeRange, selectedTaskFilterId);
     setChartData(data);
     setIsLoading(false);
-  }, [selectedTaskFilterId, getDailyAggregatesForChart]);
+  }, [selectedTaskFilterId, getAggregatesForChart, timeRange]);
 
   const chartConfig = useMemo(() => {
     let color = defaultChartColor;
@@ -76,17 +84,26 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
       const maxValueInChart = Math.max(...chartData.map(d => d.value), 0);
       const thresholds = [...task.intensityThresholds];
       
-      // If the max value in the chart is higher than the highest threshold, add it to the scale
       if (maxValueInChart > thresholds[thresholds.length - 1]) {
-        // Add a rounded-up tick to give some space at the top
         const topTick = Math.ceil(maxValueInChart / 5) * 5;
         thresholds.push(topTick);
       }
       
       return [0, ...thresholds];
     }
-    return undefined; // Let Recharts decide the ticks
+    return undefined;
   }, [task, chartData]);
+
+  const chartDescription = useMemo(() => {
+    switch(timeRange) {
+        case 'weekly': return 'Total daily values for the current week.';
+        case 'monthly': return 'Total daily values for the last 30 days.';
+        case 'quarterly': return 'Total weekly values for the last 3 months.';
+        case 'biannually': return 'Total weekly values for the last 6 months.';
+        case 'yearly': return 'Total monthly values for the last 12 months.';
+        default: return 'Your progress over time.'
+    }
+  }, [timeRange]);
 
   return (
     <Card className="shadow-lg">
@@ -95,7 +112,7 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <TrendingUp className="h-6 w-6 text-accent" />
           <CardTitle>{chartTitle}</CardTitle>
         </div>
-        <CardDescription>Total daily values for the current week.</CardDescription>
+        <CardDescription>{chartDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
