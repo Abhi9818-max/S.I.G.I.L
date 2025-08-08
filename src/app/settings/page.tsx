@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -57,6 +57,11 @@ export default function SettingsPage() {
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    setShowLoading(false);
+  }, []);
 
   const levelInfo = getUserLevelInfo();
   const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
@@ -237,6 +242,10 @@ export default function SettingsPage() {
     });
   };
 
+  if (showLoading) {
+    return null;
+  }
+
   return (
     <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -252,41 +261,37 @@ export default function SettingsPage() {
               </TabsList>
               
                <TabsContent value="profile" className="mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="md:col-span-1 flex justify-center md:justify-start">
-                    <Avatar className="h-36 w-36">
-                      <AvatarImage src={userAvatar} alt={userData?.username}/>
-                      <AvatarFallback className="text-5xl">
-                        {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-
-                  <div className="md:col-span-2 space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <h2 className="text-2xl font-light">{userData?.username}</h2>
-                      <div className="flex items-center gap-2">
-                         <Button variant="secondary" size="sm" onClick={() => setIsAvatarDialogOpen(true)}>
-                            Change Avatar
-                         </Button>
-                      </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-1 flex justify-center md:justify-start">
+                        <Avatar className="h-36 w-36 ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
+                            <AvatarImage src={userAvatar} alt={userData?.username}/>
+                            <AvatarFallback className="text-5xl">
+                                {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                            </AvatarFallback>
+                        </Avatar>
                     </div>
-                    
-                    <div className="flex items-center gap-8">
-                        <div>
-                            <span className="font-bold">{levelInfo?.currentLevel}</span>
-                            <span className="text-muted-foreground ml-1">Level</span>
+
+                    <div className="md:col-span-2 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-2xl font-light">{userData?.username}</h2>
+                             <Button variant="ghost" size="icon" onClick={() => setIsAvatarDialogOpen(true)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-8">
+                            <div>
+                                <span className="font-bold">{levelInfo?.currentLevel}</span>
+                                <span className="text-muted-foreground ml-1">Level</span>
+                            </div>
                         </div>
                     </div>
-
-                  </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="layout" className="mt-6">
                 <div className="space-y-4">
                   <div className="p-4 border rounded-lg space-y-4">
-                      <p className="text-sm text-muted-foreground">Choose which components to display on the main dashboard.</p>
                       
                       <div>
                         <h4 className="font-semibold text-sm mb-3">Stats Panel Cards</h4>
