@@ -18,6 +18,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import LevelDetailsModal from './LevelDetailsModal';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+
+// Simple hash function to get a number from a string for consistent default avatars
+const simpleHash = (s: string) => {
+    let hash = 0;
+    if (s.length === 0) return hash;
+    for (let i = 0; i < s.length; i++) {
+        const char = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+};
 
 interface HeaderProps {
   onAddRecordClick: () => void;
@@ -26,7 +39,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick }) => {
   const { getUserLevelInfo } = useUserRecords(); 
-  const { logout } = useAuth();
+  const { user, userData, logout } = useAuth();
   const [isLevelDetailsModalOpen, setIsLevelDetailsModalOpen] = useState(false);
   const pathname = usePathname();
   const [levelInfo, setLevelInfo] = useState<UserLevelInfo | null>(null);
@@ -60,6 +73,14 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/test-api", label: "Test API", icon: Server },
   ];
+
+  const getAvatarForId = (id: string | undefined) => {
+      if (!id) return '';
+      const avatarNumber = (simpleHash(id) % 12) + 1;
+      return `/avatars/avatar${avatarNumber}.jpeg`;
+  }
+
+  const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);
 
   return (
     <>
@@ -106,9 +127,13 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" size="icon">
-                    <Settings className="h-5 w-5" />
-                    <span className="sr-only">More Options</span>
+                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={userAvatar} alt={userData?.username} />
+                      <AvatarFallback>
+                        {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                      </AvatarFallback>
+                    </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
