@@ -539,7 +539,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return Array.from(distribution.entries()).map(([_, data]) => ({
       name: data.name,
       value: data.value,
-      fill: data.name,
+      fill: data.color,
     }));
   }, [getRecordsForDateRange, getTaskDefinitionById]);
 

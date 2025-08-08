@@ -86,7 +86,7 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             stroke="hsl(var(--background))"
         >
             {data.map((entry) => (
-            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+              <Cell key={`cell-${entry.name}`} fill={entry.fill} />
             ))}
         </Pie>
       </PieChart>
@@ -129,15 +129,15 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             No data to display for this period.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 min-h-[250px]">
-            <LabelColumn items={chartData.slice(0, Math.ceil(chartData.length / 2))} />
-            <div className="col-span-1 h-full flex items-center justify-center">
-              <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                <MemoizedPie data={chartData} />
-              </ChartContainer>
+          <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 min-h-[250px]">
+              <LabelColumn items={chartData.slice(0, Math.ceil(chartData.length / 2))} />
+              <div className="col-span-1 h-full flex items-center justify-center">
+                  <MemoizedPie data={chartData} />
+              </div>
+              <LabelColumn items={chartData.slice(Math.ceil(chartData.length / 2))} />
             </div>
-            <LabelColumn items={chartData.slice(Math.ceil(chartData.length / 2))} />
-          </div>
+          </ChartContainer>
         )}
       </CardContent>
     </Card>
