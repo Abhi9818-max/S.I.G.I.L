@@ -33,6 +33,8 @@ import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from 'next/link';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -49,7 +51,7 @@ const SECRET_CODE = "9818";
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
-  const { friends, pendingRequests } = useFriends();
+  const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture } = useAuth();
   const { toast } = useToast();
@@ -288,18 +290,78 @@ export default function SettingsPage() {
                                 <span className="font-bold">{levelInfo?.currentLevel}</span>
                                 <span className="text-muted-foreground ml-1">Level</span>
                             </div>
-                             <Link href="/friends" className="hover:underline">
-                                <div>
-                                    <span className="font-bold">{friends.length}</span>
-                                    <span className="text-muted-foreground ml-1">Friends</span>
-                                </div>
-                            </Link>
-                            <Link href="/friends" className="hover:underline">
-                                <div>
-                                    <span className="font-bold">{pendingRequests.length}</span>
-                                    <span className="text-muted-foreground ml-1">Pending</span>
-                                </div>
-                            </Link>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className="cursor-pointer hover:underline">
+                                        <span className="font-bold">{friends.length}</span>
+                                        <span className="text-muted-foreground ml-1">Friends</span>
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                    <div className="grid gap-4">
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium leading-none">Friends</h4>
+                                            <p className="text-sm text-muted-foreground">Your connections.</p>
+                                        </div>
+                                        <ScrollArea className="h-[200px]">
+                                        {friends.length === 0 ? (
+                                            <p className="text-center text-sm text-muted-foreground py-4">No friends yet.</p>
+                                        ) : (
+                                            <div className="space-y-2 pr-2">
+                                                {friends.map(friend => (
+                                                <Link key={friend.uid} href={`/friends/${friend.uid}`}>
+                                                    <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                        <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="font-medium text-sm">{friend.username}</span>
+                                                    </div>
+                                                </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                        </ScrollArea>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <div className="cursor-pointer hover:underline">
+                                        <span className="font-bold">{pendingRequests.length + incomingRequests.length}</span>
+                                        <span className="text-muted-foreground ml-1">Pending</span>
+                                    </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                    <div className="grid gap-4">
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium leading-none">Pending Requests</h4>
+                                            <p className="text-sm text-muted-foreground">Manage your requests.</p>
+                                        </div>
+                                        <ScrollArea className="h-[200px]">
+                                            <h5 className="text-xs font-semibold text-muted-foreground mb-2">INCOMING ({incomingRequests.length})</h5>
+                                            {incomingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : incomingRequests.map(req => (
+                                                <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
+                                                    <span className="font-medium text-xs">{req.senderUsername}</span>
+                                                    <div className="flex gap-1">
+                                                        <Button size="sm" className="h-6 px-2 text-xs" onClick={() => acceptFriendRequest(req)}>Accept</Button>
+                                                        <Button size="sm" variant="destructive" className="h-6 px-2 text-xs" onClick={() => declineFriendRequest(req.id)}>Decline</Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <Separator className="my-2" />
+                                            <h5 className="text-xs font-semibold text-muted-foreground mb-2">SENT ({pendingRequests.length})</h5>
+                                            {pendingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : pendingRequests.map(req => (
+                                                <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
+                                                    <span className="font-medium text-xs">{req.recipientUsername}</span>
+                                                    <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                                </div>
+                                            ))}
+                                        </ScrollArea>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 </div>
@@ -515,3 +577,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
