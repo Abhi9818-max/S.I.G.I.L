@@ -87,6 +87,7 @@ interface UserRecordsContextType {
   getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
+  awardBonusPoints: (bonusAmount: number) => void;
   deductBonusPoints: (penalty: number) => void;
   updateUserDataInDb: (dataToUpdate: Partial<UserData>) => Promise<void>;
   // Constellations
@@ -465,6 +466,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [totalBonusPoints, updateUserDataInDb]);
 
+  const awardBonusPoints = useCallback((bonusAmount: number) => {
+    if (bonusAmount > 0) {
+      const newBonus = totalBonusPoints + bonusAmount;
+      updateUserDataInDb({ bonusPoints: newBonus });
+    }
+  }, [totalBonusPoints, updateUserDataInDb]);
+
   const deductBonusPoints = useCallback((penalty: number) => {
     const newBonus = totalBonusPoints - Math.abs(penalty);
     updateUserDataInDb({ bonusPoints: newBonus });
@@ -711,6 +719,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     getUserLevelInfo,
     totalBonusPoints,
     awardTierEntryBonus,
+    awardBonusPoints,
     deductBonusPoints,
     updateUserDataInDb,
     getAvailableSkillPoints,
@@ -752,6 +761,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       getUserLevelInfo,
       totalBonusPoints,
       awardTierEntryBonus,
+      awardBonusPoints,
       deductBonusPoints,
       updateUserDataInDb,
       getAvailableSkillPoints,

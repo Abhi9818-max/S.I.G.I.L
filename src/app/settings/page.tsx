@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -44,14 +44,18 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
+const SECRET_CODE = "Endborne";
+
 export default function SettingsPage() {
-  const { getUserLevelInfo } = useUserRecords();
+  const { getUserLevelInfo, awardBonusPoints } = useUserRecords();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const [secretCodeInput, setSecretCodeInput] = useState('');
+  const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const levelInfo = getUserLevelInfo();
@@ -203,6 +207,31 @@ export default function SettingsPage() {
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);
 
+  const handleUnlockMasterControl = () => {
+    if (secretCodeInput === SECRET_CODE) {
+      setMasterControlUnlocked(true);
+      toast({
+        title: "Master Control Unlocked",
+        description: "Secrets are now available.",
+      });
+    } else {
+      toast({
+        title: "Incorrect Code",
+        description: "The sequence is wrong. Access denied.",
+        variant: "destructive"
+      });
+      setSecretCodeInput('');
+    }
+  };
+
+  const handleAwardBonusXp = () => {
+    const bonus = 10000;
+    awardBonusPoints(bonus);
+    toast({
+      title: `✨ ${bonus.toLocaleString()} XP Awarded!`,
+      description: "A surge of energy flows through you."
+    });
+  };
 
   return (
     <>
@@ -378,6 +407,40 @@ export default function SettingsPage() {
                                 <Input id="import-file" type="file" accept=".json" className="hidden" onChange={handleImportData} disabled={isImporting}/>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-primary">Secrets</h3>
+                         <div className="p-4 border rounded-lg space-y-4">
+                           {!masterControlUnlocked ? (
+                             <>
+                                <p className="text-sm text-muted-foreground">Enter the correct sequence to unlock master control.</p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <div className="relative flex-grow">
+                                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                      type="password"
+                                      placeholder="Secret Code"
+                                      className="pl-10"
+                                      value={secretCodeInput}
+                                      onChange={(e) => setSecretCodeInput(e.target.value)}
+                                      onKeyDown={(e) => e.key === 'Enter' && handleUnlockMasterControl()}
+                                    />
+                                  </div>
+                                  <Button onClick={handleUnlockMasterControl}>Unlock</Button>
+                                </div>
+                             </>
+                           ) : (
+                             <div className="space-y-4 animate-fade-in-up">
+                                <h4 className="font-semibold text-primary">Master Control Panel</h4>
+                                <p className="text-sm text-muted-foreground">With great power comes great responsibility.</p>
+                                <Button onClick={handleAwardBonusXp}>
+                                  <Zap className="mr-2 h-4 w-4" />
+                                  Award 10,000 Bonus XP
+                                </Button>
+                             </div>
+                           )}
+                         </div>
                     </div>
 
                     <div className="space-y-4">
