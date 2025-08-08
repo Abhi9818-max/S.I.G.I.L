@@ -160,9 +160,6 @@ export default function HighGoalsPage() {
               <ShieldCheck className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">High Goals</h1>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Define your long-term objectives. Set a target for a specific task over a custom period to track your biggest ambitions.
-            </p>
           </div>
           <div className="p-6 md:p-0 pt-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 border rounded-lg bg-muted/30">
