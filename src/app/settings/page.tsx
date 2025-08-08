@@ -287,18 +287,6 @@ export default function SettingsPage() {
                             <span className="font-bold">{levelInfo?.currentLevel}</span>
                             <span className="text-muted-foreground ml-1">Level</span>
                         </div>
-                        <div>
-                            <span className="font-bold">{levelInfo?.tierName}</span>
-                             <span className="text-muted-foreground ml-1">Tier</span>
-                        </div>
-                         <div>
-                            <span className="font-bold">{levelInfo?.totalAccumulatedValue.toLocaleString()}</span>
-                            <span className="text-muted-foreground ml-1">XP</span>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <p className="font-semibold">{levelInfo?.levelName}</p>
                     </div>
 
                   </div>
