@@ -278,11 +278,11 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
-                        <div className="flex items-center justify-between w-full">
-                            <h2 className="text-2xl font-light">{userData?.username}</h2>
-                             <Button variant="ghost" size="icon" onClick={() => setIsAvatarDialogOpen(true)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-2xl font-light">{userData?.username}</h2>
+                          <Button variant="ghost" size="icon" onClick={() => setIsAvatarDialogOpen(true)}>
+                              <Pencil className="h-4 w-4" />
+                          </Button>
                         </div>
                         
                         <div className="flex items-center gap-8">
