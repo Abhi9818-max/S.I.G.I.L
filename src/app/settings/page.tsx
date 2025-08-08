@@ -248,9 +248,6 @@ export default function SettingsPage() {
                 <SettingsIcon className="h-6 w-6 text-primary" />
                 <h1 className="text-2xl font-semibold leading-none tracking-tight">Settings</h1>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                Manage your application data and settings.
-                </p>
             </div>
             <div className="p-6 md:p-0 pt-6 space-y-8">
             <Tabs defaultValue="profile" className="w-full">
