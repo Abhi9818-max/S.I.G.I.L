@@ -288,14 +288,18 @@ export default function SettingsPage() {
                                 <span className="font-bold">{levelInfo?.currentLevel}</span>
                                 <span className="text-muted-foreground ml-1">Level</span>
                             </div>
-                            <div>
-                                <span className="font-bold">{friends.length}</span>
-                                <span className="text-muted-foreground ml-1">Friends</span>
-                            </div>
-                            <div>
-                                <span className="font-bold">{pendingRequests.length}</span>
-                                <span className="text-muted-foreground ml-1">Pending</span>
-                            </div>
+                             <Link href="/friends" className="hover:underline">
+                                <div>
+                                    <span className="font-bold">{friends.length}</span>
+                                    <span className="text-muted-foreground ml-1">Friends</span>
+                                </div>
+                            </Link>
+                            <Link href="/friends" className="hover:underline">
+                                <div>
+                                    <span className="font-bold">{pendingRequests.length}</span>
+                                    <span className="text-muted-foreground ml-1">Pending</span>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>
