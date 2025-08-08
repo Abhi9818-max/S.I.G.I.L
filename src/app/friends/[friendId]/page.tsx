@@ -6,11 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { UserData, Friend, RecordEntry, TaskDefinition } from '@/types';
+import type { UserData, Friend, RecordEntry, TaskDefinition, Post } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import PactList from '@/components/todo/PactList';
+import Image from 'next/image';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -91,6 +92,7 @@ export default function FriendProfilePage() {
     const totalExperience = friendRecords.reduce((sum, r) => sum + r.value, 0) + friendBonusPoints;
     const friendLevelInfo = calculateUserLevelInfo(totalExperience);
     const friendPacts = friendData.todoItems || [];
+    const friendPosts = friendData.posts || [];
 
     const avatarNumber = (simpleHash(friendId) % 12) + 1;
     const friendAvatar = friendData.photoURL || `/avatars/avatar${avatarNumber}.jpeg`;
@@ -125,66 +127,97 @@ export default function FriendProfilePage() {
                         </div>
                     </div>
                 </div>
-                <StatsPanel friendData={friendData} />
-
-                <div className="p-6 md:p-0">
-                    <div className="flex items-center gap-2 mb-2">
-                       <ListChecks className="h-6 w-6 text-primary" />
-                       <h2 className="text-2xl font-semibold">Pacts</h2>
-                    </div>
-                   <PactList items={friendPacts} isEditable={false} />
-                </div>
-
-                <div className="p-4 rounded-lg bg-muted/40">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                        <Tabs defaultValue="today" className="w-auto">
-                            <TabsList>
-                                <TabsTrigger value="today">Today</TabsTrigger>
-                                <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="today" className="mt-4">
-                                <DailyTimeBreakdownChart
-                                    date={today}
-                                    records={friendRecords}
-                                    taskDefinitions={friendTasks}
-                                    hideFooter={true}
-                                    hideDescription={true}
-                                    hideTitle={true}
-                                />
-                            </TabsContent>
-                            <TabsContent value="yesterday" className="mt-4">
-                                <DailyTimeBreakdownChart
-                                    date={yesterday}
-                                    records={friendRecords}
-                                    taskDefinitions={friendTasks}
-                                    hideFooter={true}
-                                    hideDescription={true}
-                                    hideTitle={true}
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-                </div>
                 
-                <TaskComparisonChart friendData={friendData} />
-                
-                <div className="p-6 md:p-0">
-                    <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                    <TaskFilterBar
-                        taskDefinitions={friendTasks}
-                        selectedTaskId={selectedTaskFilterId}
-                        onSelectTask={setSelectedTaskFilterId}
-                    />
-                    <ContributionGraph 
-                        year={new Date().getFullYear()}
-                        onDayClick={() => {}} 
-                        selectedTaskFilterId={selectedTaskFilterId}
-                        records={friendRecords} 
-                        taskDefinitions={friendTasks}
-                        displayMode="full"
-                    />
-                </div>
+                <Tabs defaultValue="stats" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="stats">Stats</TabsTrigger>
+                    <TabsTrigger value="pacts">Pacts</TabsTrigger>
+                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                    <TabsTrigger value="posts">Posts</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="stats" className="mt-6">
+                    <StatsPanel friendData={friendData} />
+                    <div className="mt-8">
+                      <TaskComparisonChart friendData={friendData} />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="pacts" className="mt-6">
+                    <PactList items={friendPacts} isEditable={false} />
+                  </TabsContent>
+
+                  <TabsContent value="activity" className="mt-6">
+                     <div className="p-4 rounded-lg bg-muted/40 mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                            <Tabs defaultValue="today" className="w-auto">
+                                <TabsList>
+                                    <TabsTrigger value="today">Today</TabsTrigger>
+                                    <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="today" className="mt-4">
+                                    <DailyTimeBreakdownChart
+                                        date={today}
+                                        records={friendRecords}
+                                        taskDefinitions={friendTasks}
+                                        hideFooter={true}
+                                        hideDescription={true}
+                                        hideTitle={true}
+                                    />
+                                </TabsContent>
+                                <TabsContent value="yesterday" className="mt-4">
+                                    <DailyTimeBreakdownChart
+                                        date={yesterday}
+                                        records={friendRecords}
+                                        taskDefinitions={friendTasks}
+                                        hideFooter={true}
+                                        hideDescription={true}
+                                        hideTitle={true}
+                                    />
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    </div>
+                     <div>
+                        <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                        <TaskFilterBar
+                            taskDefinitions={friendTasks}
+                            selectedTaskId={selectedTaskFilterId}
+                            onSelectTask={setSelectedTaskFilterId}
+                        />
+                        <ContributionGraph 
+                            year={new Date().getFullYear()}
+                            onDayClick={() => {}} 
+                            selectedTaskFilterId={selectedTaskFilterId}
+                            records={friendRecords} 
+                            taskDefinitions={friendTasks}
+                            displayMode="full"
+                        />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="posts" className="mt-6">
+                      {friendPosts.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                           <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-2"/>
+                           <p>{friendData.username} hasn't posted anything yet.</p>
+                        </div>
+                      ) : (
+                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
+                          {friendPosts.map(post => (
+                            <div key={post.id} className="w-full aspect-square relative group bg-muted">
+                              <Image src={post.imageUrl} alt={post.caption || 'User post'} fill className="object-cover" />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                                <p className="text-white text-xs text-center line-clamp-4">{post.caption}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </TabsContent>
+
+                </Tabs>
             </main>
         </div>
     );

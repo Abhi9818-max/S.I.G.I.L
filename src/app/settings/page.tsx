@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings, ProgressChartTimeRange } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange, Post } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -44,6 +44,7 @@ import { useFriends } from '@/components/providers/FriendProvider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import Image from 'next/image';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -93,20 +94,91 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
     )
 }
 
+const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSave: (caption: string, image: File) => void }) => {
+    const [caption, setCaption] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setImageFile(file);
+            setPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleSave = () => {
+        if (imageFile) {
+            onSave(caption, imageFile);
+            onOpenChange(false);
+            setCaption('');
+            setImageFile(null);
+            setPreview(null);
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create a new post</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                    {preview ? (
+                         <div className="w-full aspect-square relative rounded-md overflow-hidden">
+                            <Image src={preview} alt="Image preview" fill className="object-cover"/>
+                         </div>
+                    ) : (
+                        <div className="w-full aspect-square flex items-center justify-center bg-muted rounded-md">
+                             <Label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center gap-2 text-muted-foreground">
+                                <ImageIcon className="h-8 w-8" />
+                                <span>Select an image</span>
+                            </Label>
+                        </div>
+                    )}
+                   
+                    <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                    
+                    <Textarea 
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        placeholder="Write a caption..."
+                        maxLength={280}
+                        rows={3}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSave} disabled={!imageFile}>Post</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture, updateBio } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio, addPost } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showLoading, setShowLoading] = useState(true);
+  
+  const [posts, setPosts] = useState<Post[]>(userData?.posts || []);
+  
+  useEffect(() => {
+    if (userData?.posts) {
+      setPosts(userData.posts);
+    }
+  }, [userData?.posts]);
 
   useEffect(() => {
     // This effect ensures the loading screen is only shown on the client
@@ -305,14 +377,16 @@ export default function SettingsPage() {
         <div className="w-full max-w-4xl mx-auto">
             <div className="p-6 md:p-0 pt-6 space-y-8">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile</TabsTrigger>
+                <TabsTrigger value="posts"><ImageIcon className="mr-2 h-4 w-4" />Posts</TabsTrigger>
                 <TabsTrigger value="layout"><LayoutDashboard className="mr-2 h-4 w-4" />Layout</TabsTrigger>
                 <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />Data</TabsTrigger>
               </TabsList>
               
                <TabsContent value="profile" className="mt-6">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                 {/* Desktop Layout */}
+                  <div className="hidden md:grid md:grid-cols-3 md:gap-8">
                     <div className="md:col-span-1 flex justify-center md:justify-start">
                         <button
                           onClick={() => setIsAvatarDialogOpen(true)}
@@ -426,6 +500,79 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
+                {/* Mobile Layout */}
+                <div className="md:hidden space-y-4">
+                  <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsAvatarDialogOpen(true)}
+                        className="avatar-overlay-container rounded-full flex-shrink-0"
+                        aria-label="Change profile picture"
+                    >
+                        <Avatar className="h-24 w-24">
+                            <AvatarImage src={userAvatar} alt={userData?.username}/>
+                            <AvatarFallback className="text-4xl">
+                                {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="avatar-overlay">
+                            <Pencil className="h-6 w-6 text-white/90" />
+                        </div>
+                    </button>
+                    <div className="flex-grow flex items-center justify-around text-center">
+                        <div>
+                          <p className="font-bold text-lg">{posts.length}</p>
+                          <p className="text-sm text-muted-foreground">Posts</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">{friends.length}</p>
+                          <p className="text-sm text-muted-foreground">Friends</p>
+                        </div>
+                        <div>
+                          <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
+                          <p className="text-sm text-muted-foreground">Level</p>
+                        </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-semibold">{userData?.username}</h2>
+                      </div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {userData?.bio || "No bio yet."}
+                      </p>
+                  </div>
+                  <div className="flex gap-2">
+                      <Button className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
+                      <Button variant="secondary" className="flex-1">Share Profile</Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="posts" className="mt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Your Posts</h3>
+                  <Button onClick={() => setIsPostDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4"/>
+                    New Post
+                  </Button>
+                </div>
+                {posts.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                    <p>No posts yet.</p>
+                    <p className="text-sm">Click "New Post" to share something.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1">
+                    {posts.map(post => (
+                      <div key={post.id} className="w-full aspect-square relative group bg-muted">
+                        <Image src={post.imageUrl} alt={post.caption || 'User post'} fill className="object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                           <p className="text-white text-xs text-center line-clamp-4">{post.caption}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="layout" className="mt-6">
@@ -640,6 +787,11 @@ export default function SettingsPage() {
         onOpenChange={setIsBioDialogOpen}
         currentBio={userData?.bio || ''}
         onSave={updateBio}
+    />
+    <PostDialog
+        isOpen={isPostDialogOpen}
+        onOpenChange={setIsPostDialogOpen}
+        onSave={(caption, imageFile) => addPost(caption, imageFile)}
     />
     </>
   );
