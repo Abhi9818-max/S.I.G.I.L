@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
 
 // Generate paths for local avatars
-const TOTAL_AVATARS = 10; // The number of avatar images you have in the folder
+const TOTAL_AVATARS = 12; // The number of avatar images you have in the folder
 const PREDEFINED_AVATARS = Array.from(
   { length: TOTAL_AVATARS },
   (_, i) => `/avatars/avatar${i + 1}.jpeg`
