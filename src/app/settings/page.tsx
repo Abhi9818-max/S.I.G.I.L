@@ -44,7 +44,7 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
-const SECRET_CODE = "Endborne";
+const SECRET_CODE = "9818";
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints } = useUserRecords();
