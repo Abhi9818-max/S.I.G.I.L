@@ -130,18 +130,16 @@ export default function HomePage() {
   if (!isUserDataLoaded || !currentLevelInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <Image src="/loading.gif" alt="Loading..." className="w-[40%] h-auto md:w-[25%]" width={210} height={210} unoptimized />
+        <Image src="/loading.gif" alt="Loading..." className="w-[40%] h-auto md:w-[25%] lg:w-[75%]" width={210} height={210} unoptimized />
       </div>
     );
   }
-  
-  const pageTierClass = currentLevelInfo ? `page-tier-group-${currentLevelInfo.tierGroup}` : 'page-tier-group-1';
   
   const showStatsPanel = dashboardSettings.showTotalLast30Days || dashboardSettings.showCurrentStreak || dashboardSettings.showDailyConsistency || dashboardSettings.showHighGoalStat;
 
 
   return (
-    <div className={cn("min-h-screen flex flex-col transition-colors duration-700 ease-in-out", pageTierClass)}>
+    <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
       <Header
         onAddRecordClick={handleAddRecordClick}
         onManageTasksClick={handleManageTasksClick}
