@@ -52,9 +52,9 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6 bg-card/70">
         <DialogHeader className="text-center items-center">
-          <DialogTitle className="text-3xl font-bold tracking-wider text-shadow-lg">
+          <DialogTitle className="text-3xl font-bold tracking-wider text-shadow-lg text-white">
             {levelName}
           </DialogTitle>
           <DialogDescription className="text-white/70 text-shadow">
