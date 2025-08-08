@@ -130,7 +130,7 @@ export default function HomePage() {
   if (!isUserDataLoaded || !currentLevelInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <Image src="/loading.gif" alt="Loading..." className="w-[40%] h-auto md:w-[25%] lg:w-[75%]" width={210} height={210} unoptimized />
+        <Image src="/loading.gif" alt="Loading..." className="w-[50%] h-auto md:w-[75%]" width={210} height={210} unoptimized />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function HomePage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
+    <div className="min-h-screen flex flex-col">
       <Header
         onAddRecordClick={handleAddRecordClick}
         onManageTasksClick={handleManageTasksClick}
