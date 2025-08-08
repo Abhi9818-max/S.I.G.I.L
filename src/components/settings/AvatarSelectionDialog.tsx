@@ -14,19 +14,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
 
-// Generate paths for avatars from avatar1.jpeg to avatar12.jpeg
-const ORIGINAL_AVATARS = Array.from(
-  { length: 12 },
+// Generate paths for all avatars from avatar1.jpeg to avatar20.jpeg
+const PREDEFINED_AVATARS = Array.from(
+  { length: 20 },
   (_, i) => `/avatars/avatar${i + 1}.jpeg`
 );
-
-// Generate paths for avatars from avatar1.png to avatar20.png in a different directory
-const NEW_AVATARS = Array.from(
-  { length: 20 },
-  (_, i) => `/images/avatars/avatar${i + 1}.png`
-);
-
-const PREDEFINED_AVATARS = [...ORIGINAL_AVATARS, ...NEW_AVATARS];
 
 
 interface AvatarSelectionDialogProps {
