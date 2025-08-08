@@ -195,4 +195,23 @@
         transform: rotateY(0deg);
     }
   }
+  
+  .frosted-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    z-index: -1;
+    background-image:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+      url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><filter id="n" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.1"/></svg>');
+  }
+
+  .text-shadow {
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .text-shadow-lg {
+    text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  }
+
 }
