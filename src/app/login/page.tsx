@@ -51,7 +51,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSetup = async (data: SetupForm>) => {
+  const handleSetup = async (data: SetupForm) => {
     setError(null);
     const success = await setupCredentials(data.username, data.password);
     if (!success) {
@@ -62,7 +62,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-          <Image src="/loading.gif" alt="Loading..." className="w-[40%] h-auto md:w-[25%]" width={210} height={210} unoptimized />
+          <Image src="/loading.gif" alt="Loading..." className="w-96 h-96" width={384} height={384} unoptimized />
       </div>
     );
   }
