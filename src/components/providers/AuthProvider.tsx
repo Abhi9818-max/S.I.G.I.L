@@ -36,6 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -123,6 +124,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
   }, [user, isGuest, loading, pathname, router]);
+
+  useEffect(() => {
+    // This effect ensures the loading screen is only shown on the client
+    // after the initial render, preventing the hydration error.
+    setShowLoading(loading);
+  }, [loading]);
 
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
@@ -255,7 +262,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, auth, toast, isGuest, db]);
 
 
-  if (loading && pathname !== '/login') {
+  if (showLoading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
           <Image src="/loading.gif" alt="Loading..." className="w-96 h-96" width={384} height={384} unoptimized />
