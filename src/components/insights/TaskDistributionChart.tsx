@@ -42,10 +42,10 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
   const chartConfig = useMemo(() => {
     const config: any = {};
     if (chartData.length > 0) {
-      chartData.forEach(item => {
-        config[item.name] = {
+      chartData.forEach((item, index) => {
+        config[`task-${index}`] = {
           label: item.name,
-          color: item.fill,
+          color: item.color,
         };
       });
     }
@@ -85,8 +85,8 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             strokeWidth={2}
             stroke="hsl(var(--background))"
         >
-            {data.map((entry) => (
-              <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
         </Pie>
       </PieChart>
@@ -98,10 +98,10 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
     <div className="flex flex-col justify-center gap-6">
         {items.map(item => (
             <div key={item.name} className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: item.fill }} />
+                <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: item.color }} />
                 <div>
                     <p className="font-semibold text-foreground">{item.name}</p>
-                    <p className="text-2xl font-bold" style={{ color: item.fill }}>{item.percentage?.toFixed(0) ?? 0}%</p>
+                    <p className="text-2xl font-bold" style={{ color: item.color }}>{item.percentage?.toFixed(0) ?? 0}%</p>
                 </div>
             </div>
         ))}
@@ -129,7 +129,7 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             No data to display for this period.
           </p>
         ) : (
-          <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+          <ChartContainer config={chartConfig} className="min-h-[250px] w-full mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 min-h-[250px]">
               <LabelColumn items={chartData.slice(0, Math.ceil(chartData.length / 2))} />
               <div className="col-span-1 h-full flex items-center justify-center">
