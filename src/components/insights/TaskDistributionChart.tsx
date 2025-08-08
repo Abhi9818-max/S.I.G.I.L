@@ -132,7 +132,9 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
           <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 min-h-[250px]">
             <LabelColumn items={chartData.slice(0, Math.ceil(chartData.length / 2))} />
             <div className="col-span-1 h-full flex items-center justify-center">
+              <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
                 <MemoizedPie data={chartData} />
+              </ChartContainer>
             </div>
             <LabelColumn items={chartData.slice(Math.ceil(chartData.length / 2))} />
           </div>
