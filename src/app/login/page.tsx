@@ -42,7 +42,7 @@ export default function LoginPage() {
     defaultValues: { username: '', password: '' },
   });
 
-  const handleLogin = async (data: LoginForm>) => {
+  const handleLogin = async (data: LoginForm) => {
     setError(null);
     const success = await login(data.username, data.password);
     if (!success) {
