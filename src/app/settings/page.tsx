@@ -263,7 +263,7 @@ export default function SettingsPage() {
               <TabsContent value="profile" className="mt-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-primary">Profile Information</h3>
-                  <div className="p-4 border rounded-lg space-y-4">
+                  <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                         <Avatar className="h-24 w-24">
                           <AvatarImage src={userAvatar} alt={userData?.username}/>
