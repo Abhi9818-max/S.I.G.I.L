@@ -38,14 +38,16 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body className={`font-sans antialiased bg-background`}>
+      <body className={`font-sans antialiased bg-background text-foreground`}>
         <AuthProvider>
           <SettingsProvider>
             <TooltipProvider delayDuration={100}>
               <FriendProvider>
                 <UserRecordsProvider>
                     <TodoProvider>
-                      {children}
+                      <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
+                        {children}
+                      </div>
                       <Toaster />
                     </TodoProvider>
                 </UserRecordsProvider>
