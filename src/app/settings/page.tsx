@@ -269,20 +269,26 @@ export default function SettingsPage() {
                <TabsContent value="profile" className="mt-6">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-1 flex justify-center md:justify-start">
-                        <Avatar className="h-36 w-36 ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
-                            <AvatarImage src={userAvatar} alt={userData?.username}/>
-                            <AvatarFallback className="text-5xl">
-                                {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                            </AvatarFallback>
-                        </Avatar>
+                        <button
+                          onClick={() => setIsAvatarDialogOpen(true)}
+                          className="avatar-overlay-container rounded-full"
+                          aria-label="Change profile picture"
+                        >
+                          <Avatar className="h-36 w-36 ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
+                              <AvatarImage src={userAvatar} alt={userData?.username}/>
+                              <AvatarFallback className="text-5xl">
+                                  {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                              </AvatarFallback>
+                          </Avatar>
+                          <div className="avatar-overlay">
+                              <Pencil className="h-8 w-8 text-white/90" />
+                          </div>
+                        </button>
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
                         <div className="flex items-center gap-2">
                           <h2 className="text-2xl font-light">{userData?.username}</h2>
-                          <Button variant="ghost" size="icon" onClick={() => setIsAvatarDialogOpen(true)}>
-                              <Pencil className="h-4 w-4" />
-                          </Button>
                         </div>
                         
                         <div className="flex items-center gap-8">

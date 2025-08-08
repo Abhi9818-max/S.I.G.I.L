@@ -203,4 +203,28 @@
     text-shadow: 0 2px 5px rgba(0,0,0,0.4);
   }
 
+  .avatar-overlay-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .avatar-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 9999px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none; /* Allows clicks to pass through */
+  }
+
+  .avatar-overlay-container:hover .avatar-overlay,
+  .avatar-overlay-container:focus-within .avatar-overlay {
+    opacity: 1;
+    pointer-events: auto; /* Make it clickable on hover */
+  }
+
 }
