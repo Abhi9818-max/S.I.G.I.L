@@ -33,7 +33,7 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
     const dataWithPercentage = data.map(item => ({
         ...item,
         percentage: totalValue > 0 ? ((item.value / totalValue) * 100) : 0
-    }));
+    })).filter(item => item.value > 0); // Filter out tasks with no value
 
     setChartData(dataWithPercentage);
     setIsLoading(false);
@@ -42,8 +42,8 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
   const chartConfig = useMemo(() => {
     const config: any = {};
     if (chartData.length > 0) {
-      chartData.forEach((item, index) => {
-        config[`task-${index}`] = {
+      chartData.forEach((item) => {
+        config[item.name] = { // Use name as key
           label: item.name,
           color: item.color,
         };
@@ -54,8 +54,8 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
   
   const totalValue = useMemo(() => chartData.reduce((sum, item) => sum + item.value, 0), [chartData]);
 
-
   const SingleTaskView = () => {
+    if (!taskId) return null;
     const task = taskDefinitions.find(t => t.id === taskId);
     if (!task) return null;
 
@@ -85,8 +85,8 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             strokeWidth={2}
             stroke="hsl(var(--background))"
         >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
+            {data.map((entry) => (
+              <Cell key={`cell-${entry.name}`} fill={entry.color} />
             ))}
         </Pie>
       </PieChart>
@@ -107,6 +107,10 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
         ))}
     </div>
   );
+  
+  const noDataMessage = !taskId && chartData.length <= 1 
+    ? "Select a specific task or log data for multiple tasks to see a distribution."
+    : "No data to display for this period.";
 
   return (
     <Card className="shadow-lg">
@@ -124,9 +128,9 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
           </div>
         ) : taskId ? (
           <SingleTaskView />
-        ) : chartData.length === 0 || totalValue === 0 ? (
+        ) : chartData.length === 0 || totalValue === 0 || chartData.length <=1 ? (
           <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">
-            No data to display for this period.
+             {noDataMessage}
           </p>
         ) : (
           <ChartContainer config={chartConfig} className="min-h-[250px] w-full mx-auto">
