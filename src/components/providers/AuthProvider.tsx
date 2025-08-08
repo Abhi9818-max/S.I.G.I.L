@@ -9,6 +9,7 @@ import { auth as firebaseAuth, db, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import type { UserData } from '@/types';
 import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
+import Image from 'next/image';
 
 const FAKE_DOMAIN = 'sigil.local';
 const GUEST_KEY = 'sigil-guest-mode';
@@ -257,7 +258,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   if (loading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="text-primary">Loading S.I.G.I.L...</div>
+          <Image src="/loading.gif" alt="Loading..." width={120} height={120} unoptimized />
       </div>
     );
   }

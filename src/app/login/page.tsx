@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { TrendingUp, KeyRound, User, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -41,7 +42,7 @@ export default function LoginPage() {
     defaultValues: { username: '', password: '' },
   });
 
-  const handleLogin = async (data: LoginForm) => {
+  const handleLogin = async (data: LoginForm>) => {
     setError(null);
     const success = await login(data.username, data.password);
     if (!success) {
@@ -50,7 +51,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSetup = async (data: SetupForm) => {
+  const handleSetup = async (data: SetupForm>) => {
     setError(null);
     const success = await setupCredentials(data.username, data.password);
     if (!success) {
@@ -61,7 +62,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="text-primary">Loading S.I.G.I.L...</div>
+          <Image src="/loading.gif" alt="Loading..." width={120} height={120} unoptimized />
       </div>
     );
   }
