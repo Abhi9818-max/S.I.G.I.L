@@ -3,7 +3,10 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   devIndicators: {
-    buildActivity: false,
+    allowedDevOrigins: [
+      // Allow requests from Firebase Studio development environment
+      '*.cloudworkstations.dev',
+    ],
   },
   typescript: {
     ignoreBuildErrors: false,
