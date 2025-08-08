@@ -336,7 +336,7 @@ export default function SettingsPage() {
                            <h2 className="text-2xl font-light">{userData?.username}</h2>
                         </div>
                          <div className="flex items-start gap-2">
-                            <p className="text-sm text-muted-foreground italic flex-grow">
+                            <p className="text-sm text-muted-foreground italic flex-grow whitespace-pre-wrap">
                                 {userData?.bio || "No bio yet."}
                             </p>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
@@ -644,5 +644,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
