@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from 'next/link';
+import { useFriends } from '@/components/providers/FriendProvider';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -48,6 +49,7 @@ const SECRET_CODE = "9818";
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
+  const { friends, pendingRequests } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture } = useAuth();
   const { toast } = useToast();
@@ -60,6 +62,8 @@ export default function SettingsPage() {
   const [showLoading, setShowLoading] = useState(true);
 
   useEffect(() => {
+    // This effect ensures the loading screen is only shown on the client
+    // after the initial render, preventing a hydration error.
     setShowLoading(false);
   }, []);
 
@@ -272,7 +276,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="md:col-span-2 space-y-4">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between w-full">
                             <h2 className="text-2xl font-light">{userData?.username}</h2>
                              <Button variant="ghost" size="icon" onClick={() => setIsAvatarDialogOpen(true)}>
                                 <Pencil className="h-4 w-4" />
@@ -283,6 +287,14 @@ export default function SettingsPage() {
                             <div>
                                 <span className="font-bold">{levelInfo?.currentLevel}</span>
                                 <span className="text-muted-foreground ml-1">Level</span>
+                            </div>
+                            <div>
+                                <span className="font-bold">{friends.length}</span>
+                                <span className="text-muted-foreground ml-1">Friends</span>
+                            </div>
+                            <div>
+                                <span className="font-bold">{pendingRequests.length}</span>
+                                <span className="text-muted-foreground ml-1">Pending</span>
                             </div>
                         </div>
                     </div>
