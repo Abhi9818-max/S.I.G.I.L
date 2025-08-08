@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -269,9 +268,6 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-2">
                          <Button variant="secondary" size="sm" onClick={() => setIsAvatarDialogOpen(true)}>
                             Change Avatar
-                         </Button>
-                         <Button asChild variant="outline" size="sm">
-                            <Link href="/tiers">View Tiers</Link>
                          </Button>
                       </div>
                     </div>
