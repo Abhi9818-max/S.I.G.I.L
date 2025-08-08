@@ -9,13 +9,11 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  type ChartConfig
 } from "@/components/ui/chart";
-import { PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import type { TaskDistributionData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface TaskDistributionChartProps {
   startDate: Date;
@@ -31,12 +29,18 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
   useEffect(() => {
     setIsLoading(true);
     const data = getTaskDistribution(startDate, endDate, taskId);
-    setChartData(data);
+    const totalValue = data.reduce((sum, item) => sum + item.value, 0);
+    const dataWithPercentage = data.map(item => ({
+        ...item,
+        percentage: totalValue > 0 ? ((item.value / totalValue) * 100) : 0
+    }));
+
+    setChartData(dataWithPercentage);
     setIsLoading(false);
   }, [startDate, endDate, taskId, getTaskDistribution]);
 
   const chartConfig = useMemo(() => {
-    const config: ChartConfig = {};
+    const config: any = {};
     if (chartData.length > 0) {
       chartData.forEach(item => {
         config[item.name] = {
@@ -44,20 +48,15 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
           color: item.fill,
         };
       });
-    } else { // Fallback for empty state
-        taskDefinitions.forEach(task => {
-            config[task.name] = {
-                label: task.name,
-                color: task.color
-            }
-        })
     }
     return config;
-  }, [chartData, taskDefinitions]);
+  }, [chartData]);
+  
+  const totalValue = useMemo(() => chartData.reduce((sum, item) => sum + item.value, 0), [chartData]);
+
 
   const SingleTaskView = () => {
     const task = taskDefinitions.find(t => t.id === taskId);
-    const totalValue = chartData.length > 0 ? chartData[0].value : 0;
     if (!task) return null;
 
     return (
@@ -69,6 +68,45 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
         </div>
     );
   };
+
+  const MemoizedPie = React.memo(({ data }: { data: TaskDistributionData[] }) => (
+    <ResponsiveContainer width="100%" height={250}>
+      <PieChart>
+        <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+        />
+        <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            innerRadius="60%"
+            outerRadius="80%"
+            strokeWidth={2}
+            stroke="hsl(var(--background))"
+        >
+            {data.map((entry) => (
+            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+            ))}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+  ));
+  MemoizedPie.displayName = 'MemoizedPie';
+  
+  const LabelColumn = ({ items }: { items: TaskDistributionData[] }) => (
+    <div className="flex flex-col justify-center gap-6">
+        {items.map(item => (
+            <div key={item.name} className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: item.fill }} />
+                <div>
+                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className="text-2xl font-bold" style={{ color: item.fill }}>{item.percentage?.toFixed(0) ?? 0}%</p>
+                </div>
+            </div>
+        ))}
+    </div>
+  );
 
   return (
     <Card className="shadow-lg">
@@ -86,34 +124,18 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
           </div>
         ) : taskId ? (
           <SingleTaskView />
-        ) : chartData.length === 0 || chartData.every(d => d.value === 0) ? (
+        ) : chartData.length === 0 || totalValue === 0 ? (
           <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">
             No data to display for this period.
           </p>
         ) : (
-          <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={60}
-                strokeWidth={5}
-              >
-                {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={`var(--color-${entry.name})`} />
-                ))}
-              </Pie>
-              <ChartLegend
-                content={<ChartLegendContent nameKey="name" />}
-                className="-translate-y-[2rem] flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-              />
-            </PieChart>
-          </ChartContainer>
+          <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4 min-h-[250px]">
+            <LabelColumn items={chartData.slice(0, Math.ceil(chartData.length / 2))} />
+            <div className="col-span-1 h-full flex items-center justify-center">
+                <MemoizedPie data={chartData} />
+            </div>
+            <LabelColumn items={chartData.slice(Math.ceil(chartData.length / 2))} />
+          </div>
         )}
       </CardContent>
     </Card>
