@@ -79,21 +79,6 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
     } satisfies ChartConfig;
   }, [task]);
 
-  const yAxisTicks = useMemo(() => {
-    if (task?.intensityThresholds && task.intensityThresholds.length === 4) {
-      const maxValueInChart = Math.max(...chartData.map(d => d.value), 0);
-      const thresholds = [...task.intensityThresholds];
-      
-      if (maxValueInChart > thresholds[thresholds.length - 1]) {
-        const topTick = Math.ceil(maxValueInChart / 5) * 5;
-        thresholds.push(topTick);
-      }
-      
-      return [0, ...thresholds];
-    }
-    return undefined;
-  }, [task, chartData]);
-
   const chartDescription = useMemo(() => {
     switch(timeRange) {
         case 'weekly': return 'Total daily values for the current week.';
@@ -159,9 +144,8 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
                 axisLine={false}
                 tickMargin={8}
                 className="text-xs"
-                width={30}
-                ticks={yAxisTicks}
-                domain={yAxisTicks ? [0, 'dataMax + 5'] : [0, 'auto']}
+                width={50}
+                domain={[0, 'dataMax']}
               />
               <RechartsTooltip
                 cursor={true}
