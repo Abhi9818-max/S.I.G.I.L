@@ -244,12 +244,6 @@ export default function SettingsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-            <div className="p-6 md:p-0">
-                <div className="flex items-center gap-2">
-                <SettingsIcon className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-semibold leading-none tracking-tight">Settings</h1>
-                </div>
-            </div>
             <div className="p-6 md:p-0 pt-6 space-y-8">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
