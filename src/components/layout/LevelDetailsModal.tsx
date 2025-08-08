@@ -48,6 +48,8 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     ? "Max Level" 
     : `${valueTowardsNextLevel.toLocaleString()} / ${pointsForNextLevel?.toLocaleString()} XP`;
 
+  const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-8">
@@ -68,7 +70,10 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
                     alt={`Image for ${tierName}`}
                     width={200}
                     height={200}
-                    className="h-full w-full object-cover drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                    className={cn(
+                        "h-full w-full object-cover drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]",
+                        customCropTiers.includes(tierSlug) && 'object-top'
+                    )}
                 />
               </div>
           )}
