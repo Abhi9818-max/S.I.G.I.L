@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -32,6 +32,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Link from 'next/link';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -242,7 +243,7 @@ export default function SettingsPage() {
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full max-w-4xl mx-auto">
             <div className="p-6 md:p-0">
                 <div className="flex items-center gap-2">
                 <SettingsIcon className="h-6 w-6 text-primary" />
@@ -257,31 +258,49 @@ export default function SettingsPage() {
                 <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />Data</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="profile" className="mt-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-primary">Profile Information</h3>
-                  <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                        <Avatar className="h-24 w-24">
-                          <AvatarImage src={userAvatar} alt={userData?.username}/>
-                          <AvatarFallback className="text-3xl">
-                            {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-xl font-semibold">{userData?.username}</p>
-                          <p className="text-sm text-muted-foreground">Level {levelInfo?.currentLevel} {levelInfo?.levelName}</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2" 
-                            onClick={() => setIsAvatarDialogOpen(true)}
-                          >
-                            <ImageIcon className="mr-2 h-4 w-4" />
+               <TabsContent value="profile" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="md:col-span-1 flex justify-center md:justify-start">
+                    <Avatar className="h-36 w-36">
+                      <AvatarImage src={userAvatar} alt={userData?.username}/>
+                      <AvatarFallback className="text-5xl">
+                        {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <h2 className="text-2xl font-light">{userData?.username}</h2>
+                      <div className="flex items-center gap-2">
+                         <Button variant="secondary" size="sm" onClick={() => setIsAvatarDialogOpen(true)}>
                             Change Avatar
-                          </Button>
-                        </div>
+                         </Button>
+                         <Button asChild variant="outline" size="sm">
+                            <Link href="/tiers">View Tiers</Link>
+                         </Button>
                       </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-8">
+                        <div>
+                            <span className="font-bold">{levelInfo?.currentLevel}</span>
+                            <span className="text-muted-foreground ml-1">Level</span>
+                        </div>
+                        <div>
+                            <span className="font-bold">{levelInfo?.tierName}</span>
+                             <span className="text-muted-foreground ml-1">Tier</span>
+                        </div>
+                         <div>
+                            <span className="font-bold">{levelInfo?.totalAccumulatedValue.toLocaleString()}</span>
+                            <span className="text-muted-foreground ml-1">XP</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p className="font-semibold">{levelInfo?.levelName}</p>
+                    </div>
+
                   </div>
                 </div>
               </TabsContent>
