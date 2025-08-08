@@ -62,13 +62,13 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
         <div className="my-6 flex justify-center">
           {tierIndex !== -1 && (
-              <div className="relative w-40 h-40">
+              <div className="relative w-40 h-40 rounded-full overflow-hidden">
                 <Image
                     src={`/tiers/tier-${tierIndex + 1}.png`}
                     alt={`Image for ${tierName}`}
                     width={200}
                     height={200}
-                    className="h-full w-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                    className="h-full w-full object-cover drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                 />
               </div>
           )}
