@@ -23,6 +23,7 @@ interface AuthContextType {
   setupCredentials: (username: string, password: string) => Promise<boolean>;
   continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
+  updateBio: (newBio: string) => Promise<void>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -74,6 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                  const initialGuestData: UserData = {
                     username: "Guest",
                     photoURL: null,
+                    bio: 'A wanderer exploring the system.',
                     records: [],
                     taskDefinitions: DEFAULT_TASK_DEFINITIONS,
                     bonusPoints: 0,
@@ -186,6 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             username: username,
             username_lowercase: username.toLowerCase(),
             photoURL: null,
+            bio: '',
             records: [],
             taskDefinitions: DEFAULT_TASK_DEFINITIONS,
             bonusPoints: 0,
@@ -261,6 +264,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, auth, toast, isGuest, db]);
 
+  const updateBio = useCallback(async (newBio: string) => {
+    if (isGuest) {
+        setUserData(prev => prev ? { ...prev, bio: newBio } : null);
+        const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+        guestData.bio = newBio;
+        localStorage.setItem('guest-userData', JSON.stringify(guestData));
+        toast({ title: 'Bio Updated' });
+        return;
+    }
+
+    if (!user || !db) return;
+    
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { bio: newBio }, { merge: true });
+        setUserData(prev => prev ? { ...prev, bio: newBio } : null);
+        toast({ title: 'Bio Updated' });
+    } catch (error) {
+        console.error('Error updating bio:', error);
+        toast({ title: 'Error', description: 'Could not update your bio.', variant: 'destructive' });
+    }
+  }, [user, db, toast, isGuest]);
+
 
   if (showLoading && pathname !== '/login') {
     return (
@@ -271,7 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );

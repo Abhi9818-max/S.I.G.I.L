@@ -120,7 +120,8 @@ export interface Constellation {
 export interface TaskDistributionData {
   name: string;
   value: number;
-  fill: string;
+  percentage?: number;
+  color: string;
 }
 
 export interface ProductivityByDayData {
@@ -185,6 +186,7 @@ export interface UserData {
     username: string;
     username_lowercase?: string; // For case-insensitive search
     photoURL?: string | null;
+    bio?: string;
     records?: RecordEntry[];
     taskDefinitions?: TaskDefinition[];
     bonusPoints?: number;

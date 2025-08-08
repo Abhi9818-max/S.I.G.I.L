@@ -20,6 +20,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
@@ -35,6 +43,7 @@ import Link from 'next/link';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -49,15 +58,51 @@ const simpleHash = (s: string) => {
 
 const SECRET_CODE = "9818";
 
+const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, currentBio: string, onSave: (newBio: string) => void }) => {
+    const [bio, setBio] = useState(currentBio);
+
+    const handleSave = () => {
+        onSave(bio);
+        onOpenChange(false);
+    };
+
+    useEffect(() => {
+        if(isOpen) {
+            setBio(currentBio);
+        }
+    }, [isOpen, currentBio]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit your bio</DialogTitle>
+                </DialogHeader>
+                <Textarea 
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell others a bit about yourself..."
+                    maxLength={150}
+                    rows={4}
+                />
+                <DialogFooter>
+                    <Button onClick={handleSave}>Save Bio</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -288,9 +333,19 @@ export default function SettingsPage() {
 
                     <div className="md:col-span-2 space-y-4">
                         <div className="flex items-center gap-2">
-                          <h2 className="text-2xl font-light">{userData?.username}</h2>
+                           <h2 className="text-2xl font-light">{userData?.username}</h2>
+                        </div>
+                         <div className="flex items-start gap-2">
+                            <p className="text-sm text-muted-foreground italic flex-grow">
+                                {userData?.bio || "No bio yet."}
+                            </p>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
                         </div>
                         
+                        <Separator />
+
                         <div className="flex items-center gap-8">
                             <div>
                                 <span className="font-bold">{levelInfo?.currentLevel}</span>
@@ -579,6 +634,12 @@ export default function SettingsPage() {
         onOpenChange={setIsAvatarDialogOpen}
         onSelect={(url) => updateProfilePicture(url)}
         currentAvatar={userData?.photoURL}
+    />
+    <BioDialog
+        isOpen={isBioDialogOpen}
+        onOpenChange={setIsBioDialogOpen}
+        currentBio={userData?.bio || ''}
+        onSave={updateBio}
     />
     </>
   );
