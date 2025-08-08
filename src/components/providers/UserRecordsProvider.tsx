@@ -87,7 +87,7 @@ interface UserRecordsContextType {
   getUserLevelInfo: () => UserLevelInfo | null;
   totalBonusPoints: number;
   awardTierEntryBonus: (bonusAmount: number) => void;
-  awardBonusPoints: (bonusAmount: number) => void;
+  awardBonusPoints: (bonusAmount: number, isMasterBonus?: boolean) => void;
   deductBonusPoints: (penalty: number) => void;
   updateUserDataInDb: (dataToUpdate: Partial<UserData>) => Promise<void>;
   // Constellations
@@ -112,6 +112,7 @@ interface UserRecordsContextType {
   updateHighGoal: (goal: HighGoal) => void;
   deleteHighGoal: (goalId: string) => void;
   getHighGoalProgress: (goal: HighGoal) => number;
+  masterBonusAwarded: boolean;
 }
 
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
@@ -142,6 +143,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const freezeCrystals = useMemo(() => userData?.freezeCrystals || 0, [userData]);
   const awardedStreakMilestones = useMemo(() => userData?.awardedStreakMilestones || {}, [userData]);
   const highGoals = useMemo(() => userData?.highGoals || [], [userData]);
+  const masterBonusAwarded = useMemo(() => userData?.masterBonusAwarded || false, [userData]);
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     if (isGuest) {
@@ -466,10 +468,14 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [totalBonusPoints, updateUserDataInDb]);
 
-  const awardBonusPoints = useCallback((bonusAmount: number) => {
+  const awardBonusPoints = useCallback((bonusAmount: number, isMasterBonus = false) => {
     if (bonusAmount > 0) {
       const newBonus = totalBonusPoints + bonusAmount;
-      updateUserDataInDb({ bonusPoints: newBonus });
+      const dataToUpdate: Partial<UserData> = { bonusPoints: newBonus };
+      if (isMasterBonus) {
+        dataToUpdate.masterBonusAwarded = true;
+      }
+      updateUserDataInDb(dataToUpdate);
     }
   }, [totalBonusPoints, updateUserDataInDb]);
 
@@ -739,6 +745,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     updateHighGoal,
     deleteHighGoal,
     getHighGoalProgress,
+    masterBonusAwarded,
   }), [
       records,
       addRecord,
@@ -781,6 +788,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateHighGoal,
       deleteHighGoal,
       getHighGoalProgress,
+      masterBonusAwarded,
   ]);
 
 
@@ -798,5 +806,3 @@ export const useUserRecords = (): UserRecordsContextType => {
   }
   return context;
 };
-
-    

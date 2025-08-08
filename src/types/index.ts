@@ -196,6 +196,7 @@ export interface UserData {
     highGoals?: HighGoal[];
     todoItems?: TodoItem[];
     dashboardSettings?: DashboardSettings;
+    masterBonusAwarded?: boolean;
 }
 
 // For Friends feature

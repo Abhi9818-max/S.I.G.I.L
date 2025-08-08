@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, Image as ImageIcon, PieChart, TrendingUp, KeyRound, Zap, CheckCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import {
@@ -47,7 +47,7 @@ const simpleHash = (s: string) => {
 const SECRET_CODE = "9818";
 
 export default function SettingsPage() {
-  const { getUserLevelInfo, awardBonusPoints } = useUserRecords();
+  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture } = useAuth();
   const { toast } = useToast();
@@ -226,7 +226,11 @@ export default function SettingsPage() {
 
   const handleAwardBonusXp = () => {
     const bonus = 10000;
-    awardBonusPoints(bonus);
+    if (masterBonusAwarded) {
+        toast({ title: "Bonus Already Awarded", description: "The master bonus can only be claimed once.", variant: "destructive" });
+        return;
+    }
+    awardBonusPoints(bonus, true); // Pass true for isMasterBonus
     toast({
       title: `✨ ${bonus.toLocaleString()} XP Awarded!`,
       description: "A surge of energy flows through you."
@@ -434,9 +438,18 @@ export default function SettingsPage() {
                              <div className="space-y-4 animate-fade-in-up">
                                 <h4 className="font-semibold text-primary">Master Control Panel</h4>
                                 <p className="text-sm text-muted-foreground">With great power comes great responsibility.</p>
-                                <Button onClick={handleAwardBonusXp}>
-                                  <Zap className="mr-2 h-4 w-4" />
-                                  Award 10,000 Bonus XP
+                                <Button onClick={handleAwardBonusXp} disabled={masterBonusAwarded}>
+                                  {masterBonusAwarded ? (
+                                    <>
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      Bonus Awarded
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Zap className="mr-2 h-4 w-4" />
+                                      Award 10,000 Bonus XP
+                                    </>
+                                  )}
                                 </Button>
                              </div>
                            )}
