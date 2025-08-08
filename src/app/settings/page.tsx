@@ -45,6 +45,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import Image from 'next/image';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -98,22 +105,68 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
     const [caption, setCaption] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const resizeImage = (file: File, maxWidth: number): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = document.createElement('img');
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = maxWidth / img.width;
+                    canvas.width = maxWidth;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                resolve(new File([blob], file.name, {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                }));
+                            } else {
+                                reject(new Error('Canvas to Blob conversion failed'));
+                            }
+                        }, 'image/jpeg', 0.85); // 85% quality
+                    } else {
+                         reject(new Error('Could not get canvas context'));
+                    }
+                };
+            };
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setImageFile(file);
-            setPreview(URL.createObjectURL(file));
+            try {
+                const resizedFile = await resizeImage(file, 1080); // Resize to max 1080px width
+                setImageFile(resizedFile);
+                setPreview(URL.createObjectURL(resizedFile));
+            } catch (error) {
+                console.error("Image resizing failed:", error);
+                toast({ title: "Error", description: "Failed to process image.", variant: "destructive" });
+                setImageFile(file); // Fallback to original file
+                setPreview(URL.createObjectURL(file));
+            }
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (imageFile) {
-            onSave(caption, imageFile);
+            setIsUploading(true);
+            await onSave(caption, imageFile);
             onOpenChange(false);
             setCaption('');
             setImageFile(null);
             setPreview(null);
+            setIsUploading(false);
         }
     };
 
@@ -148,7 +201,9 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
                     />
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSave} disabled={!imageFile}>Post</Button>
+                    <Button onClick={handleSave} disabled={!imageFile || isUploading}>
+                        {isUploading ? "Posting..." : "Post"}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -160,7 +215,7 @@ export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture, updateBio, addPost } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio, addPost, logout } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -502,49 +557,47 @@ export default function SettingsPage() {
                 </div>
                 {/* Mobile Layout */}
                 <div className="md:hidden space-y-4">
-                  <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setIsAvatarDialogOpen(true)}
-                        className="avatar-overlay-container rounded-full flex-shrink-0"
-                        aria-label="Change profile picture"
-                    >
-                        <Avatar className="h-24 w-24">
-                            <AvatarImage src={userAvatar} alt={userData?.username}/>
-                            <AvatarFallback className="text-4xl">
-                                {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="avatar-overlay">
-                            <Pencil className="h-6 w-6 text-white/90" />
-                        </div>
-                    </button>
-                    <div className="flex-grow flex items-center justify-around text-center">
-                        <div>
-                          <p className="font-bold text-lg">{posts.length}</p>
-                          <p className="text-sm text-muted-foreground">Posts</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-lg">{friends.length}</p>
-                          <p className="text-sm text-muted-foreground">Friends</p>
-                        </div>
-                        <div>
-                          <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
-                          <p className="text-sm text-muted-foreground">Level</p>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setIsAvatarDialogOpen(true)}
+                            className="avatar-overlay-container rounded-full flex-shrink-0"
+                            aria-label="Change profile picture"
+                        >
+                            <Avatar className="h-24 w-24">
+                                <AvatarImage src={userAvatar} alt={userData?.username}/>
+                                <AvatarFallback className="text-4xl">
+                                    {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="avatar-overlay">
+                                <Pencil className="h-6 w-6 text-white/90" />
+                            </div>
+                        </button>
+                        <div className="flex-grow flex items-center justify-around text-center">
+                            <div>
+                                <p className="font-bold text-lg">{posts.length}</p>
+                                <p className="text-sm text-muted-foreground">Posts</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-lg">{friends.length}</p>
+                                <p className="text-sm text-muted-foreground">Friends</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
+                                <p className="text-sm text-muted-foreground">Level</p>
+                            </div>
                         </div>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1">
                         <h2 className="font-semibold">{userData?.username}</h2>
-                      </div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {userData?.bio || "No bio yet."}
-                      </p>
-                  </div>
-                  <div className="flex gap-2">
-                      <Button className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
-                      <Button variant="secondary" className="flex-1">Share Profile</Button>
-                  </div>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {userData?.bio || "No bio yet."}
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
+                        <Button variant="secondary" className="flex-1">Share Profile</Button>
+                    </div>
                 </div>
               </TabsContent>
 
@@ -576,50 +629,28 @@ export default function SettingsPage() {
               </TabsContent>
 
               <TabsContent value="layout" className="mt-6">
-                <div className="space-y-4">
-                  <div className="p-4 border rounded-lg space-y-4">
-                      
-                      <div>
-                        <h4 className="font-semibold text-sm mb-3">Stats Panel Cards</h4>
-                        <div className="space-y-3 pl-2">
-                            {statComponents.map(({ key, label, hasDaysInput }) => (
-                                <div key={key} className="flex flex-col gap-2">
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor={key.toString()} className="font-normal">{label}</Label>
-                                        <Switch
-                                            id={key.toString()}
-                                            checked={!!dashboardSettings[key]}
-                                            onCheckedChange={(checked) => updateDashboardSetting(key, checked)}
-                                        />
-                                    </div>
-                                    {hasDaysInput && dashboardSettings[key] && (
-                                         <div className="flex items-center gap-2 pl-4 animate-fade-in-up">
-                                            <CalendarDays className="h-4 w-4 text-muted-foreground"/>
-                                            <Label htmlFor={`${hasDaysInput}-input`} className="text-xs text-muted-foreground whitespace-nowrap">Time Period (days)</Label>
-                                            <Input
-                                                id={`${hasDaysInput}-input`}
-                                                type="number"
-                                                className="h-8 w-20"
-                                                value={dashboardSettings[hasDaysInput] as number}
-                                                onChange={(e) => handleDaysChange(hasDaysInput, e.target.value)}
-                                                onBlur={(e) => handleDaysBlur(hasDaysInput, e.target.value)}
-                                                min={1}
-                                                max={365}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <h4 className="font-semibold text-sm mb-3">Main Dashboard Components</h4>
-                         <div className="space-y-3 pl-2">
-                          {dashboardComponents.map(({ key, label }) => (
-                              <div key={key} className="flex items-center justify-between">
+                <Accordion type="multiple" className="w-full space-y-4">
+                  <AccordionItem value="dashboard-components" className="border rounded-lg p-4">
+                    <AccordionTrigger>Main Dashboard Components</AccordionTrigger>
+                    <AccordionContent className="space-y-3 pt-4">
+                      {dashboardComponents.map(({ key, label }) => (
+                          <div key={key} className="flex items-center justify-between">
+                              <Label htmlFor={key.toString()} className="font-normal">{label}</Label>
+                              <Switch
+                                  id={key.toString()}
+                                  checked={!!dashboardSettings[key]}
+                                  onCheckedChange={(checked) => updateDashboardSetting(key, checked)}
+                              />
+                          </div>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                   <AccordionItem value="stats-panel" className="border rounded-lg p-4">
+                    <AccordionTrigger>Stats Panel Cards</AccordionTrigger>
+                    <AccordionContent className="space-y-3 pt-4">
+                       {statComponents.map(({ key, label, hasDaysInput }) => (
+                          <div key={key} className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
                                   <Label htmlFor={key.toString()} className="font-normal">{label}</Label>
                                   <Switch
                                       id={key.toString()}
@@ -627,55 +658,65 @@ export default function SettingsPage() {
                                       onCheckedChange={(checked) => updateDashboardSetting(key, checked)}
                                   />
                               </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Separator />
-
+                              {hasDaysInput && dashboardSettings[key] && (
+                                   <div className="flex items-center gap-2 pl-4 animate-fade-in-up">
+                                      <CalendarDays className="h-4 w-4 text-muted-foreground"/>
+                                      <Label htmlFor={`${hasDaysInput}-input`} className="text-xs text-muted-foreground whitespace-nowrap">Time Period (days)</Label>
+                                      <Input
+                                          id={`${hasDaysInput}-input`}
+                                          type="number"
+                                          className="h-8 w-20"
+                                          value={dashboardSettings[hasDaysInput] as number}
+                                          onChange={(e) => handleDaysChange(hasDaysInput, e.target.value)}
+                                          onBlur={(e) => handleDaysBlur(hasDaysInput, e.target.value)}
+                                          min={1}
+                                          max={365}
+                                      />
+                                  </div>
+                              )}
+                          </div>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                   <AccordionItem value="chart-display" className="border rounded-lg p-4">
+                    <AccordionTrigger>Chart Display</AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
                       <div>
-                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                          <PieChart className="h-4 w-4"/>
-                          Chart Display
-                        </h4>
-                         <div className="space-y-4 pl-2">
-                            <div>
-                                <Label className="font-normal">Progress Chart Time Range</Label>
-                                <RadioGroup 
-                                    value={dashboardSettings.progressChartTimeRange || 'weekly'}
-                                    onValueChange={(value: ProgressChartTimeRange) => updateDashboardSetting('progressChartTimeRange', value)}
-                                    className="mt-2 grid grid-cols-2 gap-2"
-                                >
-                                    {(['weekly', 'monthly', 'quarterly', 'biannually', 'yearly'] as ProgressChartTimeRange[]).map(range => (
-                                        <div className="flex items-center space-x-2" key={range}>
-                                            <RadioGroupItem value={range} id={`r-${range}`} />
-                                            <Label htmlFor={`r-${range}`} className="font-normal capitalize">{range}</Label>
-                                        </div>
-                                    ))}
-                                </RadioGroup>
-                            </div>
-                            <Separator />
-                            <div>
-                                <Label className="font-normal">Time Pie Chart Labels</Label>
-                                <RadioGroup 
-                                    value={dashboardSettings.pieChartLabelFormat || 'percentage'}
-                                    onValueChange={(value: 'percentage' | 'time') => updateDashboardSetting('pieChartLabelFormat', value)}
-                                    className="mt-2"
-                                >
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="percentage" id="r-percent" />
-                                    <Label htmlFor="r-percent" className="font-normal">Percentage</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="time" id="r-time" />
-                                    <Label htmlFor="r-time" className="font-normal">Time (HH:MM)</Label>
-                                </div>
-                                </RadioGroup>
-                            </div>
-                        </div>
+                          <Label className="font-normal">Progress Chart Time Range</Label>
+                          <RadioGroup 
+                              value={dashboardSettings.progressChartTimeRange || 'weekly'}
+                              onValueChange={(value: ProgressChartTimeRange) => updateDashboardSetting('progressChartTimeRange', value)}
+                              className="mt-2 grid grid-cols-2 gap-2"
+                          >
+                              {(['weekly', 'monthly', 'quarterly', 'biannually', 'yearly'] as ProgressChartTimeRange[]).map(range => (
+                                  <div className="flex items-center space-x-2" key={range}>
+                                      <RadioGroupItem value={range} id={`r-${range}`} />
+                                      <Label htmlFor={`r-${range}`} className="font-normal capitalize">{range}</Label>
+                                  </div>
+                              ))}
+                          </RadioGroup>
                       </div>
-                  </div>
-                </div>
+                      <Separator />
+                      <div>
+                          <Label className="font-normal">Time Pie Chart Labels</Label>
+                          <RadioGroup 
+                              value={dashboardSettings.pieChartLabelFormat || 'percentage'}
+                              onValueChange={(value: 'percentage' | 'time') => updateDashboardSetting('pieChartLabelFormat', value)}
+                              className="mt-2"
+                          >
+                          <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="percentage" id="r-percent" />
+                              <Label htmlFor="r-percent" className="font-normal">Percentage</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="time" id="r-time" />
+                              <Label htmlFor="r-time" className="font-normal">Time (HH:MM)</Label>
+                          </div>
+                          </RadioGroup>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </TabsContent>
               
               <TabsContent value="data" className="mt-6">
