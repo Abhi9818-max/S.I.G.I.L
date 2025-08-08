@@ -112,7 +112,6 @@ const ProgressOverTimeChart: React.FC<ProgressOverTimeChartProps> = ({ selectedT
           <TrendingUp className="h-6 w-6 text-accent" />
           <CardTitle>{chartTitle}</CardTitle>
         </div>
-        <CardDescription>{chartDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
