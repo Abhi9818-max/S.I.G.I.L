@@ -85,7 +85,8 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
     }, [currentRelationship, isOpen]);
 
     const handleSave = () => {
-        onSave(relationship);
+        // If the user selects the 'none' value, save an empty string.
+        onSave(relationship === 'none' ? '' : relationship);
         onOpenChange(false);
     };
 
@@ -102,7 +103,7 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
                             <SelectValue placeholder="Select a relationship..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">Clear Relationship</SelectItem>
+                            <SelectItem value="none">Clear Relationship</SelectItem>
                             {relationshipOptions.map(option => (
                                 <SelectItem key={option} value={option}>{option}</SelectItem>
                             ))}
