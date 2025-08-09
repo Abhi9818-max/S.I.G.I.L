@@ -456,19 +456,82 @@ export default function SettingsPage() {
                         </button>
                         <div className="flex-grow flex flex-col items-start space-y-2">
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                              <div className="flex justify-around items-center gap-4 text-center">
-                                <div>
-                                    <p className="font-bold text-lg">{friends.length}</p>
-                                    <p className="text-sm text-muted-foreground">Friends</p>
-                                </div>
+                              <div className="flex justify-around items-center gap-4 text-center w-full">
+                                <Popover>
+                                  <PopoverTrigger>
+                                    <div className="cursor-pointer">
+                                        <p className="font-bold text-lg">{friends.length}</p>
+                                        <p className="text-sm text-muted-foreground">Friends</p>
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
+                                      <div className="grid gap-4">
+                                          <div className="space-y-2">
+                                              <h4 className="font-medium leading-none">Friends</h4>
+                                              <p className="text-sm text-muted-foreground">Your connections.</p>
+                                          </div>
+                                          <ScrollArea className="h-[200px]">
+                                          {friends.length === 0 ? (
+                                              <p className="text-center text-sm text-muted-foreground py-4">No friends yet.</p>
+                                          ) : (
+                                              <div className="space-y-2 pr-2">
+                                                  {friends.map(friend => (
+                                                  <Link key={friend.uid} href={`/friends/${friend.uid}`}>
+                                                      <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                      <Avatar className="h-8 w-8">
+                                                          <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                          <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                      </Avatar>
+                                                      <span className="font-medium text-sm">{friend.username}</span>
+                                                      </div>
+                                                  </Link>
+                                                  ))}
+                                              </div>
+                                          )}
+                                          </ScrollArea>
+                                      </div>
+                                  </PopoverContent>
+                                </Popover>
                                 <div>
                                     <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
                                     <p className="text-sm text-muted-foreground">Level</p>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
-                                    <p className="text-sm text-muted-foreground">Pending</p>
-                                </div>
+                                <Popover>
+                                    <PopoverTrigger>
+                                      <div className="cursor-pointer">
+                                          <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
+                                          <p className="text-sm text-muted-foreground">Pending</p>
+                                      </div>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80">
+                                      <div className="grid gap-4">
+                                          <div className="space-y-2">
+                                              <h4 className="font-medium leading-none">Pending Requests</h4>
+                                              <p className="text-sm text-muted-foreground">Manage your requests.</p>
+                                          </div>
+                                          <ScrollArea className="h-[200px]">
+                                              <h5 className="text-xs font-semibold text-muted-foreground mb-2">INCOMING ({incomingRequests.length})</h5>
+                                              {incomingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : incomingRequests.map(req => (
+                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
+                                                      <span className="font-medium text-xs">{req.senderUsername}</span>
+                                                      <div className="flex gap-1">
+                                                          <Button size="sm" className="h-6 px-2 text-xs" onClick={() => acceptFriendRequest(req)}>Accept</Button>
+                                                          <Button size="sm" variant="destructive" className="h-6 px-2 text-xs" onClick={() => declineFriendRequest(req.id)}>Decline</Button>
+                                                      </div>
+                                                  </div>
+                                              ))}
+                                              <Separator className="my-2" />
+                                              <h5 className="text-xs font-semibold text-muted-foreground mb-2">SENT ({pendingRequests.length})</h5>
+                                              {pendingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : pendingRequests.map(req => (
+                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
+                                                      <span className="font-medium text-xs">{req.recipientUsername}</span>
+                                                      <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                                  </div>
+                                              ))}
+                                          </ScrollArea>
+                                      </div>
+                                  </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
                     </div>
