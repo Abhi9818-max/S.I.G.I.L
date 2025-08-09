@@ -136,7 +136,7 @@ export default function FriendProfilePage() {
     const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
     const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
     const { toast } = useToast();
-
+    
     const currentUserRecords = useUserRecords();
     const levelInfo = currentUserRecords.getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
@@ -144,6 +144,17 @@ export default function FriendProfilePage() {
     const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
     const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
     const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
+    
+    const friendPacts = useMemo(() => {
+        if (!friendData?.todoItems) return [];
+        return friendData.todoItems.filter(pact => {
+            try {
+                return isToday(new Date(pact.createdAt));
+            } catch {
+                return false;
+            }
+        })
+    }, [friendData?.todoItems]);
 
     useEffect(() => {
         const fetchFriendData = async () => {
@@ -153,10 +164,12 @@ export default function FriendProfilePage() {
                     if (data) {
                         setFriendData(data);
                     } else {
+                        toast({ title: 'Error', description: 'Friend data not found.', variant: 'destructive' });
                         router.push('/friends'); // Friend not found or not a friend
                     }
                 } catch (error) {
                     console.error("Error fetching friend data:", error);
+                    toast({ title: 'Error', description: 'Could not fetch friend data.', variant: 'destructive' });
                     router.push('/friends');
                 } finally {
                     setIsLoading(false);
@@ -165,7 +178,7 @@ export default function FriendProfilePage() {
         };
 
         fetchFriendData();
-    }, [friendId, getFriendData, router]);
+    }, [friendId, getFriendData, router, toast]);
     
     const handleUpdateNickname = async (newNickname: string) => {
         if (!friendId) return;
@@ -202,30 +215,12 @@ export default function FriendProfilePage() {
     
     const friendRecords = friendData.records || [];
     const friendTasks = friendData.taskDefinitions || [];
-    const friendBonusPoints = friendData.bonusPoints || 0;
-    const totalExperience = friendRecords.reduce((sum, r) => sum + r.value, 0) + friendBonusPoints;
-    const friendLevelInfo = calculateUserLevelInfo(totalExperience);
     
-    const friendPacts = useMemo(() => {
-        if (!friendData.todoItems) return [];
-        return friendData.todoItems.filter(pact => {
-            try {
-                return isToday(new Date(pact.createdAt));
-            } catch {
-                return false;
-            }
-        })
-    }, [friendData.todoItems]);
-
     const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 12) + 1}.jpeg`;
-
     const today = new Date();
     const yesterday = subDays(today, 1);
-    
     const displayName = friendInfo.nickname || friendData.username;
     
-    const canPropose = !pendingProposal && !incomingProposal;
-
     const getRelationshipContent = () => {
         if (pendingProposal) {
             return (
@@ -330,18 +325,12 @@ export default function FriendProfilePage() {
                                         <TabsTrigger value="today">Today</TabsTrigger>
                                         <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                                     </TabsList>
-                                </Tabs>
-                            </div>
-                             <div className="flex justify-center">
-                                <Tabs defaultValue="today" className="w-full">
                                     <TabsContent value="today" className="mt-4">
                                         <DailyTimeBreakdownChart
                                             date={today}
                                             records={friendRecords}
                                             taskDefinitions={friendTasks}
                                             hideFooter={true}
-                                            hideDescription={true}
-                                            hideTitle={true}
                                         />
                                     </TabsContent>
                                     <TabsContent value="yesterday" className="mt-4">
@@ -350,8 +339,6 @@ export default function FriendProfilePage() {
                                             records={friendRecords}
                                             taskDefinitions={friendTasks}
                                             hideFooter={true}
-                                            hideDescription={true}
-                                            hideTitle={true}
                                         />
                                     </TabsContent>
                                 </Tabs>

@@ -21,12 +21,8 @@ import { ScrollArea } from '../ui/scroll-area';
 interface DailyTimeBreakdownChartProps {
   date?: Date;
   hideFooter?: boolean;
-  hideDescription?: boolean;
   records?: RecordEntry[];
   taskDefinitions?: TaskDefinition[];
-  hideTitle?: boolean;
-  hideTitleDate?: boolean;
-  headerContent?: React.ReactNode;
 }
 
 const getDailyTimeBreakdown = (
@@ -88,7 +84,7 @@ const getDailyTimeBreakdown = (
 };
 
 
-const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, hideDescription = false, records: recordsProp, taskDefinitions: taskDefinitionsProp, hideTitle = false, hideTitleDate = false, headerContent = null }) => {
+const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
     const userRecordsContext = useUserRecords();
     const { dashboardSettings } = useSettings();
     
@@ -158,7 +154,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
         });
     };
 
-    const chartTitle = hideTitleDate ? 'Time Breakdown' : (date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown');
+    const chartTitle = date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown';
     const chartDescription = `A 24-hour visualization of your time-based tasks.`;
 
     const pieData = useMemo(() => {
@@ -171,12 +167,13 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     
     const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, outerRadius, percent, index, name, value }: any) => {
       const RADIAN = Math.PI / 180;
-      const radius = outerRadius * 1.25;
+      // Make radius larger to render labels outside the pie
+      const radius = outerRadius * 1.25; 
       const x = cx + radius * Math.cos(-midAngle * RADIAN);
       const y = cy + radius * Math.sin(-midAngle * RADIAN);
       const textAnchor = x > cx ? 'start' : 'end';
     
-      if (percent === 0 || name === 'Unallocated') {
+      if (percent < 0.05 || name === 'Unallocated') { // Don't render for small slices or unallocated time
         return null;
       }
       
@@ -203,115 +200,108 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     });
 
     return (
-        <div>
-            {!hideTitle && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mb-6">
-                  <div className="flex items-center gap-2">
-                      <Clock className="h-6 w-6 text-accent" />
-                      <div>
-                        <h2 className="text-2xl font-semibold leading-none tracking-tight">{chartTitle}</h2>
-                        {!hideDescription && <p className="text-sm text-muted-foreground">{chartDescription}</p>}
-                      </div>
-                  </div>
-                  {headerContent}
-              </div>
-            )}
-            
-            <div className="h-[300px] w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                        <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={renderCustomizedLabel}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            nameKey="name"
-                            strokeWidth={2}
-                            stroke="hsl(var(--background))"
-                        >
-                            {pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
-            
-            {!hideFooter && (
-                <div className="mt-6">
-                    <Separator />
-                    <div className="pt-4 flex flex-col items-start gap-4">
-                        <button 
-                          className="w-full flex justify-between items-center p-2 rounded-md hover:bg-muted/50 transition-colors"
-                          onClick={() => setShowQuickLogForm(!showQuickLogForm)}
-                          aria-expanded={showQuickLogForm}
-                        >
-                            <p className="text-sm font-medium text-muted-foreground">Quick Log Time</p>
-                            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", showQuickLogForm && "rotate-180")} />
-                        </button>
-                        {showQuickLogForm && (
-                            <div className="w-full space-y-3 animate-fade-in-up">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                     <div>
-                                        <Label htmlFor="quick-task-name" className="sr-only">Task Name</Label>
-                                        <Input 
-                                            id="quick-task-name"
-                                            placeholder="Task Name"
-                                            value={newTaskName}
-                                            onChange={(e) => setNewTaskName(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Select value={unit} onValueChange={(value: TaskUnit) => setUnit(value)}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="minutes">Minutes</SelectItem>
-                                                <SelectItem value="hours">Hours</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                         <Input 
-                                            type="number" 
-                                            placeholder="e.g., 30"
-                                            value={quickLogValue}
-                                            onChange={(e) => setQuickLogValue(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                                <Button onClick={handleQuickLog} className="w-full">
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Log Time
-                                </Button>
-                                {timeBasedRecords.length > 0 && (
-                                    <div className="space-y-2 pt-2">
-                                        <h4 className="text-xs font-semibold text-muted-foreground">LOGGED TODAY:</h4>
-                                        <ScrollArea className="h-24 pr-2">
-                                            <div className="space-y-1">
-                                                {timeBasedRecords.map(rec => {
-                                                    const task = userRecordsContext.getTaskDefinitionById(rec.taskType!);
-                                                    return (
-                                                        <div key={rec.id} className="flex items-center justify-between text-xs p-1 rounded-md hover:bg-muted/50">
-                                                            <span>{task?.name}: <span className="font-bold">{rec.value}</span> {task?.unit}</span>
-                                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(rec.id)}>
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                    )
-                                                })}
-                                            </div>
-                                        </ScrollArea>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+        <Card className="shadow-lg">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-6 w-6 text-accent" />
+                  <CardTitle>{chartTitle}</CardTitle>
                 </div>
+                <CardDescription>{chartDescription}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="h-[300px] w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                         <PieChart>
+                            <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={renderCustomizedLabel}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                                nameKey="name"
+                                strokeWidth={2}
+                                stroke="hsl(var(--background))"
+                            >
+                                {pieData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            </CardContent>
+            {!hideFooter && (
+                <CardFooter className="flex-col items-start gap-4">
+                    <Separator />
+                    <button 
+                      className="w-full flex justify-between items-center p-2 rounded-md hover:bg-muted/50 transition-colors"
+                      onClick={() => setShowQuickLogForm(!showQuickLogForm)}
+                      aria-expanded={showQuickLogForm}
+                    >
+                        <p className="text-sm font-medium text-muted-foreground">Quick Log Time</p>
+                        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", showQuickLogForm && "rotate-180")} />
+                    </button>
+                    {showQuickLogForm && (
+                        <div className="w-full space-y-3 animate-fade-in-up">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                 <div>
+                                    <Label htmlFor="quick-task-name" className="sr-only">Task Name</Label>
+                                    <Input 
+                                        id="quick-task-name"
+                                        placeholder="Task Name"
+                                        value={newTaskName}
+                                        onChange={(e) => setNewTaskName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Select value={unit} onValueChange={(value: TaskUnit) => setUnit(value)}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="minutes">Minutes</SelectItem>
+                                            <SelectItem value="hours">Hours</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                     <Input 
+                                        type="number" 
+                                        placeholder="e.g., 30"
+                                        value={quickLogValue}
+                                        onChange={(e) => setQuickLogValue(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <Button onClick={handleQuickLog} className="w-full">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Log Time
+                            </Button>
+                            {timeBasedRecords.length > 0 && (
+                                <div className="space-y-2 pt-2">
+                                    <h4 className="text-xs font-semibold text-muted-foreground">LOGGED TODAY:</h4>
+                                    <ScrollArea className="h-24 pr-2">
+                                        <div className="space-y-1">
+                                            {timeBasedRecords.map(rec => {
+                                                const task = userRecordsContext.getTaskDefinitionById(rec.taskType!);
+                                                return (
+                                                    <div key={rec.id} className="flex items-center justify-between text-xs p-1 rounded-md hover:bg-muted/50">
+                                                        <span>{task?.name}: <span className="font-bold">{rec.value}</span> {task?.unit}</span>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(rec.id)}>
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </ScrollArea>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </CardFooter>
             )}
-        </div>
+        </Card>
     );
 }
 
