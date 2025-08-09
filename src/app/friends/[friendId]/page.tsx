@@ -313,8 +313,8 @@ export default function FriendProfilePage() {
 
                       <TabsContent value="activity" className="mt-6">
                          <div className="p-4 rounded-lg bg-muted/40 mb-8">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                            <h2 className="text-2xl font-semibold mb-4">Daily Breakdown</h2>
+                            <div className="flex items-center justify-between">
                                 <Tabs defaultValue="today" className="w-auto">
                                     <TabsList>
                                         <TabsTrigger value="today">Today</TabsTrigger>
