@@ -573,23 +573,25 @@ export default function SettingsPage() {
                                 <Pencil className="h-6 w-6 text-white/90" />
                             </div>
                         </button>
-                        <div className="flex-grow flex items-center justify-around text-center">
-                            <div>
-                                <p className="font-bold text-lg">{posts.length}</p>
-                                <p className="text-sm text-muted-foreground">Posts</p>
-                            </div>
-                            <div>
-                                <p className="font-bold text-lg">{friends.length}</p>
-                                <p className="text-sm text-muted-foreground">Friends</p>
-                            </div>
-                            <div>
-                                <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
-                                <p className="text-sm text-muted-foreground">Level</p>
+                        <div className="flex-grow text-center space-y-2">
+                             <h2 className="font-semibold text-lg">{userData?.username}</h2>
+                             <div className="flex justify-around items-center">
+                                <div>
+                                    <p className="font-bold text-lg">{posts.length}</p>
+                                    <p className="text-sm text-muted-foreground">Posts</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg">{friends.length}</p>
+                                    <p className="text-sm text-muted-foreground">Friends</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
+                                    <p className="text-sm text-muted-foreground">Level</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <h2 className="font-semibold">{userData?.username}</h2>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>
@@ -837,3 +839,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
