@@ -116,7 +116,7 @@ export default function FriendProfilePage() {
                                 <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
                              <div className="md:hidden">
-                                <h1 className="text-2xl font-semibold">{friendData.username}</h1>
+                                <h1 className="text-xl font-semibold">{friendData.username}</h1>
                                 <div className="mt-1">
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
@@ -125,7 +125,7 @@ export default function FriendProfilePage() {
 
                         <div className="w-full">
                             <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
-                                <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                                <h1 className="text-2xl font-semibold">{friendData.username}</h1>
                                <div className="hidden md:block">
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
