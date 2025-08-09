@@ -557,7 +557,7 @@ export default function SettingsPage() {
                 </div>
                 {/* Mobile Layout */}
                 <div className="md:hidden space-y-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
                             className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -592,7 +592,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold">{userData?.username}</p>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>
