@@ -108,71 +108,33 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
 
-    const resizeImage = (file: File, maxWidth: number): Promise<File> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = document.createElement('img');
-                img.src = event.target?.result as string;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const scale = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        canvas.toBlob((blob) => {
-                            if (blob) {
-                                resolve(new File([blob], file.name, {
-                                    type: 'image/jpeg',
-                                    lastModified: Date.now()
-                                }));
-                            } else {
-                                reject(new Error('Canvas to Blob conversion failed'));
-                            }
-                        }, 'image/jpeg', 0.85); // 85% quality
-                    } else {
-                         reject(new Error('Could not get canvas context'));
-                    }
-                };
-            };
-            reader.onerror = error => reject(error);
-        });
-    };
-
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            try {
-                const resizedFile = await resizeImage(file, 1080); // Resize to max 1080px width
-                setImageFile(resizedFile);
-                setPreview(URL.createObjectURL(resizedFile));
-            } catch (error) {
-                console.error("Image resizing failed:", error);
-                toast({ title: "Error", description: "Failed to process image.", variant: "destructive" });
-                setImageFile(file); // Fallback to original file
-                setPreview(URL.createObjectURL(file));
-            }
+            setImageFile(file);
+            setPreview(URL.createObjectURL(file));
         }
     };
 
     const handleSave = async () => {
         if (!imageFile || isUploading) return;
+        
         setIsUploading(true);
         try {
             const result = await onSave(caption, imageFile);
             if (result) {
+                // Success, close dialog and reset state
                 onOpenChange(false);
                 setCaption('');
                 setImageFile(null);
                 setPreview(null);
             }
         } catch (error) {
-            // Error toast is handled in the `addPost` function in AuthProvider
+            // Error is already toasted inside `addPost` function.
+            // No need to show another toast here.
             console.error("Post creation failed:", error);
         } finally {
+            // This will run regardless of success or failure
             setIsUploading(false);
         }
     };
@@ -564,7 +526,7 @@ export default function SettingsPage() {
                 </div>
                  {/* Mobile Layout */}
                 <div className="md:hidden space-y-4">
-                    <div className="flex items-start gap-6">
+                    <div className="flex items-center gap-6">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
                             className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -580,7 +542,7 @@ export default function SettingsPage() {
                                 <Pencil className="h-6 w-6 text-white/90" />
                             </div>
                         </button>
-                        <div className="flex-grow flex flex-col items-start space-y-2 mt-2">
+                        <div className="flex-grow flex flex-col items-start space-y-2">
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
                              <div className="flex justify-around items-center gap-4 text-center">
                                 <div>
@@ -599,7 +561,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>
                     </div>
@@ -846,8 +808,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
-
-    
-
