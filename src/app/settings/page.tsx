@@ -159,17 +159,18 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
     };
 
     const handleSave = async () => {
-        if (imageFile) {
-            setIsUploading(true);
-            try {
-                await onSave(caption, imageFile);
-                onOpenChange(false);
-                setCaption('');
-                setImageFile(null);
-                setPreview(null);
-            } finally {
-                setIsUploading(false);
-            }
+        if (!imageFile) return;
+        setIsUploading(true);
+        try {
+            await onSave(caption, imageFile);
+            onOpenChange(false);
+            setCaption('');
+            setImageFile(null);
+            setPreview(null);
+        } catch (error) {
+            // Error toast is handled in the `addPost` function
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -558,8 +559,8 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-                {/* Mobile Layout */}
-                <div className="md:hidden space-y-4">
+                 {/* Mobile Layout */}
+                 <div className="md:hidden space-y-4">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
@@ -595,6 +596,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="space-y-1">
+                        <p className="text-sm font-semibold">{userData?.username}</p>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>
@@ -842,5 +844,7 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
 
     
