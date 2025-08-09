@@ -8,7 +8,7 @@ import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth as firebaseAuth, db, storage as firebaseStorage, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import type { UserData, Post } from '@/types';
+import type { UserData } from '@/types';
 import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,7 +26,6 @@ interface AuthContextType {
   continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
-  addPost: (caption: string, imageFile: File) => Promise<Post | null>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -90,7 +89,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     awardedStreakMilestones: {},
                     highGoals: [],
                     todoItems: [],
-                    posts: [],
                 };
                 setUserData(initialGuestData);
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
@@ -204,7 +202,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             awardedStreakMilestones: {},
             highGoals: [],
             todoItems: [],
-            posts: [],
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
@@ -293,48 +290,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, db, toast, isGuest]);
   
-  const addPost = useCallback(async (caption: string, imageFile: File): Promise<Post | null> => {
-    if (!storage) {
-        toast({ title: "Error", description: "Storage is not configured.", variant: "destructive" });
-        return null;
-    }
-    if (!user) {
-        toast({ title: "Error", description: "You must be logged in to post.", variant: "destructive" });
-        return null;
-    }
-
-    toast({ title: "Uploading...", description: "Your post is being uploaded." });
-
-    try {
-        const imagePath = `posts/${user.uid}/${uuidv4()}-${imageFile.name}`;
-        const storageRef = ref(storage, imagePath);
-        await uploadBytes(storageRef, imageFile);
-        const imageUrl = await getDownloadURL(storageRef);
-
-        const newPost: Post = {
-            id: uuidv4(),
-            imageUrl,
-            caption,
-            createdAt: new Date().toISOString(),
-        };
-
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, {
-            posts: arrayUnion(newPost)
-        });
-        
-        setUserData(prev => prev ? { ...prev, posts: [...(prev.posts || []), newPost] } : null);
-
-        toast({ title: "Success!", description: "Your post has been published." });
-        return newPost;
-
-    } catch (error) {
-        console.error("Error adding post:", error);
-        toast({ title: "Upload Failed", description: "Could not publish your post.", variant: "destructive" });
-        return null;
-    }
-  }, [user, storage, toast, db]);
-
 
   if (showLoading && pathname !== '/login') {
     return (
@@ -345,7 +300,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, addPost, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );

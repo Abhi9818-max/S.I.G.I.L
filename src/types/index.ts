@@ -181,13 +181,6 @@ export interface DashboardSettings {
   pieChartLabelFormat?: 'percentage' | 'time';
 }
 
-export interface Post {
-    id: string;
-    imageUrl: string;
-    caption: string;
-    createdAt: string; // ISO date string
-}
-
 // For Auth/User Data
 export interface UserData {
     username: string;
@@ -206,7 +199,6 @@ export interface UserData {
     todoItems?: TodoItem[];
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
-    posts?: Post[];
 }
 
 // For Friends feature

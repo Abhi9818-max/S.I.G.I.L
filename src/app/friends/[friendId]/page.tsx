@@ -10,7 +10,7 @@ import { ArrowLeft, User, ListChecks, ImageIcon } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { UserData, Friend, RecordEntry, TaskDefinition, Post } from '@/types';
+import type { UserData, Friend, RecordEntry, TaskDefinition } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
@@ -92,7 +92,6 @@ export default function FriendProfilePage() {
     const totalExperience = friendRecords.reduce((sum, r) => sum + r.value, 0) + friendBonusPoints;
     const friendLevelInfo = calculateUserLevelInfo(totalExperience);
     const friendPacts = friendData.todoItems || [];
-    const friendPosts = friendData.posts || [];
 
     const avatarNumber = (simpleHash(friendId) % 12) + 1;
     const friendAvatar = friendData.photoURL || `/avatars/avatar${avatarNumber}.jpeg`;
@@ -129,11 +128,10 @@ export default function FriendProfilePage() {
                 </div>
                 
                 <Tabs defaultValue="stats" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="stats">Stats</TabsTrigger>
                     <TabsTrigger value="pacts">Pacts</TabsTrigger>
                     <TabsTrigger value="activity">Activity</TabsTrigger>
-                    <TabsTrigger value="posts">Posts</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="stats" className="mt-6">
@@ -197,26 +195,6 @@ export default function FriendProfilePage() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="posts" className="mt-6">
-                      {friendPosts.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                           <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-2"/>
-                           <p>{friendData.username} hasn't posted anything yet.</p>
-                        </div>
-                      ) : (
-                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
-                          {friendPosts.map(post => (
-                            <div key={post.id} className="w-full aspect-square relative group bg-muted">
-                              <Image src={post.imageUrl} alt={post.caption || 'User post'} fill className="object-cover" />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
-                                <p className="text-white text-xs text-center line-clamp-4">{post.caption}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </TabsContent>
-
                 </Tabs>
             </main>
         </div>
