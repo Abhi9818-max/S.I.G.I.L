@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -25,7 +25,7 @@ import TaskFilterBar from '@/components/records/TaskFilterBar';
 import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +77,7 @@ const relationshipOptions = [
     "Best Friend", "Boyfriend", "Girlfriend", "Ex-Boyfriend", "Ex-Girlfriend", "Sugar Daddy", "Sugar Mommy", "Fuck Buddy"
 ];
 
-const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentRelationship: string; onSave: (name: string) => void }) => {
+const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave, friendName }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentRelationship: string; onSave: (name: string) => void; friendName: string; }) => {
     const [relationship, setRelationship] = useState(currentRelationship);
 
     useEffect(() => {
@@ -85,8 +85,7 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
     }, [currentRelationship, isOpen]);
 
     const handleSave = () => {
-        // If the user selects the 'none' value, save an empty string.
-        onSave(relationship === 'none' ? '' : relationship);
+        onSave(relationship);
         onOpenChange(false);
     };
 
@@ -94,7 +93,10 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Select Relationship</DialogTitle>
+                    <DialogTitle>Propose a Relationship</DialogTitle>
+                    <DialogDescription>
+                        This will send a proposal to {friendName}. They must accept it for the relationship to be set for both of you.
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2">
                     <Label htmlFor="relationship">Your Relationship</Label>
@@ -103,7 +105,7 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
                             <SelectValue placeholder="Select a relationship..." />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none">Clear Relationship</SelectItem>
+                             <SelectItem value="none">Clear Relationship</SelectItem>
                             {relationshipOptions.map(option => (
                                 <SelectItem key={option} value={option}>{option}</SelectItem>
                             ))}
@@ -111,7 +113,10 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
                     </Select>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleSave} disabled={!relationship || relationship === 'none'}>
+                        <Send className="mr-2 h-4 w-4"/>
+                        Send Proposal
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -125,7 +130,7 @@ export default function FriendProfilePage() {
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, updateFriendNickname, updateFriendRelationship } = useFriends();
+    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend } = useFriends();
     const [friendData, setFriendData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
@@ -138,6 +143,8 @@ export default function FriendProfilePage() {
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
+    const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
+    const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
 
     useEffect(() => {
         const fetchFriendData = async () => {
@@ -167,10 +174,18 @@ export default function FriendProfilePage() {
         toast({ title: 'Nickname Updated!', description: `The nickname has been saved.` });
     };
 
-    const handleUpdateRelationship = async (newRelationship: string) => {
+    const handleSendRelationshipProposal = async (newRelationship: string) => {
         if (!friendId) return;
-        await updateFriendRelationship(friendId, newRelationship);
-        toast({ title: 'Relationship Updated!', description: `Your relationship has been set.` });
+        try {
+            await sendRelationshipProposal(friendId, newRelationship);
+            if (newRelationship === 'none') {
+                toast({ title: 'Relationship Cleared', description: 'Your relationship status with this friend has been removed.' });
+            } else {
+                toast({ title: 'Proposal Sent!', description: `Your relationship proposal has been sent.` });
+            }
+        } catch(e) {
+            toast({ title: 'Error', description: (e as Error).message, variant: 'destructive'});
+        }
     };
 
     if (isLoading) {
@@ -200,6 +215,36 @@ export default function FriendProfilePage() {
     const yesterday = subDays(today, 1);
     
     const displayName = friendInfo.nickname || friendData.username;
+    
+    const canPropose = !pendingProposal && !incomingProposal;
+
+    const getRelationshipContent = () => {
+        if (pendingProposal) {
+            return (
+                <Badge variant="secondary" className="cursor-default">
+                    <Clock className="mr-2 h-3 w-3" />
+                    Proposal Sent: {pendingProposal.relationship}
+                </Badge>
+            )
+        }
+        if (incomingProposal) {
+             return (
+                <Badge variant="secondary" className="cursor-default">
+                    <Send className="mr-2 h-3 w-3" />
+                    New Proposal Received!
+                </Badge>
+            )
+        }
+        return (
+            <button onClick={() => setIsRelationshipDialogOpen(true)}>
+                <Badge variant={friendInfo.relationship ? "secondary" : "outline"} className="cursor-pointer hover:bg-muted">
+                    <Heart className="mr-2 h-3 w-3" />
+                    {friendInfo.relationship || "Set Relationship"}
+                </Badge>
+            </button>
+        )
+    };
+
 
     return (
         <>
@@ -244,12 +289,7 @@ export default function FriendProfilePage() {
                                     {friendData.bio || "No bio yet."}
                                 </p>
                                 <div className="mt-3">
-                                    <button onClick={() => setIsRelationshipDialogOpen(true)}>
-                                        <Badge variant={friendInfo.relationship ? "secondary" : "outline"} className="cursor-pointer hover:bg-muted">
-                                            <Heart className="mr-2 h-3 w-3" />
-                                            {friendInfo.relationship || "Set Relationship"}
-                                        </Badge>
-                                    </button>
+                                   {getRelationshipContent()}
                                 </div>
                             </div>
                         </div>
@@ -336,7 +376,8 @@ export default function FriendProfilePage() {
                 isOpen={isRelationshipDialogOpen}
                 onOpenChange={setIsRelationshipDialogOpen}
                 currentRelationship={friendInfo.relationship || ''}
-                onSave={handleUpdateRelationship}
+                onSave={handleSendRelationshipProposal}
+                friendName={displayName}
             />
         </>
     );

@@ -5,8 +5,21 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+
+const RELATIONSHIP_MAP: Record<string, string> = {
+    "Boyfriend": "Girlfriend",
+    "Girlfriend": "Boyfriend",
+    "Best Friend": "Best Friend",
+    "Ex-Boyfriend": "Ex-Girlfriend",
+    "Ex-Girlfriend": "Ex-Boyfriend",
+    "Sugar Daddy": "Obedient Girl",
+    "Obedient Girl": "Sugar Daddy",
+    "Sugar Mommy": "Obedient Kid",
+    "Obedient Kid": "Sugar Mommy",
+    "Fuck Buddy": "Fuck Buddy",
+};
 
 interface FriendContextType {
     searchUser: (username: string) => Promise<SearchedUser | null>;
@@ -16,10 +29,17 @@ interface FriendContextType {
     cancelFriendRequest: (requestId: string) => Promise<void>;
     getFriendData: (friendId: string) => Promise<UserData | null>;
     updateFriendNickname: (friendId: string, nickname: string) => Promise<void>;
-    updateFriendRelationship: (friendId: string, relationship: string) => Promise<void>;
+    sendRelationshipProposal: (friendId: string, relationship: string) => Promise<void>;
+    acceptRelationshipProposal: (proposal: RelationshipProposal) => Promise<void>;
+    declineRelationshipProposal: (proposalId: string) => Promise<void>;
+    cancelRelationshipProposal: (proposalId: string) => Promise<void>;
     incomingRequests: FriendRequest[];
     pendingRequests: FriendRequest[];
     friends: Friend[];
+    incomingRelationshipProposals: RelationshipProposal[];
+    pendingRelationshipProposals: RelationshipProposal[];
+    pendingRelationshipProposalForFriend: (friendId: string) => RelationshipProposal | undefined;
+    incomingRelationshipProposalFromFriend: (friendId: string) => RelationshipProposal | undefined;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -30,6 +50,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
     const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
     const [friends, setFriends] = useState<Friend[]>([]);
+    const [incomingRelationshipProposals, setIncomingRelationshipProposals] = useState<RelationshipProposal[]>([]);
+    const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
 
     const fetchFriendsAndRequests = useCallback(async () => {
         if (!user) return;
@@ -69,6 +91,19 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
         const friendsList = (await Promise.all(friendsListPromises)).filter(Boolean) as Friend[];
         setFriends(friendsList);
+        
+        // Fetch incoming relationship proposals
+        const incomingRelQuery = query(collection(db, 'relationship_proposals'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
+        const incomingRelSnapshot = await getDocs(incomingRelQuery);
+        const incomingRel = incomingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal));
+        setIncomingRelationshipProposals(incomingRel);
+
+        // Fetch sent/pending relationship proposals
+        const pendingRelQuery = query(collection(db, 'relationship_proposals'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
+        const pendingRelSnapshot = await getDocs(pendingRelQuery);
+        const pendingRel = pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal));
+        setPendingRelationshipProposals(pendingRel);
+
     }, [user]);
 
     useEffect(() => {
@@ -133,7 +168,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const batch = writeBatch(db);
 
-        // Add sender to current user's friend list
         const currentUserFriendRef = doc(db, `users/${user.uid}/friends`, request.senderId);
         batch.set(currentUserFriendRef, { 
             uid: request.senderId, 
@@ -141,7 +175,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             since: new Date().toISOString() 
         });
 
-        // Add current user to sender's friend list
         const senderFriendRef = doc(db, `users/${request.senderId}/friends`, user.uid);
         batch.set(senderFriendRef, { 
             uid: user.uid, 
@@ -149,7 +182,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             since: new Date().toISOString() 
         });
         
-        // Delete the original request
         const requestRef = doc(db, 'friend_requests', request.id);
         batch.delete(requestRef);
 
@@ -204,12 +236,87 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await fetchFriendsAndRequests();
     }, [user, fetchFriendsAndRequests]);
 
-    const updateFriendRelationship = useCallback(async (friendId: string, relationship: string) => {
-        if (!user) return;
-        const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
-        await updateDoc(friendRef, { relationship });
+    const sendRelationshipProposal = useCallback(async (friendId: string, relationship: string) => {
+        if (!user || !userData) throw new Error("You must be logged in.");
+
+        if (relationship === 'none') {
+            const batch = writeBatch(db);
+            const userFriendRef = doc(db, `users/${user.uid}/friends`, friendId);
+            batch.update(userFriendRef, { relationship: '' });
+            const friendUserRef = doc(db, `users/${friendId}/friends`, user.uid);
+            batch.update(friendUserRef, { relationship: '' });
+            await batch.commit();
+            await fetchFriendsAndRequests();
+            return;
+        }
+
+        const proposalId = `${user.uid}_${friendId}`;
+        const existingProposalRef = doc(db, 'relationship_proposals', proposalId);
+        const existingReverseProposalRef = doc(db, 'relationship_proposals', `${friendId}_${user.uid}`);
+        
+        const existingSnap = await getDoc(existingProposalRef);
+        const existingReverseSnap = await getDoc(existingReverseProposalRef);
+
+        if (existingSnap.exists() || existingReverseSnap.exists()) {
+            throw new Error("A relationship proposal already exists with this user.");
+        }
+        
+        const correspondingRelationship = RELATIONSHIP_MAP[relationship] || relationship;
+
+        const proposalData: Omit<RelationshipProposal, 'id'> = {
+            senderId: user.uid,
+            senderUsername: userData.username,
+            recipientId: friendId,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            relationship: relationship,
+            correspondingRelationship: correspondingRelationship,
+        };
+
+        await setDoc(existingProposalRef, proposalData);
         await fetchFriendsAndRequests();
-    }, [user, fetchFriendsAndRequests]);
+    }, [user, userData, fetchFriendsAndRequests]);
+    
+    const acceptRelationshipProposal = useCallback(async (proposal: RelationshipProposal) => {
+        if (!user) return;
+        const batch = writeBatch(db);
+
+        // Update relationship for current user
+        const userFriendRef = doc(db, `users/${user.uid}/friends`, proposal.senderId);
+        batch.update(userFriendRef, { relationship: proposal.correspondingRelationship });
+        
+        // Update relationship for sender
+        const senderFriendRef = doc(db, `users/${proposal.senderId}/friends`, user.uid);
+        batch.update(senderFriendRef, { relationship: proposal.relationship });
+
+        // Delete proposal
+        const proposalRef = doc(db, 'relationship_proposals', proposal.id);
+        batch.delete(proposalRef);
+
+        await batch.commit();
+        await fetchFriendsAndRequests();
+        toast({ title: "Relationship Updated!", description: `You are now ${proposal.correspondingRelationship} with ${proposal.senderUsername}.` });
+    }, [user, fetchFriendsAndRequests, toast]);
+
+    const declineRelationshipProposal = useCallback(async (proposalId: string) => {
+        await deleteDoc(doc(db, 'relationship_proposals', proposalId));
+        await fetchFriendsAndRequests();
+        toast({ title: 'Proposal Declined', variant: 'destructive' });
+    }, [fetchFriendsAndRequests, toast]);
+
+    const cancelRelationshipProposal = useCallback(async (proposalId: string) => {
+        await deleteDoc(doc(db, 'relationship_proposals', proposalId));
+        await fetchFriendsAndRequests();
+        toast({ title: 'Proposal Cancelled' });
+    }, [fetchFriendsAndRequests, toast]);
+    
+    const pendingRelationshipProposalForFriend = useCallback((friendId: string) => {
+        return pendingRelationshipProposals.find(p => p.recipientId === friendId);
+    }, [pendingRelationshipProposals]);
+    
+    const incomingRelationshipProposalFromFriend = useCallback((friendId: string) => {
+        return incomingRelationshipProposals.find(p => p.senderId === friendId);
+    }, [incomingRelationshipProposals]);
 
     return (
         <FriendContext.Provider value={{ 
@@ -220,10 +327,17 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             cancelFriendRequest,
             getFriendData,
             updateFriendNickname,
-            updateFriendRelationship,
+            sendRelationshipProposal,
+            acceptRelationshipProposal,
+            declineRelationshipProposal,
+            cancelRelationshipProposal,
             incomingRequests, 
             pendingRequests, 
-            friends 
+            friends,
+            incomingRelationshipProposals,
+            pendingRelationshipProposals,
+            pendingRelationshipProposalForFriend,
+            incomingRelationshipProposalFromFriend,
         }}>
             {children}
         </FriendContext.Provider>

@@ -226,3 +226,14 @@ export interface Friend {
     photoURL?: string | null;
     since: string;
 }
+
+export interface RelationshipProposal {
+    id: string;
+    senderId: string;
+    senderUsername: string;
+    recipientId: string;
+    status: 'pending' | 'accepted' | 'declined';
+    createdAt: string;
+    relationship: string;
+    correspondingRelationship: string;
+}

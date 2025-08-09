@@ -6,11 +6,11 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { SearchedUser, FriendRequest } from '@/types';
+import type { SearchedUser, FriendRequest, RelationshipProposal } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -47,7 +47,12 @@ export default function FriendsPage() {
         friends,
         acceptFriendRequest,
         declineFriendRequest,
-        cancelFriendRequest
+        cancelFriendRequest,
+        incomingRelationshipProposals,
+        pendingRelationshipProposals,
+        acceptRelationshipProposal,
+        declineRelationshipProposal,
+        cancelRelationshipProposal,
     } = useFriends();
 
     const [usernameQuery, setUsernameQuery] = useState('');
@@ -201,22 +206,22 @@ export default function FriendsPage() {
                     </div>
 
                     <div className="space-y-8">
-                         <Accordion type="single" collapsible className="w-full">
+                         <Accordion type="single" collapsible className="w-full" defaultValue="requests-list">
                             <AccordionItem value="requests-list">
                                 <AccordionTrigger>
                                     <h2 className="text-xl font-semibold leading-none tracking-tight">Requests</h2>
                                 </AccordionTrigger>
                                 <AccordionContent>
                                    <p className="text-sm text-muted-foreground pt-4 pb-4">
-                                        Manage your friend requests.
+                                        Manage your friend and relationship requests.
                                    </p>
                                    <div className="flex justify-around items-center pt-2">
                                       <Popover>
                                           <PopoverTrigger asChild>
                                               <Button variant="outline" className="relative">
                                                   <Mail className="h-5 w-5" />
-                                                  {incomingRequests.length > 0 && (
-                                                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{incomingRequests.length}</Badge>
+                                                  {(incomingRequests.length + incomingRelationshipProposals.length) > 0 && (
+                                                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{incomingRequests.length + incomingRelationshipProposals.length}</Badge>
                                                   )}
                                               </Button>
                                           </PopoverTrigger>
@@ -227,26 +232,49 @@ export default function FriendsPage() {
                                                       <p className="text-sm text-muted-foreground">Accept or decline requests.</p>
                                                   </div>
                                                   <ScrollArea className="h-[200px]">
-                                                      {incomingRequests.length === 0 ? (
+                                                      {(incomingRequests.length + incomingRelationshipProposals.length) === 0 ? (
                                                           <p className="text-center text-sm text-muted-foreground py-4">No incoming requests.</p>
                                                       ) : (
-                                                          <div className="space-y-3 pr-3">
-                                                              {incomingRequests.map(req => (
-                                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
-                                                                      <div className="flex items-center gap-2">
-                                                                          <Avatar className="h-8 w-8">
-                                                                              <AvatarImage src={getAvatarForId(req.senderId)} />
-                                                                              <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
-                                                                          </Avatar>
-                                                                          <span className="font-medium text-xs">{req.senderUsername}</span>
-                                                                      </div>
-                                                                      <div className="flex gap-1">
-                                                                          <Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4" /></Button>
-                                                                          <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4" /></Button>
-                                                                      </div>
-                                                                  </div>
-                                                              ))}
-                                                          </div>
+                                                        <>
+                                                            <h5 className="text-xs text-muted-foreground font-semibold my-2">Friend Requests</h5>
+                                                            {incomingRequests.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">None</p>}
+                                                            <div className="space-y-3 pr-3">
+                                                                {incomingRequests.map(req => (
+                                                                    <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Avatar className="h-8 w-8">
+                                                                                <AvatarImage src={getAvatarForId(req.senderId)} />
+                                                                                <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                            </Avatar>
+                                                                            <span className="font-medium text-xs">{req.senderUsername}</span>
+                                                                        </div>
+                                                                        <div className="flex gap-1">
+                                                                            <Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4" /></Button>
+                                                                            <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4" /></Button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <h5 className="text-xs text-muted-foreground font-semibold my-2">Relationship Proposals</h5>
+                                                            {incomingRelationshipProposals.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">None</p>}
+                                                             <div className="space-y-3 pr-3">
+                                                                {incomingRelationshipProposals.map(req => (
+                                                                    <div key={req.id} className="p-2 border rounded-lg flex flex-col items-start gap-2 bg-card">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Avatar className="h-8 w-8">
+                                                                                <AvatarImage src={getAvatarForId(req.senderId)} />
+                                                                                <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                            </Avatar>
+                                                                            <p className="text-xs"><span className="font-medium">{req.senderUsername}</span> wants to be your <span className="font-bold text-primary">{req.relationship}</span>.</p>
+                                                                        </div>
+                                                                        <div className="flex gap-1 self-end">
+                                                                            <Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptRelationshipProposal(req)}><Check className="h-4 w-4" /></Button>
+                                                                            <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineRelationshipProposal(req.id)}><X className="h-4 w-4" /></Button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </>
                                                       )}
                                                   </ScrollArea>
                                               </div>
@@ -256,36 +284,56 @@ export default function FriendsPage() {
                                       <Popover>
                                           <PopoverTrigger asChild>
                                               <Button variant="outline" className="relative">
-                                                  <Hourglass className="h-5 w-5" />
-                                                  {pendingRequests.length > 0 && (
-                                                      <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{pendingRequests.length}</Badge>
+                                                  <Send className="h-5 w-5" />
+                                                  {(pendingRequests.length + pendingRelationshipProposals.length) > 0 && (
+                                                      <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{pendingRequests.length + pendingRelationshipProposals.length}</Badge>
                                                   )}
                                               </Button>
                                           </PopoverTrigger>
                                           <PopoverContent className="w-80">
                                               <div className="grid gap-4">
                                                   <div className="space-y-2">
-                                                      <h4 className="font-medium leading-none">Pending Requests</h4>
+                                                      <h4 className="font-medium leading-none">Sent Requests</h4>
                                                       <p className="text-sm text-muted-foreground">Requests you've sent.</p>
                                                   </div>
                                                   <ScrollArea className="h-[200px]">
-                                                      {pendingRequests.length === 0 ? (
+                                                       {(pendingRequests.length + pendingRelationshipProposals.length) === 0 ? (
                                                           <p className="text-center text-sm text-muted-foreground py-4">No pending requests.</p>
                                                       ) : (
-                                                          <div className="space-y-3 pr-3">
-                                                              {pendingRequests.map(req => (
-                                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
-                                                                      <div className="flex items-center gap-2">
-                                                                          <Avatar className="h-8 w-8">
-                                                                              <AvatarImage src={getAvatarForId(req.recipientId)} />
-                                                                              <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
-                                                                          </Avatar>
-                                                                          <span className="font-medium text-xs">{req.recipientUsername}</span>
-                                                                      </div>
-                                                                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
-                                                                  </div>
-                                                              ))}
-                                                          </div>
+                                                        <>
+                                                            <h5 className="text-xs text-muted-foreground font-semibold my-2">Friend Requests</h5>
+                                                            {pendingRequests.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">None</p>}
+                                                            <div className="space-y-3 pr-3">
+                                                                {pendingRequests.map(req => (
+                                                                    <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Avatar className="h-8 w-8">
+                                                                                <AvatarImage src={getAvatarForId(req.recipientId)} />
+                                                                                <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                            </Avatar>
+                                                                            <span className="font-medium text-xs">{req.recipientUsername}</span>
+                                                                        </div>
+                                                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <h5 className="text-xs text-muted-foreground font-semibold my-2">Relationship Proposals</h5>
+                                                             {pendingRelationshipProposals.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">None</p>}
+                                                            <div className="space-y-3 pr-3">
+                                                                {pendingRelationshipProposals.map(req => (
+                                                                    <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Avatar className="h-8 w-8">
+                                                                                <AvatarImage src={getAvatarForId(req.recipientId)} />
+                                                                                <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                            </Avatar>
+                                                                            <p className="text-xs">To <span className="font-medium">{req.recipientUsername}</span> as <span className="font-bold text-primary">{req.relationship}</span></p>
+                                                                        </div>
+                                                                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => cancelRelationshipProposal(req.id)}>Cancel</Button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </>
                                                       )}
                                                   </ScrollArea>
                                               </div>
