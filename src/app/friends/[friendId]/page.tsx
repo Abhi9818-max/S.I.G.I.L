@@ -17,7 +17,7 @@ import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
 import { calculateUserLevelInfo } from '@/lib/config';
-import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import PactList from '@/components/todo/PactList';
@@ -205,7 +205,17 @@ export default function FriendProfilePage() {
     const friendBonusPoints = friendData.bonusPoints || 0;
     const totalExperience = friendRecords.reduce((sum, r) => sum + r.value, 0) + friendBonusPoints;
     const friendLevelInfo = calculateUserLevelInfo(totalExperience);
-    const friendPacts = friendData.todoItems || [];
+    
+    const friendPacts = useMemo(() => {
+        if (!friendData.todoItems) return [];
+        return friendData.todoItems.filter(pact => {
+            try {
+                return isToday(new Date(pact.createdAt));
+            } catch {
+                return false;
+            }
+        })
+    }, [friendData.todoItems]);
 
     const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 12) + 1}.jpeg`;
 
@@ -313,13 +323,17 @@ export default function FriendProfilePage() {
 
                       <TabsContent value="activity" className="mt-6">
                          <div className="p-4 rounded-lg bg-muted/40 mb-8">
-                            <h2 className="text-2xl font-semibold mb-4">Daily Breakdown</h2>
-                             <div className="flex justify-center">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
                                 <Tabs defaultValue="today" className="w-auto">
                                     <TabsList>
                                         <TabsTrigger value="today">Today</TabsTrigger>
                                         <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                                     </TabsList>
+                                </Tabs>
+                            </div>
+                             <div className="flex justify-center">
+                                <Tabs defaultValue="today" className="w-full">
                                     <TabsContent value="today" className="mt-4">
                                         <DailyTimeBreakdownChart
                                             date={today}

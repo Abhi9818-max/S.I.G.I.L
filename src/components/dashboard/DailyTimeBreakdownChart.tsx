@@ -169,39 +169,25 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
         }));
     }, [data]);
     
-    const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload, name }: any) => {
+    const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, outerRadius, percent, index, name, value }: any) => {
       const RADIAN = Math.PI / 180;
-      // Stagger labels to prevent overlap
-      const yStagger = (index % 4) * 15; 
-      const radius = innerRadius + (outerRadius - innerRadius) * 1.25 + yStagger; 
+      const radius = outerRadius * 1.25;
       const x = cx + radius * Math.cos(-midAngle * RADIAN);
       const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      const textAnchor = x > cx ? 'start' : 'end';
     
-      const sin = Math.sin(-RADIAN * midAngle);
-      const cos = Math.cos(-RADIAN * midAngle);
-      const sx = cx + (outerRadius + 5) * cos;
-      const sy = cy + (outerRadius + 5) * sin;
-      // Adjust the middle point of the line based on stagger
-      const mx = cx + (outerRadius + 15) * cos;
-      const my = cy + (outerRadius + 15) * sin + yStagger;
-      const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-      const ey = my;
-      const textAnchor = cos >= 0 ? 'start' : 'end';
-    
-      if (percent === 0 || payload.name === 'Unallocated') return null;
+      if (percent === 0 || name === 'Unallocated') {
+        return null;
+      }
       
       const labelValue = dashboardSettings.pieChartLabelFormat === 'time'
-        ? `${Math.floor(payload.value / 60)}h ${payload.value % 60}m`
+        ? `${Math.floor(value / 60)}h ${value % 60}m`
         : `${(percent * 100).toFixed(0)}%`;
 
       return (
-        <g>
-           <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={"hsl(var(--foreground))"} fill="none" strokeOpacity={0.6}/>
-           <circle cx={ex} cy={ey} r={2} fill={payload.fill} stroke="none" />
-           <text x={ex + (cos >= 0 ? 1 : -1) * 6} y={ey} dy={4} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-xs">
-               {`${name} (${labelValue})`}
-           </text>
-        </g>
+        <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={textAnchor} dominantBaseline="central" className="text-xs">
+          {`${name} (${labelValue})`}
+        </text>
       );
     }, [dashboardSettings.pieChartLabelFormat]);
 
@@ -243,6 +229,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
                             outerRadius={80}
                             fill="#8884d8"
                             dataKey="value"
+                            nameKey="name"
                             strokeWidth={2}
                             stroke="hsl(var(--background))"
                         >
