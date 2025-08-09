@@ -13,7 +13,6 @@ import { useFriends } from '@/components/providers/FriendProvider';
 import type { UserData, Friend, RecordEntry, TaskDefinition } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import LevelIndicator from '@/components/layout/LevelIndicator';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
@@ -21,7 +20,6 @@ import { calculateUserLevelInfo } from '@/lib/config';
 import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
-import TaskFilterBar from '@/components/records/TaskFilterBar';
 import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -113,9 +111,9 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave,
                     </Select>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSave} disabled={!relationship || relationship === 'none'}>
+                    <Button onClick={handleSave} disabled={!relationship || relationship === currentRelationship}>
                         <Send className="mr-2 h-4 w-4"/>
-                        Send Proposal
+                        {relationship === 'none' ? 'Clear Relationship' : 'Send Proposal'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -175,9 +173,9 @@ export default function FriendProfilePage() {
     };
 
     const handleSendRelationshipProposal = async (newRelationship: string) => {
-        if (!friendId) return;
+        if (!friendId || !friendData) return;
         try {
-            await sendRelationshipProposal(friendId, newRelationship);
+            await sendRelationshipProposal(friendId, friendData.username, friendData.photoURL, newRelationship);
             if (newRelationship === 'none') {
                 toast({ title: 'Relationship Cleared', description: 'Your relationship status with this friend has been removed.' });
             } else {
@@ -208,8 +206,7 @@ export default function FriendProfilePage() {
     const friendLevelInfo = calculateUserLevelInfo(totalExperience);
     const friendPacts = friendData.todoItems || [];
 
-    const avatarNumber = (simpleHash(friendId) % 12) + 1;
-    const friendAvatar = friendData.photoURL || `/avatars/avatar${avatarNumber}.jpeg`;
+    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 12) + 1}.jpeg`;
 
     const today = new Date();
     const yesterday = subDays(today, 1);

@@ -85,10 +85,10 @@ export default function FriendsPage() {
         }
     };
 
-    const handleSendRequest = async (recipientId: string, recipientUsername: string) => {
+    const handleSendRequest = async (recipient: SearchedUser) => {
         try {
-            await sendFriendRequest(recipientId, recipientUsername);
-            toast({ title: "Request Sent", description: `Friend request sent to ${recipientUsername}.` });
+            await sendFriendRequest(recipient);
+            toast({ title: "Request Sent", description: `Friend request sent to ${recipient.username}.` });
             setSearchedUser(null); // Clear search result after sending request
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
@@ -102,7 +102,8 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
-    const getAvatarForId = (id: string) => {
+    const getAvatarForId = (id: string, url?: string | null) => {
+        if (url) return url;
         const avatarNumber = (simpleHash(id) % 12) + 1;
         return `/avatars/avatar${avatarNumber}.jpeg`;
     }
@@ -135,7 +136,7 @@ export default function FriendsPage() {
                                     <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={searchedUser.photoURL || getAvatarForId(searchedUser.uid)} />
+                                                <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
                                                 <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <span className="font-medium">{searchedUser.username}</span>
@@ -147,7 +148,7 @@ export default function FriendsPage() {
                                         ) : requestAlreadySent ? (
                                             <p className="text-sm text-muted-foreground">Request Sent</p>
                                         ) : (
-                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser.uid, searchedUser.username)}>
+                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
                                                 <UserPlus className="h-4 w-4 mr-2" /> Add Friend
                                             </Button>
                                         )}
@@ -180,7 +181,7 @@ export default function FriendsPage() {
                                                           <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                                                               <div className="flex items-center gap-3">
                                                                   <Avatar>
-                                                                      <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
+                                                                      <AvatarImage src={getAvatarForId(friend.uid, friend.photoURL)} />
                                                                       <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                                   </Avatar>
                                                                   <div>
@@ -243,7 +244,7 @@ export default function FriendsPage() {
                                                                     <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
                                                                         <div className="flex items-center gap-2">
                                                                             <Avatar className="h-8 w-8">
-                                                                                <AvatarImage src={getAvatarForId(req.senderId)} />
+                                                                                <AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} />
                                                                                 <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
                                                                             </Avatar>
                                                                             <span className="font-medium text-xs">{req.senderUsername}</span>
@@ -262,7 +263,7 @@ export default function FriendsPage() {
                                                                     <div key={req.id} className="p-2 border rounded-lg flex flex-col items-start gap-2 bg-card">
                                                                         <div className="flex items-center gap-2">
                                                                             <Avatar className="h-8 w-8">
-                                                                                <AvatarImage src={getAvatarForId(req.senderId)} />
+                                                                                <AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} />
                                                                                 <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
                                                                             </Avatar>
                                                                             <p className="text-xs"><span className="font-medium">{req.senderUsername}</span> wants to be your <span className="font-bold text-primary">{req.relationship}</span>.</p>
@@ -308,7 +309,7 @@ export default function FriendsPage() {
                                                                     <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
                                                                         <div className="flex items-center gap-2">
                                                                             <Avatar className="h-8 w-8">
-                                                                                <AvatarImage src={getAvatarForId(req.recipientId)} />
+                                                                                <AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} />
                                                                                 <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
                                                                             </Avatar>
                                                                             <span className="font-medium text-xs">{req.recipientUsername}</span>
@@ -324,7 +325,7 @@ export default function FriendsPage() {
                                                                     <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card">
                                                                         <div className="flex items-center gap-2">
                                                                             <Avatar className="h-8 w-8">
-                                                                                <AvatarImage src={getAvatarForId(req.recipientId)} />
+                                                                                <AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} />
                                                                                 <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
                                                                             </Avatar>
                                                                             <p className="text-xs">To <span className="font-medium">{req.recipientUsername}</span> as <span className="font-bold text-primary">{req.relationship}</span></p>

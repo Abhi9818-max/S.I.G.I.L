@@ -205,15 +205,17 @@ export interface UserData {
 export interface SearchedUser {
     uid: string;
     username: string;
-    photoURL?: string;
+    photoURL?: string | null;
 }
 
 export interface FriendRequest {
     id: string;
     senderId: string;
     senderUsername: string;
+    senderPhotoURL?: string | null;
     recipientId: string;
     recipientUsername: string;
+    recipientPhotoURL?: string | null;
     status: 'pending' | 'accepted' | 'declined';
     createdAt: string;
 }
@@ -231,7 +233,10 @@ export interface RelationshipProposal {
     id: string;
     senderId: string;
     senderUsername: string;
+    senderPhotoURL?: string | null;
     recipientId: string;
+    recipientUsername: string;
+    recipientPhotoURL?: string | null;
     status: 'pending' | 'accepted' | 'declined';
     createdAt: string;
     relationship: string;

@@ -23,13 +23,13 @@ const RELATIONSHIP_MAP: Record<string, string> = {
 
 interface FriendContextType {
     searchUser: (username: string) => Promise<SearchedUser | null>;
-    sendFriendRequest: (recipientId: string, recipientUsername: string) => Promise<void>;
+    sendFriendRequest: (recipient: SearchedUser) => Promise<void>;
     acceptFriendRequest: (request: FriendRequest) => Promise<void>;
     declineFriendRequest: (requestId: string) => Promise<void>;
     cancelFriendRequest: (requestId: string) => Promise<void>;
     getFriendData: (friendId: string) => Promise<UserData | null>;
     updateFriendNickname: (friendId: string, nickname: string) => Promise<void>;
-    sendRelationshipProposal: (friendId: string, relationship: string) => Promise<void>;
+    sendRelationshipProposal: (friendId: string, recipientUsername: string, recipientPhotoURL: string | null | undefined, relationship: string) => Promise<void>;
     acceptRelationshipProposal: (proposal: RelationshipProposal) => Promise<void>;
     declineRelationshipProposal: (proposalId: string) => Promise<void>;
     cancelRelationshipProposal: (proposalId: string) => Promise<void>;
@@ -131,12 +131,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
     }, []);
 
-    const sendFriendRequest = useCallback(async (recipientId: string, recipientUsername: string) => {
+    const sendFriendRequest = useCallback(async (recipient: SearchedUser) => {
         if (!user || !userData) throw new Error("You must be logged in to send requests.");
-        if (user.uid === recipientId) throw new Error("You cannot send a request to yourself.");
+        if (user.uid === recipient.uid) throw new Error("You cannot send a request to yourself.");
 
-        const requestId = `${user.uid}_${recipientId}`;
-        const reverseRequestId = `${recipientId}_${user.uid}`;
+        const requestId = `${user.uid}_${recipient.uid}`;
+        const reverseRequestId = `${recipient.uid}_${user.uid}`;
         const requestRef = doc(db, 'friend_requests', requestId);
         const reverseRequestRef = doc(db, 'friend_requests', reverseRequestId);
         
@@ -150,8 +150,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const newRequest: Omit<FriendRequest, 'id'> = {
             senderId: user.uid,
             senderUsername: userData.username,
-            recipientId: recipientId,
-            recipientUsername: recipientUsername,
+            senderPhotoURL: userData.photoURL,
+            recipientId: recipient.uid,
+            recipientUsername: recipient.username,
+            recipientPhotoURL: recipient.photoURL,
             status: 'pending',
             createdAt: new Date().toISOString(),
         };
@@ -236,7 +238,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await fetchFriendsAndRequests();
     }, [user, fetchFriendsAndRequests]);
 
-    const sendRelationshipProposal = useCallback(async (friendId: string, relationship: string) => {
+    const sendRelationshipProposal = useCallback(async (friendId: string, recipientUsername: string, recipientPhotoURL: string | null | undefined, relationship: string) => {
         if (!user || !userData) throw new Error("You must be logged in.");
 
         if (relationship === 'none') {
@@ -266,7 +268,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const proposalData: Omit<RelationshipProposal, 'id'> = {
             senderId: user.uid,
             senderUsername: userData.username,
+            senderPhotoURL: userData.photoURL,
             recipientId: friendId,
+            recipientUsername: recipientUsername,
+            recipientPhotoURL: recipientPhotoURL,
             status: 'pending',
             createdAt: new Date().toISOString(),
             relationship: relationship,
