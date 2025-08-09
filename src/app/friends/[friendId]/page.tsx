@@ -183,7 +183,7 @@ export default function FriendProfilePage() {
                                        <LevelIndicator levelInfo={friendLevelInfo} />
                                     </div>
                                 </div>
-                                 <div className="mt-1 hidden md:block">
+                                 <div className="mt-1 md:hidden">
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
