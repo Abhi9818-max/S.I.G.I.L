@@ -384,9 +384,9 @@ export default function SettingsPage() {
                                                     <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                                                     <Avatar className="h-8 w-8">
                                                         <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                        <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
-                                                    <span className="font-medium text-sm">{friend.username}</span>
+                                                    <span className="font-medium text-sm">{friend.nickname || friend.username}</span>
                                                     </div>
                                                 </Link>
                                                 ))}
@@ -458,7 +458,7 @@ export default function SettingsPage() {
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
                               <div className="flex justify-around items-center gap-4 text-center w-full">
                                 <Popover>
-                                  <PopoverTrigger>
+                                  <PopoverTrigger asChild>
                                     <div className="cursor-pointer">
                                         <p className="font-bold text-lg">{friends.length}</p>
                                         <p className="text-sm text-muted-foreground">Friends</p>
@@ -480,9 +480,9 @@ export default function SettingsPage() {
                                                       <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                                                       <Avatar className="h-8 w-8">
                                                           <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                          <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                          <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                       </Avatar>
-                                                      <span className="font-medium text-sm">{friend.username}</span>
+                                                      <span className="font-medium text-sm">{friend.nickname || friend.username}</span>
                                                       </div>
                                                   </Link>
                                                   ))}
@@ -497,7 +497,7 @@ export default function SettingsPage() {
                                     <p className="text-sm text-muted-foreground">Level</p>
                                 </div>
                                 <Popover>
-                                    <PopoverTrigger>
+                                    <PopoverTrigger asChild>
                                       <div className="cursor-pointer">
                                           <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
                                           <p className="text-sm text-muted-foreground">Pending</p>

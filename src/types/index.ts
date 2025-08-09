@@ -221,6 +221,7 @@ export interface FriendRequest {
 export interface Friend {
     uid: string;
     username: string;
+    nickname?: string;
     photoURL?: string | null;
     since: string;
 }

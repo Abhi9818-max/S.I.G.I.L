@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -25,6 +25,10 @@ import TaskFilterBar from '@/components/records/TaskFilterBar';
 import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -37,20 +41,54 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
+const NicknameDialog = ({ isOpen, onOpenChange, currentNickname, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentNickname: string; onSave: (name: string) => void }) => {
+    const [nickname, setNickname] = useState(currentNickname);
+
+    useEffect(() => {
+        setNickname(currentNickname);
+    }, [currentNickname, isOpen]);
+
+    const handleSave = () => {
+        onSave(nickname);
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Nickname</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                    <Label htmlFor="nickname">Friend's Nickname</Label>
+                    <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSave}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export default function FriendProfilePage() {
     const params = useParams();
     const router = useRouter();
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData } = useFriends();
+    const { friends, getFriendData, updateFriendNickname } = useFriends();
     const [friendData, setFriendData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
+    const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
+    const { toast } = useToast();
 
     const currentUserRecords = useUserRecords();
     const levelInfo = currentUserRecords.getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
+
+    const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
 
     useEffect(() => {
         const fetchFriendData = async () => {
@@ -73,12 +111,18 @@ export default function FriendProfilePage() {
 
         fetchFriendData();
     }, [friendId, getFriendData, router]);
+    
+    const handleUpdateNickname = async (newNickname: string) => {
+        if (!friendId) return;
+        await updateFriendNickname(friendId, newNickname);
+        toast({ title: 'Nickname Updated!', description: `The nickname has been saved.` });
+    };
 
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading friend's profile...</div>;
     }
 
-    if (!friendData) {
+    if (!friendData || !friendInfo) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 Could not load friend data.
@@ -99,117 +143,133 @@ export default function FriendProfilePage() {
 
     const today = new Date();
     const yesterday = subDays(today, 1);
+    
+    const displayName = friendInfo.nickname || friendData.username;
 
     return (
-        <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
-            <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-                <Button variant="outline" onClick={() => router.push('/friends')} className="hidden md:inline-flex mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Friends
-                </Button>
-                <div className="p-6 md:p-0">
-                    <div className="flex flex-col md:flex-row items-start gap-4">
-                        <div className="flex items-center gap-4 md:items-start">
-                             <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                                <AvatarImage src={friendAvatar} />
-                                <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                             <div className="md:hidden">
-                                <h1 className="text-lg font-semibold">{friendData.username}</h1>
-                                <div className="mt-1">
-                                   <LevelIndicator levelInfo={friendLevelInfo} />
+        <>
+            <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
+                <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
+                <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
+                    <Button variant="outline" onClick={() => router.push('/friends')} className="hidden md:inline-flex mb-4">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Friends
+                    </Button>
+                    <div className="p-6 md:p-0">
+                        <div className="flex flex-col md:flex-row items-start gap-4">
+                            <div className="flex items-center gap-4 md:items-start">
+                                 <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
+                                    <AvatarImage src={friendAvatar} />
+                                    <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                 <div className="md:hidden">
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="text-lg font-semibold">{displayName}</h1>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                    </div>
+                                    <div className="mt-1">
+                                       <LevelIndicator levelInfo={friendLevelInfo} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="w-full">
-                            <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
-                                <h1 className="text-xl font-semibold">{friendData.username}</h1>
-                               <div className="hidden md:block">
+                            <div className="w-full">
+                                <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="text-xl font-semibold">{displayName}</h1>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                    </div>
+                                   <div className="hidden md:block">
+                                       <LevelIndicator levelInfo={friendLevelInfo} />
+                                    </div>
+                                </div>
+                                 <div className="mt-1 hidden md:block">
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
+                                <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
+                                    {friendData.bio || "No bio yet."}
+                                </p>
                             </div>
-                             <div className="mt-1 hidden md:block">
-                               <LevelIndicator levelInfo={friendLevelInfo} />
-                            </div>
-                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
-                                {friendData.bio || "No bio yet."}
-                            </p>
                         </div>
                     </div>
-                </div>
-                
-                <Tabs defaultValue="stats" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                    <TabsTrigger value="pacts"><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
-                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="stats" className="mt-6">
-                    <StatsPanel friendData={friendData} />
-                    <div className="mt-8">
-                      <TaskComparisonChart friendData={friendData} />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="pacts" className="mt-6">
-                    <PactList items={friendPacts} isEditable={false} />
-                  </TabsContent>
+                    
+                    <Tabs defaultValue="stats" className="w-full">
+                      <TabsList>
+                        <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+                        <TabsTrigger value="pacts"><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
+                        <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="stats" className="mt-6">
+                        <StatsPanel friendData={friendData} />
+                        <div className="mt-8">
+                          <TaskComparisonChart friendData={friendData} friendNickname={friendInfo.nickname} />
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="pacts" className="mt-6">
+                        <PactList items={friendPacts} isEditable={false} />
+                      </TabsContent>
 
-                  <TabsContent value="activity" className="mt-6">
-                     <div className="p-4 rounded-lg bg-muted/40 mb-8">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                            <Tabs defaultValue="today" className="w-auto">
-                                <TabsList>
-                                    <TabsTrigger value="today">Today</TabsTrigger>
-                                    <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="today" className="mt-4">
-                                    <DailyTimeBreakdownChart
-                                        date={today}
-                                        records={friendRecords}
-                                        taskDefinitions={friendTasks}
-                                        hideFooter={true}
-                                        hideDescription={true}
-                                        hideTitle={true}
-                                    />
-                                </TabsContent>
-                                <TabsContent value="yesterday" className="mt-4">
-                                    <DailyTimeBreakdownChart
-                                        date={yesterday}
-                                        records={friendRecords}
-                                        taskDefinitions={friendTasks}
-                                        hideFooter={true}
-                                        hideDescription={true}
-                                        hideTitle={true}
-                                    />
-                                </TabsContent>
-                            </Tabs>
+                      <TabsContent value="activity" className="mt-6">
+                         <div className="p-4 rounded-lg bg-muted/40 mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                                <Tabs defaultValue="today" className="w-auto">
+                                    <TabsList>
+                                        <TabsTrigger value="today">Today</TabsTrigger>
+                                        <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="today" className="mt-4">
+                                        <DailyTimeBreakdownChart
+                                            date={today}
+                                            records={friendRecords}
+                                            taskDefinitions={friendTasks}
+                                            hideFooter={true}
+                                            hideDescription={true}
+                                            hideTitle={true}
+                                        />
+                                    </TabsContent>
+                                    <TabsContent value="yesterday" className="mt-4">
+                                        <DailyTimeBreakdownChart
+                                            date={yesterday}
+                                            records={friendRecords}
+                                            taskDefinitions={friendTasks}
+                                            hideFooter={true}
+                                            hideDescription={true}
+                                            hideTitle={true}
+                                        />
+                                    </TabsContent>
+                                </Tabs>
+                            </div>
                         </div>
-                    </div>
-                     <div>
-                        <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                        <TaskFilterBar
-                            taskDefinitions={friendTasks}
-                            selectedTaskId={selectedTaskFilterId}
-                            onSelectTask={setSelectedTaskFilterId}
-                        />
-                        <ContributionGraph 
-                            year={new Date().getFullYear()}
-                            onDayClick={() => {}} 
-                            selectedTaskFilterId={selectedTaskFilterId}
-                            records={friendRecords} 
-                            taskDefinitions={friendTasks}
-                            displayMode="full"
-                        />
-                    </div>
-                  </TabsContent>
-                  
-                </Tabs>
-            </main>
-        </div>
+                         <div>
+                            <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                            <TaskFilterBar
+                                taskDefinitions={friendTasks}
+                                selectedTaskId={selectedTaskFilterId}
+                                onSelectTask={setSelectedTaskFilterId}
+                            />
+                            <ContributionGraph 
+                                year={new Date().getFullYear()}
+                                onDayClick={() => {}} 
+                                selectedTaskFilterId={selectedTaskFilterId}
+                                records={friendRecords} 
+                                taskDefinitions={friendTasks}
+                                displayMode="full"
+                            />
+                        </div>
+                      </TabsContent>
+                      
+                    </Tabs>
+                </main>
+            </div>
+            <NicknameDialog
+                isOpen={isNicknameDialogOpen}
+                onOpenChange={setIsNicknameDialogOpen}
+                currentNickname={friendInfo.nickname || friendData.username}
+                onSave={handleUpdateNickname}
+            />
+        </>
     );
 };

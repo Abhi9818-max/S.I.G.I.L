@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData } from '@/types';
@@ -15,6 +15,7 @@ interface FriendContextType {
     declineFriendRequest: (requestId: string) => Promise<void>;
     cancelFriendRequest: (requestId: string) => Promise<void>;
     getFriendData: (friendId: string) => Promise<UserData | null>;
+    updateFriendNickname: (friendId: string, nickname: string) => Promise<void>;
     incomingRequests: FriendRequest[];
     pendingRequests: FriendRequest[];
     friends: Friend[];
@@ -49,6 +50,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const friendsSnapshot = await getDocs(friendsQuery);
         const friendsListPromises = friendsSnapshot.docs.map(async (friendDoc) => {
             const friendId = friendDoc.id;
+            const friendDocData = friendDoc.data();
             const userDocRef = doc(db, 'users', friendId);
             const userDocSnap = await getDoc(userDocRef);
             if (userDocSnap.exists()) {
@@ -57,7 +59,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     uid: friendId,
                     username: friendUserData.username,
                     photoURL: friendUserData.photoURL,
-                    since: friendDoc.data().since,
+                    since: friendDocData.since,
+                    nickname: friendDocData.nickname,
                 };
             }
             return null;
@@ -192,6 +195,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return null;
     }, [user]);
 
+    const updateFriendNickname = useCallback(async (friendId: string, nickname: string) => {
+        if (!user) return;
+        const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
+        await updateDoc(friendRef, { nickname });
+        await fetchFriendsAndRequests();
+    }, [user, fetchFriendsAndRequests]);
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -200,6 +210,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             declineFriendRequest,
             cancelFriendRequest,
             getFriendData,
+            updateFriendNickname,
             incomingRequests, 
             pendingRequests, 
             friends 

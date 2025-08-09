@@ -176,9 +176,9 @@ export default function FriendsPage() {
                                                               <div className="flex items-center gap-3">
                                                                   <Avatar>
                                                                       <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                                      <AvatarFallback>{friend.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                                      <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                                   </Avatar>
-                                                                  <span className="font-medium">{friend.username}</span>
+                                                                  <span className="font-medium">{friend.nickname || friend.username}</span>
                                                               </div>
                                                           </div>
                                                       </Link>

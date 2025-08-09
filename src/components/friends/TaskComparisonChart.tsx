@@ -12,9 +12,10 @@ import { startOfYear, endOfYear, parseISO } from 'date-fns';
 
 interface TaskComparisonChartProps {
     friendData: UserData;
+    friendNickname?: string;
 }
 
-const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData }) => {
+const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData, friendNickname }) => {
     const { userData } = useAuth();
     const { taskDefinitions: currentUserTasks, records: currentUserRecordsFromCtx } = useUserRecords();
     
@@ -23,6 +24,7 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
     const comparisonData = useMemo(() => {
         const friendTasks = friendData.taskDefinitions || [];
         const friendRecords = friendData.records || [];
+        const friendDisplayName = friendNickname || friendData.username;
 
         const allTaskDefinitions = new Map<string, TaskDefinition>();
         [...currentUserTasks, ...friendTasks].forEach(task => {
@@ -45,12 +47,12 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
             return {
                 task: task.name,
                 'You': currentUserTotal,
-                [friendData.username]: friendUserTotal,
+                [friendDisplayName]: friendUserTotal,
             };
         }).filter(Boolean);
 
         return data as { task: string; [key: string]: number | string; }[];
-    }, [friendData, userData, currentUserTasks, currentUserRecords]);
+    }, [friendData, userData, currentUserTasks, currentUserRecords, friendNickname]);
 
     if (!comparisonData || comparisonData.length === 0) {
         return (
@@ -66,8 +68,9 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
         );
     }
     
+    const friendDisplayName = friendNickname || friendData.username;
     const maxVal = Math.max(
-      ...comparisonData.flatMap(d => [d['You'] as number, d[friendData.username] as number])
+      ...comparisonData.flatMap(d => [d['You'] as number, d[friendDisplayName] as number])
     );
     const friendColor = "hsl(var(--destructive))";
     const userColor = "hsl(var(--primary))";
@@ -96,8 +99,8 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData })
                           fillOpacity={0.6} 
                         />
                         <Radar 
-                          name={friendData.username} 
-                          dataKey={friendData.username} 
+                          name={friendDisplayName} 
+                          dataKey={friendDisplayName} 
                           stroke={friendColor} 
                           fill={friendColor} 
                           fillOpacity={0.6}
