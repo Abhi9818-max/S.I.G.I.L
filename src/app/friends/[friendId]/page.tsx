@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -141,10 +141,10 @@ export default function FriendProfilePage() {
                 </div>
                 
                 <Tabs defaultValue="stats" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="stats">Stats</TabsTrigger>
-                    <TabsTrigger value="pacts">Pacts</TabsTrigger>
-                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                  <TabsList>
+                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+                    <TabsTrigger value="pacts"><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
+                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="stats" className="mt-6">
