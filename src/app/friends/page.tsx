@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -178,7 +178,15 @@ export default function FriendsPage() {
                                                                       <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
                                                                       <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                                   </Avatar>
-                                                                  <span className="font-medium">{friend.nickname || friend.username}</span>
+                                                                  <div>
+                                                                      <span className="font-medium">{friend.nickname || friend.username}</span>
+                                                                      {friend.relationship && (
+                                                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                            <Heart className="h-3 w-3" />
+                                                                            {friend.relationship}
+                                                                        </p>
+                                                                      )}
+                                                                  </div>
                                                               </div>
                                                           </div>
                                                       </Link>

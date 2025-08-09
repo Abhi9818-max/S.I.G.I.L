@@ -222,6 +222,7 @@ export interface Friend {
     uid: string;
     username: string;
     nickname?: string;
+    relationship?: string;
     photoURL?: string | null;
     since: string;
 }

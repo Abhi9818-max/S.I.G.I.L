@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 
 // Simple hash function to get a number from a string
@@ -71,17 +72,49 @@ const NicknameDialog = ({ isOpen, onOpenChange, currentNickname, onSave }: { isO
     );
 };
 
+const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentRelationship: string; onSave: (name: string) => void }) => {
+    const [relationship, setRelationship] = useState(currentRelationship);
+
+    useEffect(() => {
+        setRelationship(currentRelationship);
+    }, [currentRelationship, isOpen]);
+
+    const handleSave = () => {
+        onSave(relationship);
+        onOpenChange(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Relationship</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                    <Label htmlFor="relationship">Your Relationship</Label>
+                    <Input id="relationship" value={relationship} onChange={(e) => setRelationship(e.target.value)} placeholder="e.g., Best Friend, Rival..." />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSave}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 export default function FriendProfilePage() {
     const params = useParams();
     const router = useRouter();
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, updateFriendNickname } = useFriends();
+    const { friends, getFriendData, updateFriendNickname, updateFriendRelationship } = useFriends();
     const [friendData, setFriendData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
+    const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const currentUserRecords = useUserRecords();
@@ -116,6 +149,12 @@ export default function FriendProfilePage() {
         if (!friendId) return;
         await updateFriendNickname(friendId, newNickname);
         toast({ title: 'Nickname Updated!', description: `The nickname has been saved.` });
+    };
+
+    const handleUpdateRelationship = async (newRelationship: string) => {
+        if (!friendId) return;
+        await updateFriendRelationship(friendId, newRelationship);
+        toast({ title: 'Relationship Updated!', description: `Your relationship has been set.` });
     };
 
     if (isLoading) {
@@ -188,6 +227,14 @@ export default function FriendProfilePage() {
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                     {friendData.bio || "No bio yet."}
                                 </p>
+                                <div className="mt-3">
+                                    <button onClick={() => setIsRelationshipDialogOpen(true)}>
+                                        <Badge variant={friendInfo.relationship ? "secondary" : "outline"} className="cursor-pointer hover:bg-muted">
+                                            <Heart className="mr-2 h-3 w-3" />
+                                            {friendInfo.relationship || "Set Relationship"}
+                                        </Badge>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -268,6 +315,12 @@ export default function FriendProfilePage() {
                 onOpenChange={setIsNicknameDialogOpen}
                 currentNickname={friendInfo.nickname || friendData.username}
                 onSave={handleUpdateNickname}
+            />
+            <RelationshipDialog
+                isOpen={isRelationshipDialogOpen}
+                onOpenChange={setIsRelationshipDialogOpen}
+                currentRelationship={friendInfo.relationship || ''}
+                onSave={handleUpdateRelationship}
             />
         </>
     );

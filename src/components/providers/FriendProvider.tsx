@@ -16,6 +16,7 @@ interface FriendContextType {
     cancelFriendRequest: (requestId: string) => Promise<void>;
     getFriendData: (friendId: string) => Promise<UserData | null>;
     updateFriendNickname: (friendId: string, nickname: string) => Promise<void>;
+    updateFriendRelationship: (friendId: string, relationship: string) => Promise<void>;
     incomingRequests: FriendRequest[];
     pendingRequests: FriendRequest[];
     friends: Friend[];
@@ -61,6 +62,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     photoURL: friendUserData.photoURL,
                     since: friendDocData.since,
                     nickname: friendDocData.nickname,
+                    relationship: friendDocData.relationship,
                 };
             }
             return null;
@@ -202,6 +204,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await fetchFriendsAndRequests();
     }, [user, fetchFriendsAndRequests]);
 
+    const updateFriendRelationship = useCallback(async (friendId: string, relationship: string) => {
+        if (!user) return;
+        const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
+        await updateDoc(friendRef, { relationship });
+        await fetchFriendsAndRequests();
+    }, [user, fetchFriendsAndRequests]);
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -211,6 +220,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             cancelFriendRequest,
             getFriendData,
             updateFriendNickname,
+            updateFriendRelationship,
             incomingRequests, 
             pendingRequests, 
             friends 
