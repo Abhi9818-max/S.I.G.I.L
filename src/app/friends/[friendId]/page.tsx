@@ -24,6 +24,7 @@ import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownCh
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
+import { Separator } from '@/components/ui/separator';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -108,21 +109,26 @@ export default function FriendProfilePage() {
                     Back to Friends
                 </Button>
                 <div className="p-6 md:p-0">
-                    <div className="flex flex-row items-center gap-4">
+                    <div className="flex flex-col md:flex-row items-start gap-4">
                         <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
                             <AvatarImage src={friendAvatar} />
                             <AvatarFallback>{friendData.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
-                             <div>
-                                <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
-                                <div className="mt-1 md:hidden">
+                        <div className="w-full">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                                <div>
+                                    <h1 className="text-2xl md:text-3xl font-semibold">{friendData.username}</h1>
+                                </div>
+                                <div className="hidden md:block">
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
                             </div>
-                            <div className="hidden md:block">
-                                <LevelIndicator levelInfo={friendLevelInfo} />
+                             <div className="mt-1 md:hidden">
+                               <LevelIndicator levelInfo={friendLevelInfo} />
                             </div>
+                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
+                                {friendData.bio || "No bio yet."}
+                            </p>
                         </div>
                     </div>
                 </div>
