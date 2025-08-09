@@ -468,13 +468,13 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="space-y-1">
-                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    <div className="flex items-start gap-2">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-grow">
                             {userData?.bio || "No bio yet."}
                         </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button className="w-full" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsBioDialogOpen(true)}>
+                            <Pencil className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
               </TabsContent>
