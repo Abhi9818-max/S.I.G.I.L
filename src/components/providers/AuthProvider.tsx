@@ -294,7 +294,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   if (showLoading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-          <Image src="/loading.gif" alt="Loading..." className="w-96 h-96" width={384} height={384} unoptimized />
+          <Image src="/loading.gif" alt="Loading..." className="w-72 h-72 md:w-96 md:h-96" width={384} height={384} unoptimized />
       </div>
     );
   }
