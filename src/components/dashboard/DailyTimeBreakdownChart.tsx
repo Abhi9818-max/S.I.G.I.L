@@ -31,15 +31,15 @@ interface DailyTimeBreakdownChartProps {
 
 const getDailyTimeBreakdown = (
     date: Date = new Date(),
-    records: RecordEntry[],
-    taskDefinitions: TaskDefinition[]
+    allRecords: RecordEntry[],
+    allTaskDefinitions: TaskDefinition[]
 ): DailyTimeBreakdownData[] => {
     const getTaskDefinitionById = (taskId: string): TaskDefinition | undefined => {
-        return taskDefinitions.find(task => task.id === taskId);
+        return allTaskDefinitions.find(task => task.id === taskId);
     };
 
     const getRecordsByDate = (dateStr: string): RecordEntry[] => {
-        return records.filter(r => r.date === dateStr);
+        return allRecords.filter(r => r.date === dateStr);
     };
 
     const dateStr = format(date, 'yyyy-MM-dd');
