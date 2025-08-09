@@ -101,7 +101,7 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
     )
 }
 
-const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSave: (caption: string, image: File) => void }) => {
+const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSave: (caption: string, image: File) => Promise<void> }) => {
     const [caption, setCaption] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -161,12 +161,15 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
     const handleSave = async () => {
         if (imageFile) {
             setIsUploading(true);
-            await onSave(caption, imageFile);
-            onOpenChange(false);
-            setCaption('');
-            setImageFile(null);
-            setPreview(null);
-            setIsUploading(false);
+            try {
+                await onSave(caption, imageFile);
+                onOpenChange(false);
+                setCaption('');
+                setImageFile(null);
+                setPreview(null);
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -574,8 +577,8 @@ export default function SettingsPage() {
                             </div>
                         </button>
                         <div className="flex-grow space-y-2">
-                            <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                             <div className="flex justify-start items-center gap-4">
+                             <h2 className="font-semibold text-lg">{userData?.username}</h2>
+                             <div className="flex justify-start items-center gap-4 text-center">
                                 <div>
                                     <p className="font-bold text-lg">{posts.length}</p>
                                     <p className="text-sm text-muted-foreground">Posts</p>
