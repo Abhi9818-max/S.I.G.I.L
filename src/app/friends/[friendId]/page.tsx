@@ -117,6 +117,9 @@ export default function FriendProfilePage() {
                             </Avatar>
                              <div className="md:hidden">
                                 <h1 className="text-2xl font-semibold">{friendData.username}</h1>
+                                <div className="mt-1">
+                                   <LevelIndicator levelInfo={friendLevelInfo} />
+                                </div>
                             </div>
                         </div>
 
@@ -127,7 +130,7 @@ export default function FriendProfilePage() {
                                    <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
                             </div>
-                             <div className="mt-1">
+                             <div className="mt-1 hidden md:block">
                                <LevelIndicator levelInfo={friendLevelInfo} />
                             </div>
                             <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
