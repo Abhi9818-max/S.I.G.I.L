@@ -184,7 +184,6 @@ export default function FriendProfilePage() {
                                     </div>
                                 </div>
                                  <div className="mt-1 md:hidden">
-                                   <LevelIndicator levelInfo={friendLevelInfo} />
                                 </div>
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                     {friendData.bio || "No bio yet."}
