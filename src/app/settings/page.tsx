@@ -557,7 +557,7 @@ export default function SettingsPage() {
                 </div>
                 {/* Mobile Layout */}
                 <div className="md:hidden space-y-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
                             className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -573,9 +573,9 @@ export default function SettingsPage() {
                                 <Pencil className="h-6 w-6 text-white/90" />
                             </div>
                         </button>
-                        <div className="flex-grow text-center space-y-2">
-                             <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                             <div className="flex justify-around items-center">
+                        <div className="flex-grow space-y-2">
+                            <h2 className="font-semibold text-lg">{userData?.username}</h2>
+                             <div className="flex justify-start items-center gap-4">
                                 <div>
                                     <p className="font-bold text-lg">{posts.length}</p>
                                     <p className="text-sm text-muted-foreground">Posts</p>
@@ -592,6 +592,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="space-y-1">
+                        <p className="text-sm font-semibold">{userData?.username}</p>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>
