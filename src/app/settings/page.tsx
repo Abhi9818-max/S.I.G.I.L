@@ -170,7 +170,8 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
                 setPreview(null);
             }
         } catch (error) {
-            // Error toast is handled in the `addPost` function
+            // Error toast is handled in the `addPost` function in AuthProvider
+            console.error("Post creation failed:", error);
         } finally {
             setIsUploading(false);
         }
@@ -563,7 +564,7 @@ export default function SettingsPage() {
                 </div>
                  {/* Mobile Layout */}
                 <div className="md:hidden space-y-4">
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-6">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
                             className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -579,7 +580,7 @@ export default function SettingsPage() {
                                 <Pencil className="h-6 w-6 text-white/90" />
                             </div>
                         </button>
-                        <div className="flex-grow flex flex-col items-start space-y-2">
+                        <div className="flex-grow flex flex-col items-start space-y-2 mt-2">
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
                              <div className="flex justify-around items-center gap-4 text-center">
                                 <div>
@@ -849,3 +850,4 @@ export default function SettingsPage() {
     
 
     
+
