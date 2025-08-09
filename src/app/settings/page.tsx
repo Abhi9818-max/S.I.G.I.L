@@ -456,7 +456,7 @@ export default function SettingsPage() {
                         </button>
                         <div className="flex-grow flex flex-col items-start space-y-2">
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                             <div className="flex justify-around items-center gap-4 text-center">
+                              <div className="flex justify-around items-center gap-4 text-center">
                                 <div>
                                     <p className="font-bold text-lg">{friends.length}</p>
                                     <p className="text-sm text-muted-foreground">Friends</p>
@@ -464,6 +464,10 @@ export default function SettingsPage() {
                                 <div>
                                     <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
                                     <p className="text-sm text-muted-foreground">Level</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
+                                    <p className="text-sm text-muted-foreground">Pending</p>
                                 </div>
                             </div>
                         </div>
