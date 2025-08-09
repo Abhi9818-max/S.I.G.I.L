@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 // Simple hash function to get a number from a string
@@ -72,6 +73,10 @@ const NicknameDialog = ({ isOpen, onOpenChange, currentNickname, onSave }: { isO
     );
 };
 
+const relationshipOptions = [
+    "Best Friend", "Boyfriend", "Girlfriend", "Ex-Boyfriend", "Ex-Girlfriend", "Sugar Daddy", "Sugar Mommy", "Fuck Buddy"
+];
+
 const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentRelationship: string; onSave: (name: string) => void }) => {
     const [relationship, setRelationship] = useState(currentRelationship);
 
@@ -88,11 +93,21 @@ const RelationshipDialog = ({ isOpen, onOpenChange, currentRelationship, onSave 
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Set Relationship</DialogTitle>
+                    <DialogTitle>Select Relationship</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2">
                     <Label htmlFor="relationship">Your Relationship</Label>
-                    <Input id="relationship" value={relationship} onChange={(e) => setRelationship(e.target.value)} placeholder="e.g., Best Friend, Rival..." />
+                     <Select onValueChange={setRelationship} value={relationship}>
+                        <SelectTrigger id="relationship">
+                            <SelectValue placeholder="Select a relationship..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">Clear Relationship</SelectItem>
+                            {relationshipOptions.map(option => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <DialogFooter>
                     <Button onClick={handleSave}>Save</Button>
@@ -207,7 +222,7 @@ export default function FriendProfilePage() {
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
                                     <div className="mt-1">
-                                       <LevelIndicator levelInfo={friendLevelInfo} />
+                                       
                                     </div>
                                 </div>
                             </div>
@@ -219,7 +234,7 @@ export default function FriendProfilePage() {
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
                                    <div className="hidden md:block">
-                                       <LevelIndicator levelInfo={friendLevelInfo} />
+                                       
                                     </div>
                                 </div>
                                  <div className="mt-1 md:hidden">
