@@ -101,7 +101,7 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
     )
 }
 
-const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSave: (caption: string, image: File) => Promise<void> }) => {
+const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onSave: (caption: string, image: File) => Promise<Post | null> }) => {
     const [caption, setCaption] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -159,14 +159,16 @@ const PostDialog = ({ isOpen, onOpenChange, onSave }: { isOpen: boolean, onOpenC
     };
 
     const handleSave = async () => {
-        if (!imageFile) return;
+        if (!imageFile || isUploading) return;
         setIsUploading(true);
         try {
-            await onSave(caption, imageFile);
-            onOpenChange(false);
-            setCaption('');
-            setImageFile(null);
-            setPreview(null);
+            const result = await onSave(caption, imageFile);
+            if (result) {
+                onOpenChange(false);
+                setCaption('');
+                setImageFile(null);
+                setPreview(null);
+            }
         } catch (error) {
             // Error toast is handled in the `addPost` function
         } finally {
@@ -560,8 +562,8 @@ export default function SettingsPage() {
                     </div>
                 </div>
                  {/* Mobile Layout */}
-                 <div className="md:hidden space-y-4">
-                    <div className="flex items-center gap-4">
+                <div className="md:hidden space-y-4">
+                    <div className="flex items-start gap-4">
                         <button
                             onClick={() => setIsAvatarDialogOpen(true)}
                             className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -577,9 +579,9 @@ export default function SettingsPage() {
                                 <Pencil className="h-6 w-6 text-white/90" />
                             </div>
                         </button>
-                        <div className="flex-grow space-y-2">
+                        <div className="flex-grow flex flex-col items-start space-y-2">
                              <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                             <div className="flex justify-start items-center gap-4 text-center">
+                             <div className="flex justify-around items-center gap-4 text-center">
                                 <div>
                                     <p className="font-bold text-lg">{posts.length}</p>
                                     <p className="text-sm text-muted-foreground">Posts</p>
@@ -596,7 +598,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold">{userData?.username}</p>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {userData?.bio || "No bio yet."}
                         </p>

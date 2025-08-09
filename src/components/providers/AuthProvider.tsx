@@ -26,7 +26,7 @@ interface AuthContextType {
   continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
-  addPost: (caption: string, imageFile: File) => Promise<void>;
+  addPost: (caption: string, imageFile: File) => Promise<Post | null>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -293,14 +293,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, db, toast, isGuest]);
   
-  const addPost = useCallback(async (caption: string, imageFile: File) => {
+  const addPost = useCallback(async (caption: string, imageFile: File): Promise<Post | null> => {
     if (!storage) {
         toast({ title: "Error", description: "Storage is not configured.", variant: "destructive" });
-        return;
+        return null;
     }
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to post.", variant: "destructive" });
-        return;
+        return null;
     }
 
     toast({ title: "Uploading...", description: "Your post is being uploaded." });
@@ -326,10 +326,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUserData(prev => prev ? { ...prev, posts: [...(prev.posts || []), newPost] } : null);
 
         toast({ title: "Success!", description: "Your post has been published." });
+        return newPost;
 
     } catch (error) {
         console.error("Error adding post:", error);
         toast({ title: "Upload Failed", description: "Could not publish your post.", variant: "destructive" });
+        return null;
     }
   }, [user, storage, toast, db]);
 
