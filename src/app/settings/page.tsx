@@ -474,8 +474,7 @@ export default function SettingsPage() {
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
-                        <Button variant="secondary" className="flex-1">Share Profile</Button>
+                        <Button className="w-full" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
                     </div>
                 </div>
               </TabsContent>
