@@ -153,8 +153,6 @@ export default function AllianceDetailPage() {
                 const data = await getAllianceWithMembers(allianceId);
                 if (data) {
                     setAlliance(data);
-                    const pending = await getPendingAllianceInvitesFor(allianceId);
-                    setPendingInvites(pending.map(p => p.recipientId));
                 } else {
                     toast({ title: 'Error', description: 'Alliance not found.', variant: 'destructive' });
                     router.push('/alliances');
@@ -167,11 +165,22 @@ export default function AllianceDetailPage() {
                 setIsLoading(false);
             }
         }
-    }, [allianceId, getAllianceWithMembers, router, toast, getPendingAllianceInvitesFor]);
+    }, [allianceId, getAllianceWithMembers, router, toast]);
     
     useEffect(() => {
         fetchAllianceData();
     }, [fetchAllianceData]);
+
+    useEffect(() => {
+        const fetchPendingInvites = async () => {
+            if (allianceId) {
+                const pending = await getPendingAllianceInvitesFor(allianceId);
+                setPendingInvites(pending.map(p => p.recipientId));
+            }
+        };
+        fetchPendingInvites();
+    }, [allianceId, getPendingAllianceInvitesFor]);
+
 
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
