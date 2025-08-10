@@ -210,38 +210,36 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     });
 
     return (
-        <Card className="shadow-lg border-0 bg-transparent">
-            <CardHeader className="items-center text-center">
-                <CardTitle>{chartTitle}</CardTitle>
-                <CardDescription>{chartDescription}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[300px] w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                         <PieChart margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>
-                            <Pie
-                                data={pieData}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={renderCustomizedLabel}
-                                outerRadius={80}
-                                fill="#8884d8"
-                                dataKey="value"
-                                nameKey="name"
-                                strokeWidth={2}
-                                stroke="hsl(var(--background))"
-                            >
-                                {pieData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-            </CardContent>
+        <div className="shadow-lg border-0 bg-transparent">
+            <div className="items-center text-center">
+                <h2 className="text-xl font-semibold">{chartTitle}</h2>
+                <p className="text-sm text-muted-foreground">{chartDescription}</p>
+            </div>
+            <div className="h-[300px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                     <PieChart margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>
+                        <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                            strokeWidth={2}
+                            stroke="hsl(var(--background))"
+                        >
+                            {pieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
             {!hideFooter && (
-                <CardFooter className="flex-col items-start gap-4">
+                <div className="flex-col items-start gap-4 p-6 pt-0">
                     <Separator />
                     <button 
                       className="w-full flex justify-between items-center p-2 rounded-md hover:bg-muted/50 transition-colors"
@@ -306,9 +304,9 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
                             )}
                         </div>
                     )}
-                </CardFooter>
+                </div>
             )}
-        </Card>
+        </div>
     );
 }
 
