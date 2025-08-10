@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useRef } from 'react';
@@ -12,6 +13,7 @@ import { getMonth, parseISO, isFuture, format, getYear } from 'date-fns';
 interface ContributionGraphProps {
   year?: number; // Optional: for selecting a specific year
   onDayClick: (date: string) => void;
+  onDayDoubleClick: (date: string) => void;
   selectedTaskFilterId: string | null;
   displayMode?: 'full' | 'current_month';
   // Allow passing records and tasks directly for friend profiles
@@ -21,7 +23,8 @@ interface ContributionGraphProps {
 
 const ContributionGraph: React.FC<ContributionGraphProps> = ({ 
   year,
-  onDayClick, 
+  onDayClick,
+  onDayDoubleClick, 
   selectedTaskFilterId,
   displayMode = 'current_month',
   records: recordsProp,
@@ -107,10 +110,16 @@ const ContributionGraph: React.FC<ContributionGraphProps> = ({
                       <div key={day.date} className="w-7 h-7">
                         <DaySquare 
                           day={day as DayData} 
+                          onClick={() => {
+                            const clickedDate = parseISO(day.date);
+                            if (!isFuture(clickedDate) || format(clickedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
+                              onDayClick(day.date);
+                            }
+                          }}
                           onDoubleClick={() => {
                             const clickedDate = parseISO(day.date);
                               if (!isFuture(clickedDate) || format(clickedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
-                              onDayClick(day.date);
+                              onDayDoubleClick(day.date);
                             }
                           }} 
                         />

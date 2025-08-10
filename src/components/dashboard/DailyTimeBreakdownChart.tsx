@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -154,9 +155,6 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
         });
     };
 
-    const chartTitle = date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown';
-    const chartDescription = `A 24-hour visualization of your time-based tasks.`;
-
     const totalMinutesForAllSlices = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
     const pieData = useMemo(() => {
@@ -179,6 +177,10 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
       const ey = my;
       const textAnchor = cos >= 0 ? "start" : "end";
 
+      if (name === 'Unallocated' && percentage === 100) {
+        return <text x={cx} y={cy} textAnchor="middle" fill="hsl(var(--muted-foreground))" dominantBaseline="central" className="text-sm">No Time Logged</text>;
+      }
+      
       if (name === 'Unallocated') {
         return null;
       }
@@ -210,7 +212,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     });
 
     return (
-        <div className="shadow-lg border-0 bg-transparent">
+        <div className="bg-transparent">
             <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                      <PieChart margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>

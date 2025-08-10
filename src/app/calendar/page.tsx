@@ -31,11 +31,14 @@ export default function CalendarPage() {
   const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
   const [dateForChart, setDateForChart] = useState<Date>(new Date());
 
-  const handleDayClick = (date: string) => {
+  const handleDayDoubleClick = (date: string) => {
     setSelectedDateForModal(date);
-    setDateForChart(parseISO(date));
     setIsRecordModalOpen(true);
   };
+  
+  const handleDaySingleClick = (date: string) => {
+    setDateForChart(parseISO(date));
+  }
 
   const handleAddRecordClick = () => {
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -101,7 +104,8 @@ export default function CalendarPage() {
              <div className="p-6 md:p-0">
                 <ContributionGraph
                     year={selectedYear}
-                    onDayClick={handleDayClick}
+                    onDayClick={handleDaySingleClick}
+                    onDayDoubleClick={handleDayDoubleClick}
                     selectedTaskFilterId={selectedTaskFilterId}
                     displayMode="full"
                 />
@@ -109,7 +113,15 @@ export default function CalendarPage() {
            </div>
 
            <div className="max-w-2xl mx-auto">
-             <DailyTimeBreakdownChart date={dateForChart} hideFooter={true} />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Time Breakdown for {format(dateForChart, 'MMMM d, yyyy')}</CardTitle>
+                        <CardDescription>A 24-hour visualization of your time-based tasks.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <DailyTimeBreakdownChart date={dateForChart} hideFooter={true} />
+                    </CardContent>
+                </Card>
            </div>
           
            <div className="text-center mt-8">
