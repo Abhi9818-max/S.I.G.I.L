@@ -319,8 +319,8 @@ export default function FriendProfilePage() {
                       </TabsContent>
 
                       <TabsContent value="activity" className="mt-6">
-                         <div className="p-4 rounded-lg bg-muted/40 mb-8 flex justify-center">
-                            <div className="w-full max-w-2xl">
+                         <div className="mb-8">
+                            <div className="max-w-2xl mx-auto">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
                                 </div>
