@@ -6,9 +6,10 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { toPng } from 'html-to-image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +51,8 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
+import ProfileCard from '@/components/profile/ProfileCard';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -115,6 +117,7 @@ export default function SettingsPage() {
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileCardRef = useRef<HTMLDivElement>(null);
   const [showLoading, setShowLoading] = useState(true);
   
   useEffect(() => {
@@ -231,6 +234,29 @@ export default function SettingsPage() {
       setIsClearing(false);
     }
   };
+  
+  const handleDownloadProfileCard = useCallback(() => {
+    if (profileCardRef.current === null) {
+      return;
+    }
+
+    toPng(profileCardRef.current, { cacheBust: true, pixelRatio: 2 })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `sigil-profile-card.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error('Failed to create profile card image', err);
+        toast({
+            title: "Download Failed",
+            description: "Could not generate profile card.",
+            variant: "destructive"
+        });
+      });
+  }, [profileCardRef, toast]);
+
 
   const dashboardComponents: { key: keyof DashboardSettings, label: string, category: 'Main' }[] = [
       { key: 'showTaskFilterBar', label: 'Task Filter Bar', category: 'Main' },
@@ -366,8 +392,8 @@ export default function SettingsPage() {
                         
                         <Separator />
 
-                        <div className="flex items-center gap-4">
-                            <Button onClick={handleShareProfile} variant="outline" size="sm">
+                        <div className="flex items-center gap-4 flex-wrap">
+                             <Button onClick={handleShareProfile} variant="outline" size="sm">
                                 <Share2 className="mr-2 h-4 w-4" />
                                 Share Profile
                             </Button>
@@ -376,6 +402,10 @@ export default function SettingsPage() {
                                     <UserPlus className="mr-2 h-4 w-4" />
                                     Manage Friends
                                 </Link>
+                            </Button>
+                            <Button onClick={handleDownloadProfileCard} variant="outline" size="sm">
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Download Card
                             </Button>
                         </div>
                         
@@ -580,6 +610,10 @@ export default function SettingsPage() {
                             </Link>
                         </Button>
                     </div>
+                     <Button onClick={handleDownloadProfileCard} variant="outline" className="w-full">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Download Card
+                    </Button>
                 </div>
               </TabsContent>
 
@@ -771,6 +805,18 @@ export default function SettingsPage() {
             </div>
         </div>
       </main>
+    </div>
+    {/* This div is for html-to-image to render offscreen */}
+    <div className="fixed -left-[9999px] top-0">
+        <div ref={profileCardRef}>
+            {levelInfo && userData && (
+                <ProfileCard 
+                    levelInfo={levelInfo} 
+                    userData={userData}
+                    userAvatar={userAvatar}
+                />
+            )}
+        </div>
     </div>
     <AvatarSelectionDialog
         isOpen={isAvatarDialogOpen}
