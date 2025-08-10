@@ -143,7 +143,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       name: '',
-      color: 'hsl(210, 40%, 96.1%)',
+      color: `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
       unit: 'count',
       customUnitName: '',
       threshold1: undefined,
@@ -159,7 +159,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
   const resetFormFields = (task: TaskDefinition | null = null) => {
     form.reset({
       name: task?.name || '',
-      color: task?.color || 'hsl(210, 40%, 96.1%)',
+      color: task?.color || `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
       unit: task?.unit ?? 'count',
       customUnitName: task?.customUnitName || '',
       threshold1: task?.intensityThresholds?.[0] ?? undefined,
