@@ -61,7 +61,7 @@ export default function CalendarPage() {
           onManageTasksClick={() => { /* Not needed on this page, but prop is required */ }}
         />
         <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-           <Card className="shadow-lg w-full max-w-7xl mx-auto">
+           <Card className="shadow-lg w-full max-w-7xl mx-auto md:bg-card bg-background">
              <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
