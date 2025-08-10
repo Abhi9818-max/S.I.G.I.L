@@ -250,5 +250,5 @@ export default function AlliancesPage() {
         </div>
       </main>
     </div>
-
-    
+  );
+}
