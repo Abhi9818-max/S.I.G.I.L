@@ -63,11 +63,11 @@ export default function CalendarPage() {
         <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
            <Card className="shadow-lg w-full max-w-7xl mx-auto">
              <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <CardTitle>Contribution Calendar</CardTitle>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
                         <Label htmlFor="task-filter" className="flex-shrink-0"><ListFilter className="h-4 w-4 inline-block mr-1" />Task</Label>
                         <Select onValueChange={(value) => setSelectedTaskFilterId(value === 'all' ? null : value)} defaultValue="all">
