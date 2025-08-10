@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
 // Simple hash function to get a number from a string
@@ -328,7 +329,7 @@ export default function FriendProfilePage() {
                       </TabsContent>
 
                       <TabsContent value="activity" className="mt-6">
-                         <div className="mb-8 max-w-2xl mx-auto">
+                         <div className="mb-8 max-w-4xl mx-auto">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
                                 <Tabs defaultValue="today" className="w-auto">
@@ -338,24 +339,31 @@ export default function FriendProfilePage() {
                                     </TabsList>
                                 </Tabs>
                             </div>
-                            <Tabs defaultValue="today" className="w-full">
-                                <TabsContent value="today" className="mt-4">
-                                    <DailyTimeBreakdownChart
-                                        date={today}
-                                        records={friendRecords}
-                                        taskDefinitions={friendTasks}
-                                        hideFooter={true}
-                                    />
-                                </TabsContent>
-                                <TabsContent value="yesterday" className="mt-4">
-                                    <DailyTimeBreakdownChart
-                                        date={yesterday}
-                                        records={friendRecords}
-                                        taskDefinitions={friendTasks}
-                                        hideFooter={true}
-                                    />
-                                </TabsContent>
-                            </Tabs>
+                            <ScrollArea className="w-full whitespace-nowrap">
+                                <Tabs defaultValue="today" className="w-full inline-block min-w-full">
+                                    <TabsContent value="today" className="mt-4">
+                                        <div className="w-[600px] md:w-full mx-auto">
+                                            <DailyTimeBreakdownChart
+                                                date={today}
+                                                records={friendRecords}
+                                                taskDefinitions={friendTasks}
+                                                hideFooter={true}
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value="yesterday" className="mt-4">
+                                        <div className="w-[600px] md:w-full mx-auto">
+                                            <DailyTimeBreakdownChart
+                                                date={yesterday}
+                                                records={friendRecords}
+                                                taskDefinitions={friendTasks}
+                                                hideFooter={true}
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
                         </div>
                          <div>
                             <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
