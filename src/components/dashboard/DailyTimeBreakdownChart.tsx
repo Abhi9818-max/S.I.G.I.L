@@ -157,34 +157,43 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     const chartTitle = date ? `Time Breakdown for ${format(date, 'MMM d, yyyy')}` : 'Daily Time Breakdown';
     const chartDescription = `A 24-hour visualization of your time-based tasks.`;
 
+    const totalMinutesForAllSlices = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
+
     const pieData = useMemo(() => {
-        const totalMinutes = data.reduce((sum, item) => item.name !== 'Unallocated' ? sum + item.value : sum, 0);
         return data.map(item => ({
             ...item,
-            percentage: totalMinutes > 0 ? (item.value / totalMinutes) : 0,
+            percentage: totalMinutesForAllSlices > 0 ? (item.value / totalMinutesForAllSlices) * 100 : 0,
         }));
-    }, [data]);
+    }, [data, totalMinutesForAllSlices]);
     
-    const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, outerRadius, percent, index, name, value }: any) => {
+    const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value, color, percentage }: any) => {
       const RADIAN = Math.PI / 180;
-      // Make radius larger to render labels outside the pie
-      const radius = outerRadius * 1.25; 
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-      const textAnchor = x > cx ? 'start' : 'end';
-    
-      if (percent < 0.05 || name === 'Unallocated') { // Don't render for small slices or unallocated time
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+      const labelRadius = outerRadius + 25;
+      const startX = cx + outerRadius * Math.cos(-midAngle * RADIAN);
+      const startY = cy + outerRadius * Math.sin(-midAngle * RADIAN);
+      const endX = cx + (outerRadius + 20) * Math.cos(-midAngle * RADIAN);
+      const endY = cy + (outerRadius + 20) * Math.sin(-midAngle * RADIAN);
+      const textX = cx + (outerRadius + 30) * Math.cos(-midAngle * RADIAN);
+      const textY = cy + (outerRadius + 30) * Math.sin(-midAngle * RADIAN);
+      const textAnchor = textX > cx ? 'start' : 'end';
+
+      if (name === 'Unallocated') {
         return null;
       }
       
       const labelValue = dashboardSettings.pieChartLabelFormat === 'time'
         ? `${Math.floor(value / 60)}h ${value % 60}m`
-        : `${(percent * 100).toFixed(0)}%`;
+        : `${percentage.toFixed(0)}%`;
 
       return (
-        <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={textAnchor} dominantBaseline="central" className="text-xs">
-          {`${name} (${labelValue})`}
-        </text>
+        <g>
+          <path d={`M${startX},${startY}L${endX},${endY}L${textX},${endY}`} stroke={color} fill="none"/>
+          <circle cx={startX} cy={startY} r={2} fill={color} stroke="none"/>
+          <text x={textX + (textAnchor === 'start' ? 3 : -3)} y={textY} fill="hsl(var(--foreground))" textAnchor={textAnchor} dominantBaseline="central" className="text-xs">
+            {`${name} (${labelValue})`}
+          </text>
+        </g>
       );
     }, [dashboardSettings.pieChartLabelFormat]);
 
@@ -211,7 +220,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
             <CardContent>
                 <div className="h-[300px] w-full relative">
                     <ResponsiveContainer width="100%" height="100%">
-                         <PieChart>
+                         <PieChart margin={{ top: 30, right: 50, bottom: 30, left: 50 }}>
                             <Pie
                                 data={pieData}
                                 cx="50%"
