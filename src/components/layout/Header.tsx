@@ -59,8 +59,8 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const navLinks = [
     { href: "/friends", label: "Friends", icon: Users },
+    { href: "/alliances", label: "Alliances", icon: ShieldCheck },
     { href: "/todo", label: "Pacts", icon: ListChecks },
-    { href: "/high-goals", label: "High Goals", icon: ShieldCheck },
     { href: "/insights", label: "Insights", icon: BarChart2 },
     { href: "/achievements", label: "Achievements", icon: Trophy },
     { href: "/constellations", label: "Constellations", icon: Sparkles },

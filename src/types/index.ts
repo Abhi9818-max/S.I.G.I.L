@@ -183,6 +183,7 @@ export interface DashboardSettings {
 
 // For Auth/User Data
 export interface UserData {
+    uid?: string;
     username: string;
     username_lowercase?: string; // For case-insensitive search
     photoURL?: string | null;
@@ -241,4 +242,29 @@ export interface RelationshipProposal {
     createdAt: string;
     relationship: string;
     correspondingRelationship: string;
+}
+
+// For Alliances (Group Goals)
+export interface AllianceMember {
+  uid: string;
+  username: string;
+  nickname?: string;
+  photoURL?: string | null;
+}
+
+export interface Alliance {
+  id: string;
+  name: string;
+  description: string;
+  creatorId: string;
+  taskId: string;
+  taskName: string;
+  taskColor: string;
+  target: number;
+  progress: number;
+  startDate: string; // ISO
+  endDate: string; // ISO
+  createdAt: string; // ISO
+  members: AllianceMember[];
+  memberIds: string[];
 }

@@ -302,6 +302,16 @@ export default function SettingsPage() {
     });
   };
 
+  const handleShareProfile = () => {
+    if (!user) return;
+    const url = `${window.location.origin}/public/${user.uid}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "Link Copied!",
+      description: "Your public profile link has been copied to your clipboard.",
+    });
+  };
+
   if (showLoading) {
     return null;
   }
@@ -351,6 +361,21 @@ export default function SettingsPage() {
                             </p>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
                                 <Pencil className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        
+                        <Separator />
+
+                        <div className="flex items-center gap-4">
+                            <Button onClick={handleShareProfile} variant="outline" size="sm">
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share Profile
+                            </Button>
+                             <Button asChild variant="outline" size="sm">
+                                <Link href="/friends">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Manage Friends
+                                </Link>
                             </Button>
                         </div>
                         
@@ -541,6 +566,18 @@ export default function SettingsPage() {
                         </p>
                         <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsBioDialogOpen(true)}>
                             <Pencil className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                         <Button onClick={handleShareProfile} variant="outline" className="w-full">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share Profile
+                        </Button>
+                         <Button asChild variant="outline" className="w-full">
+                            <Link href="/friends">
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Manage Friends
+                            </Link>
                         </Button>
                     </div>
                 </div>

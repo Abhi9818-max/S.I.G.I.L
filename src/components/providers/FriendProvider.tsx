@@ -2,11 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember } from '@/types';
 import { useToast } from "@/hooks/use-toast";
+import { parseISO, isWithinInterval } from 'date-fns';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -40,6 +41,13 @@ interface FriendContextType {
     pendingRelationshipProposals: RelationshipProposal[];
     pendingRelationshipProposalForFriend: (friendId: string) => RelationshipProposal | undefined;
     incomingRelationshipProposalFromFriend: (friendId: string) => RelationshipProposal | undefined;
+    getPublicUserData: (userId: string) => Promise<UserData | null>;
+    // Alliances
+    createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress'>) => Promise<string>;
+    userAlliances: Alliance[];
+    getAllianceWithMembers: (allianceId: string) => Promise<Alliance | null>;
+    leaveAlliance: (allianceId: string, memberId: string) => Promise<void>;
+    disbandAlliance: (allianceId: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -52,6 +60,23 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [friends, setFriends] = useState<Friend[]>([]);
     const [incomingRelationshipProposals, setIncomingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
+    const [userAlliances, setUserAlliances] = useState<Alliance[]>([]);
+
+    useEffect(() => {
+        if (!user) {
+            setUserAlliances([]);
+            return;
+        };
+
+        const alliancesQuery = query(collection(db, 'alliances'), where('memberIds', 'array-contains', user.uid));
+        
+        const unsubscribe = onSnapshot(alliancesQuery, (snapshot) => {
+            const alliancesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alliance));
+            setUserAlliances(alliancesData);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
 
     const fetchFriendsAndRequests = useCallback(async () => {
         if (!user) return;
@@ -231,6 +256,17 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return null;
     }, [user]);
 
+    const getPublicUserData = useCallback(async (userId: string): Promise<UserData | null> => {
+        const userDocRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(userDocRef);
+        
+        if (docSnap.exists()) {
+            // Here you could filter out sensitive data if needed, but for now we return all
+            return docSnap.data() as UserData;
+        }
+        return null;
+    }, []);
+
     const updateFriendNickname = useCallback(async (friendId: string, nickname: string) => {
         if (!user) return;
         const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
@@ -323,6 +359,101 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return incomingRelationshipProposals.find(p => p.senderId === friendId);
     }, [incomingRelationshipProposals]);
 
+    // Alliance Functions
+    const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds'>): Promise<string> => {
+        if (!user || !userData) throw new Error("Authentication required.");
+        
+        const newAllianceData = {
+            ...allianceData,
+            creatorId: user.uid,
+            members: [{
+                uid: user.uid,
+                username: userData.username,
+                photoURL: userData.photoURL
+            }],
+            memberIds: [user.uid],
+            progress: 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        const docRef = await addDoc(collection(db, 'alliances'), newAllianceData);
+        return docRef.id;
+    }, [user, userData]);
+
+     const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<Alliance | null> => {
+        const allianceRef = doc(db, 'alliances', allianceId);
+        const allianceSnap = await getDoc(allianceRef);
+
+        if (!allianceSnap.exists()) return null;
+
+        const allianceData = allianceSnap.data() as Alliance;
+        const memberIds = allianceData.memberIds || [];
+        
+        if (memberIds.length === 0) {
+            return { ...allianceData, members: [], progress: 0 };
+        }
+
+        // Fetch user data for all members
+        const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
+        const usersSnapshot = await getDocs(usersQuery);
+        const membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
+
+        // Fetch friends data to get nicknames
+        const friendsSnapshot = user ? await getDocs(collection(db, `users/${user.uid}/friends`)) : null;
+        const nicknames = new Map<string, string>();
+        friendsSnapshot?.docs.forEach(doc => {
+            if (doc.data().nickname) {
+                nicknames.set(doc.id, doc.data().nickname);
+            }
+        });
+        
+        const members: AllianceMember[] = membersData.map(m => ({
+            uid: m.uid!,
+            username: m.username,
+            photoURL: m.photoURL,
+            nickname: nicknames.get(m.uid!) || m.username,
+        }));
+        
+        // Calculate progress
+        const startDate = parseISO(allianceData.startDate);
+        const endDate = parseISO(allianceData.endDate);
+        let totalProgress = 0;
+
+        membersData.forEach(member => {
+            const memberRecords = member.records || [];
+            const relevantRecords = memberRecords.filter(r => {
+                return r.taskType === allianceData.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate });
+            });
+            totalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
+        });
+
+        return { ...allianceData, members, progress: totalProgress };
+    }, [user]);
+
+    const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
+        const allianceRef = doc(db, 'alliances', allianceId);
+        const memberRef = doc(db, 'users', memberId);
+        const memberSnap = await getDoc(memberRef);
+        if(!memberSnap.exists()) throw new Error("Member not found");
+
+        const memberData = memberSnap.data() as UserData;
+        const memberToRemove = {
+            uid: memberId,
+            username: memberData.username,
+            photoURL: memberData.photoURL
+        };
+
+        await updateDoc(allianceRef, {
+            memberIds: arrayRemove(memberId),
+            members: arrayRemove(memberToRemove)
+        });
+    }, []);
+
+    const disbandAlliance = useCallback(async (allianceId: string) => {
+        await deleteDoc(doc(db, 'alliances', allianceId));
+    }, []);
+
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -343,6 +474,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             pendingRelationshipProposals,
             pendingRelationshipProposalForFriend,
             incomingRelationshipProposalFromFriend,
+            getPublicUserData,
+            createAlliance,
+            userAlliances,
+            getAllianceWithMembers,
+            leaveAlliance,
+            disbandAlliance
         }}>
             {children}
         </FriendContext.Provider>
