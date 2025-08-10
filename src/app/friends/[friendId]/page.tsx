@@ -342,7 +342,7 @@ export default function FriendProfilePage() {
                             <ScrollArea className="w-full whitespace-nowrap">
                                 <Tabs defaultValue="today" className="w-full inline-block min-w-full">
                                     <TabsContent value="today" className="mt-4">
-                                        <div className="w-[600px] md:w-full md:mx-auto">
+                                        <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
                                             <DailyTimeBreakdownChart
                                                 date={today}
                                                 records={friendRecords}
@@ -402,3 +402,5 @@ export default function FriendProfilePage() {
         </>
     );
 };
+
+    
