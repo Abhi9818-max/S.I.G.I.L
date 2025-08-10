@@ -352,7 +352,7 @@ export default function FriendProfilePage() {
                                         </div>
                                     </TabsContent>
                                     <TabsContent value="yesterday" className="mt-4">
-                                        <div className="w-[600px] md:w-full md:mx-auto">
+                                        <div className="w-full md:mx-auto">
                                             <DailyTimeBreakdownChart
                                                 date={yesterday}
                                                 records={friendRecords}
@@ -402,5 +402,3 @@ export default function FriendProfilePage() {
         </>
     );
 };
-
-    
