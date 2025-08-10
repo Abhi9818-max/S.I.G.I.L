@@ -6,11 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { UserData, Friend, RecordEntry, TaskDefinition } from '@/types';
+import type { UserData, Friend, RecordEntry, TaskDefinition, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
@@ -144,6 +144,13 @@ export default function FriendProfilePage() {
     const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
     const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
     const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
+
+    const friendLevelInfo: UserLevelInfo | null = useMemo(() => {
+        if (!friendData) return null;
+        const totalRecordValue = friendData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
+        const totalExperience = totalRecordValue + (friendData.bonusPoints || 0);
+        return calculateUserLevelInfo(totalExperience);
+    }, [friendData]);
     
     const friendPacts = useMemo(() => {
         if (!friendData?.todoItems) return [];
@@ -285,10 +292,21 @@ export default function FriendProfilePage() {
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
                                    <div className="hidden md:block">
-                                       
+                                        {friendLevelInfo && (
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <Award className="h-4 w-4 text-primary" />
+                                                Level {friendLevelInfo.currentLevel}: {friendLevelInfo.levelName}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                  <div className="mt-1 md:hidden">
+                                    {friendLevelInfo && (
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Award className="h-4 w-4 text-primary" />
+                                            Level {friendLevelInfo.currentLevel}: {friendLevelInfo.levelName}
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                     {friendData.bio || "No bio yet."}
@@ -319,34 +337,34 @@ export default function FriendProfilePage() {
                       </TabsContent>
 
                       <TabsContent value="activity" className="mt-6">
-                         <div className="mb-8">
-                            <div className="max-w-2xl mx-auto">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                                </div>
-                                <Tabs defaultValue="today" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
+                         <div className="mb-8 max-w-2xl mx-auto">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                                <Tabs defaultValue="today" className="w-auto">
+                                    <TabsList>
                                         <TabsTrigger value="today">Today</TabsTrigger>
                                         <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                                     </TabsList>
-                                    <TabsContent value="today" className="mt-4">
-                                        <DailyTimeBreakdownChart
-                                            date={today}
-                                            records={friendRecords}
-                                            taskDefinitions={friendTasks}
-                                            hideFooter={true}
-                                        />
-                                    </TabsContent>
-                                    <TabsContent value="yesterday" className="mt-4">
-                                        <DailyTimeBreakdownChart
-                                            date={yesterday}
-                                            records={friendRecords}
-                                            taskDefinitions={friendTasks}
-                                            hideFooter={true}
-                                        />
-                                    </TabsContent>
                                 </Tabs>
                             </div>
+                            <Tabs defaultValue="today" className="w-full">
+                                <TabsContent value="today" className="mt-4">
+                                    <DailyTimeBreakdownChart
+                                        date={today}
+                                        records={friendRecords}
+                                        taskDefinitions={friendTasks}
+                                        hideFooter={true}
+                                    />
+                                </TabsContent>
+                                <TabsContent value="yesterday" className="mt-4">
+                                    <DailyTimeBreakdownChart
+                                        date={yesterday}
+                                        records={friendRecords}
+                                        taskDefinitions={friendTasks}
+                                        hideFooter={true}
+                                    />
+                                </TabsContent>
+                            </Tabs>
                         </div>
                          <div>
                             <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
