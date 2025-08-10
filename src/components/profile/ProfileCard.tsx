@@ -24,11 +24,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
             </div>
         </div>
         <div className="flex-grow flex items-center justify-between text-white pt-4">
-            <div>
-                <h2 className="text-2xl font-bold">{userData.username}</h2>
-                <p className="text-md text-white/70">Level {levelInfo.currentLevel}</p>
+            <div className="w-1/2">
+                <h2 className="text-2xl font-bold truncate">{userData.username}</h2>
+                <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis">
+                    {userData.bio || 'No bio yet.'}
+                </p>
             </div>
-            <div className="text-right">
+            <div className="text-right w-1/2">
                 <LevelIndicator levelInfo={levelInfo} />
             </div>
         </div>
