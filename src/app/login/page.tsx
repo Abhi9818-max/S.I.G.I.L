@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -14,6 +14,7 @@ import { TrendingUp, KeyRound, User, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 const setupSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters.").max(20, "Username is too long."),
     password: z.string().min(6, "Password must be at least 6 characters.").max(50, "Password is too long."),
+    gender: z.string({ required_error: "Please select your gender." }),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -39,7 +41,7 @@ export default function LoginPage() {
 
   const setupForm = useForm<SetupForm>({
     resolver: zodResolver(setupSchema),
-    defaultValues: { username: '', password: '' },
+    defaultValues: { username: '', password: '', gender: undefined },
   });
 
   const handleLogin = async (data: LoginForm) => {
@@ -53,7 +55,7 @@ export default function LoginPage() {
 
   const handleSetup = async (data: SetupForm) => {
     setError(null);
-    const success = await setupCredentials(data.username, data.password);
+    const success = await setupCredentials(data.username, data.password, data.gender as any);
     if (!success) {
       setError("An account with this username may already exist, or another error occurred.");
     }
@@ -128,6 +130,27 @@ export default function LoginPage() {
                             <Input id="signup-password" type="password" {...setupForm.register('password')} className="pl-10" />
                           </div>
                           {setupForm.formState.errors.password && <p className="text-sm text-destructive mt-1">{setupForm.formState.errors.password.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="signup-gender">Gender</Label>
+                            <Controller
+                                name="gender"
+                                control={setupForm.control}
+                                render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger id="signup-gender">
+                                    <SelectValue placeholder="Select your gender..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                    <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                )}
+                            />
+                            {setupForm.formState.errors.gender && <p className="text-sm text-destructive mt-1">{setupForm.formState.errors.gender.message}</p>}
                         </div>
                         
                         {error && <p className="text-sm text-destructive text-center">{error}</p>}

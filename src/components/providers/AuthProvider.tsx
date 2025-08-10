@@ -22,7 +22,7 @@ interface AuthContextType {
   isGuest: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  setupCredentials: (username: string, password: string) => Promise<boolean>;
+  setupCredentials: (username: string, password: string, gender: 'male' | 'female' | 'other' | 'prefer_not_to_say') => Promise<boolean>;
   continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [auth, router, toast, isGuest]);
 
-  const setupCredentials = useCallback(async (username: string, password: string): Promise<boolean> => {
+  const setupCredentials = useCallback(async (username: string, password: string, gender: 'male' | 'female' | 'other' | 'prefer_not_to_say'): Promise<boolean> => {
     if (!auth || !db) return false;
     try {
         const email = `${username.toLowerCase()}@${FAKE_DOMAIN}`;
@@ -192,6 +192,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             username_lowercase: username.toLowerCase(),
             photoURL: null,
             bio: '',
+            gender: gender,
             records: [],
             taskDefinitions: DEFAULT_TASK_DEFINITIONS,
             bonusPoints: 0,

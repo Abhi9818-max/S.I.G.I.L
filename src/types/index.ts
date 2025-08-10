@@ -190,6 +190,7 @@ export interface UserData {
     username_lowercase?: string; // For case-insensitive search
     photoURL?: string | null;
     bio?: string;
+    gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
     records?: RecordEntry[];
     taskDefinitions?: TaskDefinition[];
     bonusPoints?: number;
