@@ -23,6 +23,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
       return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Heart className="h-4 w-4 text-pink-400" /> {relationship}</p>;
     }
     
+    // Fallback logic when no relationship is defined.
     switch (displayStat) {
       case 'currentStreak':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Flame className="h-4 w-4 text-orange-400" /> {currentStreak} Day Streak</p>;
@@ -47,8 +48,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
                 <h2 className="text-2xl font-bold truncate">{userData.username}</h2>
                 <StatDisplay />
             </div>
-            <div className="text-right w-1/2 pl-2">
+            <div className="w-1/2 flex justify-end">
+              <div className="flex flex-col items-end -mt-1 -mr-1">
                 <LevelIndicator levelInfo={levelInfo} />
+              </div>
             </div>
         </div>
          <div className="text-center pt-4 mt-auto border-t border-white/10">
