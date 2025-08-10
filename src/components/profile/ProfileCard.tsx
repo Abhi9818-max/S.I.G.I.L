@@ -4,7 +4,7 @@
 import React from 'react';
 import { UserLevelInfo, UserData, ProfileCardStat } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Flame, TrendingUp, Star } from 'lucide-react';
+import { Flame, TrendingUp, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 
@@ -14,10 +14,15 @@ interface ProfileCardProps {
   userAvatar: string;
   displayStat?: ProfileCardStat;
   currentStreak?: number;
+  relationship?: string | null;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvatar, displayStat, currentStreak }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvatar, displayStat, currentStreak, relationship }) => {
   const StatDisplay = () => {
+    if (relationship) {
+      return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Heart className="h-4 w-4 text-pink-400" /> {relationship}</p>;
+    }
+    
     switch (displayStat) {
       case 'currentStreak':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Flame className="h-4 w-4 text-orange-400" /> {currentStreak} Day Streak</p>;

@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -17,7 +17,7 @@ import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
 import { calculateUserLevelInfo } from '@/lib/config';
-import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday, parseISO } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import PactList from '@/components/todo/PactList';
@@ -31,6 +31,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { toPng } from 'html-to-image';
+import ProfileCard from '@/components/profile/ProfileCard';
 
 
 // Simple hash function to get a number from a string
@@ -133,6 +135,7 @@ export default function FriendProfilePage() {
     const { user } = useAuth();
     const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend } = useFriends();
     const currentUserRecords = useUserRecords();
+    const profileCardRef = useRef<HTMLDivElement>(null);
 
     const [friendData, setFriendData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -209,6 +212,73 @@ export default function FriendProfilePage() {
         }
     };
     
+      const handleDownloadProfileCard = useCallback(() => {
+        if (profileCardRef.current === null) {
+          return;
+        }
+
+        toPng(profileCardRef.current, { cacheBust: true, pixelRatio: 2 })
+          .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = `sigil-profile-card-${friendData?.username}.png`;
+            link.href = dataUrl;
+            link.click();
+          })
+          .catch((err) => {
+            console.error('Failed to create profile card image', err);
+            toast({
+                title: "Download Failed",
+                description: "Could not generate profile card.",
+                variant: "destructive"
+            });
+          });
+      }, [profileCardRef, toast, friendData]);
+      
+      const getFriendStreak = useCallback((friendRecords: RecordEntry[] | undefined, friendTasks: TaskDefinition[] | undefined, taskId: string | null = null): number => {
+        if (!friendRecords || !friendTasks) return 0;
+        let taskRelevantRecords = taskId ? friendRecords.filter(r => r.taskType === taskId) : friendRecords;
+        const recordDates = new Set(taskRelevantRecords.map(r => r.date));
+      
+        const taskDef = taskId ? friendTasks.find(t => t.id === taskId) : null;
+        const isDaily = !taskDef || !taskDef.frequencyType || taskDef.frequencyType === 'daily';
+      
+        let currentDate = startOfDay(new Date());
+        let streak = 0;
+      
+        if (!recordDates.has(currentDate.toISOString().split('T')[0])) {
+          currentDate = subDays(currentDate, 1);
+        }
+      
+        if (isDaily) {
+          while (recordDates.has(currentDate.toISOString().split('T')[0])) {
+            streak++;
+            currentDate = subDays(currentDate, 1);
+          }
+        } else {
+            const freqCount = taskDef?.frequencyCount || 1;
+            let consecutiveWeeks = 0;
+            let continueStreak = true;
+        
+            while (continueStreak) {
+                const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+                const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+                const recordsThisWeek = [...recordDates].filter(d => 
+                isWithinInterval(parseISO(d), { start: weekStart, end: weekEnd })
+                ).length;
+                
+                if (recordsThisWeek >= freqCount) {
+                consecutiveWeeks++;
+                currentDate = subDays(weekStart, 1);
+                } else {
+                continueStreak = false;
+                }
+            }
+            streak = consecutiveWeeks;
+        }
+      
+        return streak;
+    }, []);
+
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     if (isLoading) {
@@ -303,8 +373,12 @@ export default function FriendProfilePage() {
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                     {friendData.bio || "No bio yet."}
                                 </p>
-                                <div className="mt-3">
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
                                    {getRelationshipContent()}
+                                    <Button onClick={handleDownloadProfileCard} variant="outline" size="sm">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        Download Card
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -386,6 +460,21 @@ export default function FriendProfilePage() {
                     </Tabs>
                 </main>
             </div>
+            {/* This div is for html-to-image to render offscreen */}
+            <div className="fixed -left-[9999px] top-0">
+                <div ref={profileCardRef}>
+                    {friendLevelInfo && friendData && (
+                        <ProfileCard 
+                            levelInfo={friendLevelInfo} 
+                            userData={friendData}
+                            userAvatar={friendAvatar}
+                            relationship={friendInfo.relationship}
+                            displayStat='currentStreak'
+                            currentStreak={getFriendStreak(friendData.records, friendData.taskDefinitions)}
+                        />
+                    )}
+                </div>
+            </div>
             <NicknameDialog
                 isOpen={isNicknameDialogOpen}
                 onOpenChange={setIsNicknameDialogOpen}
@@ -402,5 +491,3 @@ export default function FriendProfilePage() {
         </>
     );
 };
-
-    
