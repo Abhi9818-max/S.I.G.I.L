@@ -205,16 +205,12 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     const dailyRecords = getRecordsByDate(format(date || new Date(), 'yyyy-MM-dd'));
     const timeBasedRecords = dailyRecords.filter(rec => {
         if (!rec.taskType) return false;
-        const task = userRecordsContext.getTaskDefinitionById(rec.taskType);
+        const task = userRecordsContext.getTaskDefinitionById(rec.taskType!);
         return task && (task.unit === 'minutes' || task.unit === 'hours');
     });
 
     return (
         <div className="shadow-lg border-0 bg-transparent">
-            <div className="items-center text-center">
-                <h2 className="text-xl font-semibold">{chartTitle}</h2>
-                <p className="text-sm text-muted-foreground">{chartDescription}</p>
-            </div>
             <div className="h-[300px] w-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                      <PieChart margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>
