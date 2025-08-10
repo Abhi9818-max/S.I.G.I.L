@@ -268,3 +268,15 @@ export interface Alliance {
   members: AllianceMember[];
   memberIds: string[];
 }
+
+export interface AllianceInvitation {
+  id: string;
+  allianceId: string;
+  allianceName: string;
+  senderId: string;
+  senderUsername: string;
+  recipientId: string;
+  recipientUsername: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string; // ISO
+}

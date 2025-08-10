@@ -5,9 +5,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -48,6 +49,11 @@ interface FriendContextType {
     getAllianceWithMembers: (allianceId: string) => Promise<Alliance | null>;
     leaveAlliance: (allianceId: string, memberId: string) => Promise<void>;
     disbandAlliance: (allianceId: string) => Promise<void>;
+    sendAllianceInvitation: (allianceId: string, allianceName: string, recipientId: string) => Promise<void>;
+    acceptAllianceInvitation: (invitation: AllianceInvitation) => Promise<void>;
+    declineAllianceInvitation: (invitationId: string) => Promise<void>;
+    getPendingAllianceInvitesFor: (allianceId: string) => Promise<AllianceInvitation[]>;
+    incomingAllianceInvitations: AllianceInvitation[];
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -55,12 +61,15 @@ const FriendContext = createContext<FriendContextType | undefined>(undefined);
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user, userData } = useAuth();
     const { toast } = useToast();
+    const router = useRouter();
+
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
     const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
     const [friends, setFriends] = useState<Friend[]>([]);
     const [incomingRelationshipProposals, setIncomingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [userAlliances, setUserAlliances] = useState<Alliance[]>([]);
+    const [incomingAllianceInvitations, setIncomingAllianceInvitations] = useState<AllianceInvitation[]>([]);
 
     useEffect(() => {
         if (!user) {
@@ -84,14 +93,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         // Fetch incoming friend requests
         const incomingQuery = query(collection(db, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
         const incomingSnapshot = await getDocs(incomingQuery);
-        const incoming = incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
-        setIncomingRequests(incoming);
+        setIncomingRequests(incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
 
         // Fetch sent/pending friend requests
         const pendingQuery = query(collection(db, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
         const pendingSnapshot = await getDocs(pendingQuery);
-        const pending = pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
-        setPendingRequests(pending);
+        setPendingRequests(pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
         
         // Fetch friends list
         const friendsQuery = collection(db, `users/${user.uid}/friends`);
@@ -114,26 +121,38 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }
             return null;
         });
-        const friendsList = (await Promise.all(friendsListPromises)).filter(Boolean) as Friend[];
-        setFriends(friendsList);
+        setFriends((await Promise.all(friendsListPromises)).filter(Boolean) as Friend[]);
         
         // Fetch incoming relationship proposals
         const incomingRelQuery = query(collection(db, 'relationship_proposals'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
         const incomingRelSnapshot = await getDocs(incomingRelQuery);
-        const incomingRel = incomingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal));
-        setIncomingRelationshipProposals(incomingRel);
+        setIncomingRelationshipProposals(incomingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
 
         // Fetch sent/pending relationship proposals
         const pendingRelQuery = query(collection(db, 'relationship_proposals'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
         const pendingRelSnapshot = await getDocs(pendingRelQuery);
-        const pendingRel = pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal));
-        setPendingRelationshipProposals(pendingRel);
+        setPendingRelationshipProposals(pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
+        
+        // Fetch incoming alliance invitations
+        const incomingAllianceQuery = query(collection(db, 'alliance_invitations'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
+        const incomingAllianceSnapshot = await getDocs(incomingAllianceQuery);
+        setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
 
     }, [user]);
 
     useEffect(() => {
         if (user) {
-            fetchFriendsAndRequests();
+            const unsub = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+                fetchFriendsAndRequests();
+            });
+            return () => unsub();
+        } else {
+             setIncomingRequests([]);
+             setPendingRequests([]);
+             setFriends([]);
+             setIncomingRelationshipProposals([]);
+             setPendingRelationshipProposals([]);
+             setIncomingAllianceInvitations([]);
         }
     }, [user, fetchFriendsAndRequests]);
 
@@ -184,7 +203,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(requestRef, newRequest);
-        await fetchFriendsAndRequests(); // Re-fetch to update pending list
+        await fetchFriendsAndRequests();
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
@@ -261,7 +280,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const docSnap = await getDoc(userDocRef);
         
         if (docSnap.exists()) {
-            // Here you could filter out sensitive data if needed, but for now we return all
             return docSnap.data() as UserData;
         }
         return null;
@@ -322,15 +340,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (!user) return;
         const batch = writeBatch(db);
 
-        // Update relationship for current user
         const userFriendRef = doc(db, `users/${user.uid}/friends`, proposal.senderId);
         batch.update(userFriendRef, { relationship: proposal.correspondingRelationship });
         
-        // Update relationship for sender
         const senderFriendRef = doc(db, `users/${proposal.senderId}/friends`, user.uid);
         batch.update(senderFriendRef, { relationship: proposal.relationship });
 
-        // Delete proposal
         const proposalRef = doc(db, 'relationship_proposals', proposal.id);
         batch.delete(proposalRef);
 
@@ -369,6 +384,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             members: [{
                 uid: user.uid,
                 username: userData.username,
+                nickname: userData.username,
                 photoURL: userData.photoURL
             }],
             memberIds: [user.uid],
@@ -393,12 +409,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             return { ...allianceData, members: [], progress: 0 };
         }
 
-        // Fetch user data for all members
         const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
         const usersSnapshot = await getDocs(usersQuery);
         const membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
 
-        // Fetch friends data to get nicknames
         const friendsSnapshot = user ? await getDocs(collection(db, `users/${user.uid}/friends`)) : null;
         const nicknames = new Map<string, string>();
         friendsSnapshot?.docs.forEach(doc => {
@@ -414,7 +428,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             nickname: nicknames.get(m.uid!) || m.username,
         }));
         
-        // Calculate progress
         const startDate = parseISO(allianceData.startDate);
         const endDate = parseISO(allianceData.endDate);
         let totalProgress = 0;
@@ -432,16 +445,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
         const allianceRef = doc(db, 'alliances', allianceId);
-        const memberRef = doc(db, 'users', memberId);
-        const memberSnap = await getDoc(memberRef);
-        if(!memberSnap.exists()) throw new Error("Member not found");
-
-        const memberData = memberSnap.data() as UserData;
-        const memberToRemove = {
-            uid: memberId,
-            username: memberData.username,
-            photoURL: memberData.photoURL
-        };
+        
+        const allianceSnap = await getDoc(allianceRef);
+        if (!allianceSnap.exists()) throw new Error("Alliance not found.");
+        const allianceData = allianceSnap.data() as Alliance;
+        
+        const memberToRemove = allianceData.members.find(m => m.uid === memberId);
 
         await updateDoc(allianceRef, {
             memberIds: arrayRemove(memberId),
@@ -453,6 +462,77 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await deleteDoc(doc(db, 'alliances', allianceId));
     }, []);
 
+    const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
+        if (!user || !userData) throw new Error("Authentication required.");
+
+        const invitationId = `${user.uid}_${recipientId}_${allianceId}`;
+        const inviteRef = doc(db, 'alliance_invitations', invitationId);
+        const inviteSnap = await getDoc(inviteRef);
+
+        if (inviteSnap.exists()) {
+            throw new Error("Invitation already sent.");
+        }
+
+        const recipientDoc = await getDoc(doc(db, 'users', recipientId));
+        if (!recipientDoc.exists()) throw new Error("Recipient not found.");
+        const recipientData = recipientDoc.data() as UserData;
+        
+        const newInvite: Omit<AllianceInvitation, 'id'> = {
+            allianceId,
+            allianceName,
+            senderId: user.uid,
+            senderUsername: userData.username,
+            recipientId,
+            recipientUsername: recipientData.username,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
+
+        await setDoc(inviteRef, newInvite);
+        await fetchFriendsAndRequests();
+
+    }, [user, userData, fetchFriendsAndRequests]);
+
+    const acceptAllianceInvitation = useCallback(async (invitation: AllianceInvitation) => {
+        if (!user || !userData) throw new Error("Authentication required.");
+        
+        const allianceRef = doc(db, 'alliances', invitation.allianceId);
+        const allianceSnap = await getDoc(allianceRef);
+        if(!allianceSnap.exists()) throw new Error("Alliance no longer exists.");
+
+        const newMember: AllianceMember = {
+            uid: user.uid,
+            username: userData.username,
+            nickname: userData.username,
+            photoURL: userData.photoURL
+        };
+
+        await updateDoc(allianceRef, {
+            memberIds: arrayUnion(user.uid),
+            members: arrayUnion(newMember)
+        });
+
+        await deleteDoc(doc(db, 'alliance_invitations', invitation.id));
+        await fetchFriendsAndRequests();
+        toast({ title: "Joined Alliance!", description: `You are now a member of ${invitation.allianceName}.` });
+        router.push(`/alliances/${invitation.allianceId}`);
+    }, [user, userData, fetchFriendsAndRequests, toast, router]);
+    
+    const declineAllianceInvitation = useCallback(async (invitationId: string) => {
+        await deleteDoc(doc(db, 'alliance_invitations', invitationId));
+        await fetchFriendsAndRequests();
+        toast({ title: 'Invitation Declined', variant: 'destructive' });
+    }, [fetchFriendsAndRequests, toast]);
+
+    const getPendingAllianceInvitesFor = useCallback(async (allianceId: string): Promise<AllianceInvitation[]> => {
+        const invitesQuery = query(
+            collection(db, 'alliance_invitations'),
+            where('allianceId', '==', allianceId),
+            where('status', '==', 'pending')
+        );
+        const snapshot = await getDocs(invitesQuery);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation));
+    }, []);
 
     return (
         <FriendContext.Provider value={{ 
@@ -479,7 +559,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             userAlliances,
             getAllianceWithMembers,
             leaveAlliance,
-            disbandAlliance
+            disbandAlliance,
+            sendAllianceInvitation,
+            acceptAllianceInvitation,
+            declineAllianceInvitation,
+            getPendingAllianceInvitesFor,
+            incomingAllianceInvitations,
         }}>
             {children}
         </FriendContext.Provider>
