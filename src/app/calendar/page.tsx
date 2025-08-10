@@ -67,7 +67,7 @@ export default function CalendarPage() {
                   <div>
                     <CardTitle>Contribution Calendar</CardTitle>
                   </div>
-                  <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <Label htmlFor="task-filter" className="flex-shrink-0"><ListFilter className="h-4 w-4 inline-block mr-1" />Task</Label>
                         <Select onValueChange={(value) => setSelectedTaskFilterId(value === 'all' ? null : value)} defaultValue="all">
