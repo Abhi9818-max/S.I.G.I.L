@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings, ProgressChartTimeRange } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -105,7 +105,7 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
 
 
 export default function SettingsPage() {
-  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded } = useUserRecords();
+  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout } = useAuth();
@@ -668,7 +668,7 @@ export default function SettingsPage() {
                     </AccordionContent>
                   </AccordionItem>
                    <AccordionItem value="chart-display" className="border rounded-lg p-4">
-                    <AccordionTrigger>Chart Display</AccordionTrigger>
+                    <AccordionTrigger>Chart & Card Display</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
                       <div>
                           <Label className="font-normal">Progress Chart Time Range</Label>
@@ -701,6 +701,29 @@ export default function SettingsPage() {
                               <RadioGroupItem value="time" id="r-time" />
                               <Label htmlFor="r-time" className="font-normal">Time (HH:MM)</Label>
                           </div>
+                          </RadioGroup>
+                      </div>
+                      <Separator />
+                       <div>
+                          <Label className="font-normal">Profile Card Info</Label>
+                           <p className="text-xs text-muted-foreground mt-1">Choose what to display below your name on the downloadable profile card.</p>
+                          <RadioGroup 
+                              value={dashboardSettings.profileCardStat || 'tierName'}
+                              onValueChange={(value: ProfileCardStat) => updateDashboardSetting('profileCardStat', value)}
+                              className="mt-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="tierName" id="r-tier" />
+                                <Label htmlFor="r-tier" className="font-normal flex items-center gap-1.5"><Star className="h-4 w-4"/>Tier Name</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="currentStreak" id="r-streak" />
+                                <Label htmlFor="r-streak" className="font-normal flex items-center gap-1.5"><Flame className="h-4 w-4" />Current Streak</Label>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="totalXp" id="r-xp" />
+                                <Label htmlFor="r-xp" className="font-normal flex items-center gap-1.5"><TrendingUp className="h-4 w-4" />Total XP</Label>
+                            </div>
                           </RadioGroup>
                       </div>
                     </AccordionContent>
@@ -814,6 +837,8 @@ export default function SettingsPage() {
                     levelInfo={levelInfo} 
                     userData={userData}
                     userAvatar={userAvatar}
+                    displayStat={dashboardSettings.profileCardStat}
+                    currentStreak={getCurrentStreak(null)}
                 />
             )}
         </div>

@@ -165,6 +165,7 @@ export interface HighGoal {
 }
 
 // For Settings
+export type ProfileCardStat = 'tierName' | 'currentStreak' | 'totalXp';
 export interface DashboardSettings {
   showTotalLast30Days: boolean;
   totalDays: number;
@@ -179,6 +180,7 @@ export interface DashboardSettings {
   progressChartTimeRange: ProgressChartTimeRange;
   showTimeBreakdownChart: boolean;
   pieChartLabelFormat?: 'percentage' | 'time';
+  profileCardStat?: ProfileCardStat;
 }
 
 // For Auth/User Data
