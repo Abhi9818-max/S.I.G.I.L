@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -236,7 +236,7 @@ export default function SettingsPage() {
     }
   };
   
-  const handleDownloadProfileCard = React.useCallback(() => {
+  const handleDownloadProfileCard = useCallback(() => {
     if (profileCardRef.current === null) {
       return;
     }
@@ -387,11 +387,11 @@ export default function SettingsPage() {
                                 {userData?.bio || "No bio yet."}
                             </p>
                             <div className="flex items-center">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
-                                    <Share2 className="h-4 w-4" />
-                                </Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
                                     <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
+                                    <Share2 className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
