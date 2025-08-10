@@ -22,13 +22,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
             <div className="absolute top-3 right-3 bg-black/50 p-2 rounded-full backdrop-blur-sm">
                  <TrendingUp className="h-5 w-5 text-white" />
             </div>
-            <div className="absolute bottom-2 left-3 bg-black/50 px-3 py-1 rounded-full text-white text-lg font-bold text-shadow backdrop-blur-sm">
-                {userData.username}
-            </div>
         </div>
         <div className="flex-grow flex items-center justify-between text-white pt-4">
             <div>
-                <h2 className="text-2xl font-bold">{levelInfo.levelName}</h2>
+                <h2 className="text-2xl font-bold">{userData.username}</h2>
                 <p className="text-md text-white/70">Level {levelInfo.currentLevel}</p>
             </div>
             <div className="text-right">
