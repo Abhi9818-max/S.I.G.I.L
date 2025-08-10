@@ -31,6 +31,13 @@ import type { TaskDefinition, Alliance } from '@/types';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useRouter } from 'next/navigation';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 
 const allianceFormSchema = z.object({
   name: z.string().min(3, "Alliance name must be at least 3 characters.").max(50, "Alliance name is too long."),
@@ -131,67 +138,75 @@ export default function AlliancesPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            <div className="flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-semibold">Form an Alliance</h1>
-            </div>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div>
-                    <Label htmlFor="alliance-name">Alliance Name</Label>
-                    <Input id="alliance-name" {...form.register('name')} className="mt-1" placeholder="e.g., The Midnight Runners" />
-                    {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
-                </div>
-                 <div>
-                    <Label htmlFor="alliance-description">Description</Label>
-                    <Input id="alliance-description" {...form.register('description')} className="mt-1" placeholder="A short mission statement for your alliance." />
-                    {form.formState.errors.description && <p className="text-sm text-destructive mt-1">{form.formState.errors.description.message}</p>}
-                </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="task">Shared Task</Label>
-                  <Controller name="taskId" control={form.control} render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger id="task" className="mt-1"><SelectValue placeholder="Select a task..." /></SelectTrigger>
-                      <SelectContent>
-                        {taskDefinitions.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )} />
-                   {form.formState.errors.taskId && <p className="text-sm text-destructive mt-1">{form.formState.errors.taskId.message}</p>}
-                </div>
-                <div>
-                    <Label htmlFor="target-value">Collective Target {unitLabel && `(${unitLabel})`}</Label>
-                    <Input id="target-value" type="number" {...form.register('target')} className="mt-1" placeholder="e.g., 1000" />
-                    {form.formState.errors.target && <p className="text-sm text-destructive mt-1">{form.formState.errors.target.message}</p>}
-                </div>
-              </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="form-alliance">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-6 w-6 text-primary" />
+                    <h1 className="text-2xl font-semibold">Form an Alliance</h1>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
+                      <div>
+                          <Label htmlFor="alliance-name">Alliance Name</Label>
+                          <Input id="alliance-name" {...form.register('name')} className="mt-1" placeholder="e.g., The Midnight Runners" />
+                          {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
+                      </div>
+                      <div>
+                          <Label htmlFor="alliance-description">Description</Label>
+                          <Input id="alliance-description" {...form.register('description')} className="mt-1" placeholder="A short mission statement for your alliance." />
+                          {form.formState.errors.description && <p className="text-sm text-destructive mt-1">{form.formState.errors.description.message}</p>}
+                      </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="task">Shared Task</Label>
+                        <Controller name="taskId" control={form.control} render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger id="task" className="mt-1"><SelectValue placeholder="Select a task..." /></SelectTrigger>
+                            <SelectContent>
+                              {taskDefinitions.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        )} />
+                        {form.formState.errors.taskId && <p className="text-sm text-destructive mt-1">{form.formState.errors.taskId.message}</p>}
+                      </div>
+                      <div>
+                          <Label htmlFor="target-value">Collective Target {unitLabel && `(${unitLabel})`}</Label>
+                          <Input id="target-value" type="number" {...form.register('target')} className="mt-1" placeholder="e.g., 1000" />
+                          {form.formState.errors.target && <p className="text-sm text-destructive mt-1">{form.formState.errors.target.message}</p>}
+                      </div>
+                    </div>
 
-               <div>
-                   <Label htmlFor="date-range">Date Range</Label>
-                    <Controller name="dateRange" control={form.control} render={({ field }) => (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button id="date-range" variant="outline" className={cn("w-full justify-start text-left font-normal mt-1", !field.value?.from && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value?.from ? (
-                                        field.value.to ? `${format(field.value.from, "LLL dd, y")} - ${format(field.value.to, "LLL dd, y")}` : format(field.value.from, "LLL dd, y")
-                                    ) : (<span>Pick a date range</span>)}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar mode="range" selected={field.value} onSelect={field.onChange} numberOfMonths={2} disabled={(date) => date < new Date() || date > new Date(new Date().setFullYear(new Date().getFullYear() + 1))}/>
-                            </PopoverContent>
-                        </Popover>
-                    )} />
-                    {form.formState.errors.dateRange && <p className="text-sm text-destructive mt-1">{form.formState.errors.dateRange?.from?.message || form.formState.errors.dateRange?.to?.message || form.formState.errors.dateRange.message}</p>}
-                </div>
-              
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                <PlusCircle className="mr-2 h-4 w-4"/>
-                {form.formState.isSubmitting ? "Forming..." : "Form Alliance"}
-              </Button>
-            </form>
+                    <div>
+                        <Label htmlFor="date-range">Date Range</Label>
+                          <Controller name="dateRange" control={form.control} render={({ field }) => (
+                              <Popover>
+                                  <PopoverTrigger asChild>
+                                      <Button id="date-range" variant="outline" className={cn("w-full justify-start text-left font-normal mt-1", !field.value?.from && "text-muted-foreground")}>
+                                          <CalendarIcon className="mr-2 h-4 w-4" />
+                                          {field.value?.from ? (
+                                              field.value.to ? `${format(field.value.from, "LLL dd, y")} - ${format(field.value.to, "LLL dd, y")}` : format(field.value.from, "LLL dd, y")
+                                          ) : (<span>Pick a date range</span>)}
+                                      </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar mode="range" selected={field.value} onSelect={field.onChange} numberOfMonths={2} disabled={(date) => date < new Date() || date > new Date(new Date().setFullYear(new Date().getFullYear() + 1))}/>
+                                  </PopoverContent>
+                              </Popover>
+                          )} />
+                          {form.formState.errors.dateRange && <p className="text-sm text-destructive mt-1">{form.formState.errors.dateRange?.from?.message || form.formState.errors.dateRange?.to?.message || form.formState.errors.dateRange.message}</p>}
+                      </div>
+                    
+                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                      <PlusCircle className="mr-2 h-4 w-4"/>
+                      {form.formState.isSubmitting ? "Forming..." : "Form Alliance"}
+                    </Button>
+                  </form>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
            <div className="space-y-4">
@@ -235,5 +250,5 @@ export default function AlliancesPage() {
         </div>
       </main>
     </div>
-  );
-}
+
+    
