@@ -61,11 +61,11 @@ export default function CalendarPage() {
           onManageTasksClick={() => { /* Not needed on this page, but prop is required */ }}
         />
         <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-           <Card className="shadow-lg w-full max-w-7xl mx-auto md:bg-card bg-background">
-             <CardHeader>
+           <div className="w-full max-w-7xl mx-auto">
+             <div className="p-6 md:p-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <CardTitle>Contribution Calendar</CardTitle>
+                    <h2 className="text-2xl font-semibold">Contribution Calendar</h2>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -97,16 +97,16 @@ export default function CalendarPage() {
                     </div>
                   </div>
                 </div>
-             </CardHeader>
-             <CardContent>
+             </div>
+             <div className="p-6 md:p-0">
                 <ContributionGraph
                     year={selectedYear}
                     onDayClick={handleDayClick}
                     selectedTaskFilterId={selectedTaskFilterId}
                     displayMode="full"
                 />
-             </CardContent>
-           </Card>
+             </div>
+           </div>
 
            <div className="max-w-2xl mx-auto">
              <DailyTimeBreakdownChart date={dateForChart} hideFooter={true} />
