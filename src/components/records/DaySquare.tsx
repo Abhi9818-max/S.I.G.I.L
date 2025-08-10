@@ -9,10 +9,10 @@ import { format, parseISO, isFuture } from 'date-fns';
 
 interface DaySquareProps {
   day: DayData;
-  onClick: () => void;
+  onDoubleClick: () => void;
 }
 
-const DaySquare: React.FC<DaySquareProps> = ({ day, onClick }) => {
+const DaySquare: React.FC<DaySquareProps> = ({ day, onDoubleClick }) => {
   const dayDate = parseISO(day.date);
   const isToday = format(dayDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   const isDayInTheFuture = isFuture(dayDate) && !isToday;
@@ -49,7 +49,7 @@ const DaySquare: React.FC<DaySquareProps> = ({ day, onClick }) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            onClick={onClick}
+            onDoubleClick={onDoubleClick}
             disabled={isDayInTheFuture}
             className={cn(
               "aspect-square w-full h-full rounded-sm focus:outline-none focus:ring-2 focus:ring-ring",

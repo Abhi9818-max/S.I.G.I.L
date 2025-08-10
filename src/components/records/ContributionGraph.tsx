@@ -107,7 +107,7 @@ const ContributionGraph: React.FC<ContributionGraphProps> = ({
                       <div key={day.date} className="w-7 h-7">
                         <DaySquare 
                           day={day as DayData} 
-                          onClick={() => {
+                          onDoubleClick={() => {
                             const clickedDate = parseISO(day.date);
                               if (!isFuture(clickedDate) || format(clickedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
                               onDayClick(day.date);
