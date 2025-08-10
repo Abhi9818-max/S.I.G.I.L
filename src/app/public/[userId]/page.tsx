@@ -1,9 +1,10 @@
-
+import React from 'react';
 import type { Metadata } from 'next';
 import { getPublicUserData } from '@/lib/server/get-public-data';
-import PublicProfilePage from '@/components/public/PublicProfilePage';
+import PublicProfileClientPage from '@/components/public/PublicProfileClient';
+import { notFound } from 'next/navigation';
 
-type Props = {
+interface Props {
     params: { userId: string }
 }
 
@@ -18,9 +19,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  const title = `${userData.username}'s Public Profile`;
-  const description = userData.bio || `View the progress and achievements of ${userData.username} on S.I.G.I.L.`;
-  const imageUrl = userData.photoURL || `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`;
+  const title = `${userData.username}'s Public Profile | S.I.G.I.L.`;
+  const description = userData.bio || `View the public profile and contribution graph for ${userData.username} on S.I.G.I.L.`;
+  const imageUrl = userData.photoURL || 'https://www.sigil.gg/default-og-image.png'; // A default OG image is good practice
 
   return {
     title: title,
@@ -31,11 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
-          width: 1200,
-          height: 630,
+          width: 800,
+          height: 600,
+          alt: `${userData.username}'s profile picture`,
         },
       ],
-      type: 'website',
+      siteName: 'S.I.G.I.L.',
     },
     twitter: {
       card: 'summary_large_image',
@@ -46,21 +48,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+// This is now a Server Component
+export default async function PublicProfilePage({ params }: Props) {
+    const userId = params.userId;
+    const userData = await getPublicUserData(userId);
 
-export default async function Page({ params }: Props) {
-    const { userId } = params;
-    const initialUserData = await getPublicUserData(userId);
-
-    if (!initialUserData) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold">Profile Not Found</h1>
-                    <p className="text-muted-foreground">The requested user profile does not exist.</p>
-                </div>
-            </div>
-        );
+    if (!userData) {
+        notFound();
     }
     
-    return <PublicProfilePage initialUserData={initialUserData} />;
+    // Pass the server-fetched data to the client component
+    return <PublicProfileClientPage initialUserData={userData} userId={userId} />;
 }
