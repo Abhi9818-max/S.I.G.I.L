@@ -66,7 +66,6 @@ export default function CalendarPage() {
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div>
                     <CardTitle>Contribution Calendar</CardTitle>
-                    <CardDescription>Click any day to add or edit a record.</CardDescription>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
