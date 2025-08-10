@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -236,7 +236,7 @@ export default function SettingsPage() {
     }
   };
   
-  const handleDownloadProfileCard = useCallback(() => {
+  const handleDownloadProfileCard = React.useCallback(() => {
     if (profileCardRef.current === null) {
       return;
     }
@@ -386,18 +386,19 @@ export default function SettingsPage() {
                             <p className="text-sm text-muted-foreground italic flex-grow whitespace-pre-wrap">
                                 {userData?.bio || "No bio yet."}
                             </p>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                         
                         <Separator />
 
                         <div className="flex items-center gap-4 flex-wrap">
-                             <Button onClick={handleShareProfile} variant="outline" size="sm">
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Share Profile
-                            </Button>
                              <Button asChild variant="outline" size="sm">
                                 <Link href="/friends">
                                     <UserPlus className="mr-2 h-4 w-4" />
@@ -709,7 +710,7 @@ export default function SettingsPage() {
                           <Label className="font-normal">Profile Card Info</Label>
                            <p className="text-xs text-muted-foreground mt-1">Choose what to display below your name on the downloadable profile card.</p>
                           <RadioGroup 
-                              value={dashboardSettings.profileCardStat || 'tierName'}
+                              value={dashboardSettings.profileCardStat || 'currentStreak'}
                               onValueChange={(value: ProfileCardStat) => updateDashboardSetting('profileCardStat', value)}
                               className="mt-2"
                           >
