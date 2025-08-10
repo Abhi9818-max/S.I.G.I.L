@@ -130,6 +130,8 @@ export default function FriendProfilePage() {
     
     const { user } = useAuth();
     const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend } = useFriends();
+    const currentUserRecords = useUserRecords();
+
     const [friendData, setFriendData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
@@ -137,10 +139,8 @@ export default function FriendProfilePage() {
     const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
     const { toast } = useToast();
     
-    const currentUserRecords = useUserRecords();
     const levelInfo = currentUserRecords.getUserLevelInfo();
-    const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
-
+    
     const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
     const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
     const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
@@ -199,6 +199,8 @@ export default function FriendProfilePage() {
             toast({ title: 'Error', description: (e as Error).message, variant: 'destructive'});
         }
     };
+    
+    const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading friend's profile...</div>;
@@ -317,11 +319,13 @@ export default function FriendProfilePage() {
                       </TabsContent>
 
                       <TabsContent value="activity" className="mt-6">
-                         <div className="p-4 rounded-lg bg-muted/40 mb-8">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                                <Tabs defaultValue="today" className="w-auto">
-                                    <TabsList>
+                         <div className="p-4 rounded-lg bg-muted/40 mb-8 flex justify-center">
+                            <div className="w-full max-w-2xl">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                                </div>
+                                <Tabs defaultValue="today" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2">
                                         <TabsTrigger value="today">Today</TabsTrigger>
                                         <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
                                     </TabsList>
