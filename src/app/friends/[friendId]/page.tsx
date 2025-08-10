@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
+import LevelIndicator from '@/components/layout/LevelIndicator';
 
 
 // Simple hash function to get a number from a string
@@ -292,21 +293,11 @@ export default function FriendProfilePage() {
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                                     </div>
                                    <div className="hidden md:block">
-                                        {friendLevelInfo && (
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Award className="h-4 w-4 text-primary" />
-                                                Level {friendLevelInfo.currentLevel}: {friendLevelInfo.levelName}
-                                            </div>
-                                        )}
+                                        {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
                                     </div>
                                 </div>
                                  <div className="mt-1 md:hidden">
-                                    {friendLevelInfo && (
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Award className="h-4 w-4 text-primary" />
-                                            Level {friendLevelInfo.currentLevel}: {friendLevelInfo.levelName}
-                                        </div>
-                                    )}
+                                    {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
                                 </div>
                                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                     {friendData.bio || "No bio yet."}
