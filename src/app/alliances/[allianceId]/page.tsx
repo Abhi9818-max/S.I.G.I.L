@@ -1,12 +1,12 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import type { Alliance, UserData, TaskDefinition, Friend } from '@/types';
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { format, parseISO, differenceInDays } from 'date-fns';
+import { toPng } from 'html-to-image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,8 @@ import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import AllianceCard from '@/components/alliances/AllianceCard';
+
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -142,6 +145,7 @@ export default function AllianceDetailPage() {
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [pendingInvites, setPendingInvites] = useState<string[]>([]);
     const { toast } = useToast();
+    const allianceCardRef = useRef<HTMLDivElement>(null);
 
     const fetchAllianceData = useCallback(async () => {
         if (allianceId) {
@@ -207,6 +211,28 @@ export default function AllianceDetailPage() {
         }
     };
 
+    const handleDownloadCard = useCallback(() => {
+        if (allianceCardRef.current === null) {
+          return;
+        }
+
+        toPng(allianceCardRef.current, { cacheBust: true, pixelRatio: 2 })
+          .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = `sigil-alliance-card-${alliance?.name}.png`;
+            link.href = dataUrl;
+            link.click();
+          })
+          .catch((err) => {
+            console.error('Failed to create alliance card image', err);
+            toast({
+                title: "Download Failed",
+                description: "Could not generate alliance card.",
+                variant: "destructive"
+            });
+          });
+      }, [allianceCardRef, toast, alliance]);
+
 
     if (isLoading || !alliance) {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
@@ -246,6 +272,10 @@ export default function AllianceDetailPage() {
                                             Invite
                                         </Button>
                                     )}
+                                     <Button onClick={handleDownloadCard} variant="outline">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        Download Card
+                                    </Button>
                                     {isCreator ? (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -324,6 +354,16 @@ export default function AllianceDetailPage() {
                         </CardContent>
                     </Card>
                 </main>
+            </div>
+             {/* This div is for html-to-image to render offscreen */}
+            <div className="fixed -left-[9999px] top-0">
+                <div ref={allianceCardRef}>
+                    {alliance && (
+                        <AllianceCard 
+                            alliance={alliance}
+                        />
+                    )}
+                </div>
             </div>
              {isCreator && (
                 <InviteFriendsDialog
