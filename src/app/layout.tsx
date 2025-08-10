@@ -3,12 +3,7 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { UserRecordsProvider } from '@/components/providers/UserRecordsProvider';
-import { TodoProvider } from '@/components/providers/TodoProvider';
-import { SettingsProvider } from '@/components/providers/SettingsProvider';
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import { FriendProvider } from '@/components/providers/FriendProvider';
+import { AppProviders } from '@/components/providers/AppProviders';
 
 export const metadata: Metadata = {
   title: 'S.I.G.I.L.',
@@ -39,22 +34,12 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={`font-sans antialiased bg-background text-foreground`}>
-        <AuthProvider>
-          <SettingsProvider>
-            <TooltipProvider delayDuration={100}>
-              <FriendProvider>
-                <UserRecordsProvider>
-                    <TodoProvider>
-                      <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
-                        {children}
-                      </div>
-                      <Toaster />
-                    </TodoProvider>
-                </UserRecordsProvider>
-              </FriendProvider>
-            </TooltipProvider>
-          </SettingsProvider>
-        </AuthProvider>
+        <AppProviders>
+            <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
+                {children}
+            </div>
+            <Toaster />
+        </AppProviders>
       </body>
     </html>
   );
