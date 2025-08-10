@@ -4,7 +4,7 @@
 import React from 'react';
 import { UserLevelInfo, UserData, ProfileCardStat } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Flame, TrendingUp } from 'lucide-react';
+import { Flame, TrendingUp, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 
@@ -22,10 +22,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
       case 'currentStreak':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Flame className="h-4 w-4 text-orange-400" /> {currentStreak} Day Streak</p>;
       case 'totalXp':
-        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis">{levelInfo.totalAccumulatedValue.toLocaleString()} Total XP</p>;
+        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><TrendingUp className="h-4 w-4"/> {levelInfo.totalAccumulatedValue.toLocaleString()} Total XP</p>;
       case 'tierName':
       default:
-        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis">{levelInfo.tierName}</p>;
+        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400"/> {levelInfo.tierName}</p>;
     }
   };
 
@@ -37,12 +37,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
                  <TrendingUp className="h-5 w-5 text-white" />
             </div>
         </div>
-        <div className="flex-grow flex items-center justify-between text-white pt-4">
+        <div className="flex-grow flex items-start justify-between text-white pt-4">
             <div className="w-1/2">
                 <h2 className="text-2xl font-bold truncate">{userData.username}</h2>
                 <StatDisplay />
             </div>
-            <div className="text-right w-1/2">
+            <div className="text-right w-1/2 pl-2">
                 <LevelIndicator levelInfo={levelInfo} />
             </div>
         </div>

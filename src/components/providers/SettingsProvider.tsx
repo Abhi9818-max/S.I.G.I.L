@@ -22,7 +22,7 @@ const defaultSettings: DashboardSettings = {
   progressChartTimeRange: 'weekly',
   showTimeBreakdownChart: true,
   pieChartLabelFormat: 'percentage',
-  profileCardStat: 'tierName',
+  profileCardStat: 'currentStreak',
 };
 
 interface SettingsContextType {
