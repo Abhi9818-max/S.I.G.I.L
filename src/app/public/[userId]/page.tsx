@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { getPublicUserData } from '@/lib/server/get-public-data';
 import PublicProfileClientPage from '@/components/public/PublicProfileClientPage';
@@ -11,19 +12,10 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const userId = params.userId;
   const userData = await getPublicUserData(userId);
-
-  if (!userData) {
-    return {
-      title: 'Profile Not Found',
-    }
-  }
-
-  // Use a high-quality default image if no photoURL is set. 
-  // This placeholder is better than a broken image link.
-  const imageUrl = userData.photoURL || 'https://placehold.co/1200x630.png';
-
-  const title = `${userData.username}'s Profile on S.I.G.I.L.`;
-  const description = userData.bio || 'View their progress and achievements.';
+  
+  const title = userData ? `${userData.username}'s Profile on S.I.G.I.L.` : 'S.I.G.I.L. Profile';
+  const description = userData?.bio || 'View this user\'s progress and achievements on S.I.G.I.L.';
+  const imageUrl = userData?.photoURL || `https://placehold.co/1200x630.png`;
 
   return {
     title: title,
@@ -36,28 +28,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${userData.username}'s profile picture`,
+          alt: `${userData?.username || 'User'}'s profile picture`,
         },
       ],
       type: 'profile',
-      username: userData.username,
+      profile: {
+          username: userData?.username
+      },
+      url: `/public/${userId}`,
+      siteName: 'S.I.G.I.L.'
     },
     twitter: {
-        card: 'summary_large_image',
-        title: title,
-        description: description,
-        images: [imageUrl],
-    }
-  }
+      card: 'summary_large_image',
+      title: title,
+      description: description,
+      images: [imageUrl],
+    },
+  };
 }
 
-
+// This is now a Server Component
 export default async function PublicProfilePage({ params }: Props) {
-  const userData = await getPublicUserData(params.userId);
+    const userData = await getPublicUserData(params.userId);
 
-  if (!userData) {
-    notFound();
-  }
+    if (!userData) {
+        notFound();
+    }
 
-  return <PublicProfileClientPage userData={userData} />;
+    return <PublicProfileClientPage initialUserData={userData} />;
 }

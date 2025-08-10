@@ -1,20 +1,22 @@
 
 "use client";
 
-import React from 'react';
-import type { UserData, UserLevelInfo } from '@/types';
+import React, { useState, useMemo, useEffect } from 'react';
+import Header from '@/components/layout/Header';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, BarChart2, Activity, Award } from 'lucide-react';
+import { UserData, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
-import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
 import { calculateUserLevelInfo } from '@/lib/config';
-import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
+import { subDays } from 'date-fns';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import TaskFilterBar from '@/components/records/TaskFilterBar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
-import { BarChart2, Activity } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -28,95 +30,146 @@ const simpleHash = (s: string) => {
 };
 
 interface PublicProfileClientPageProps {
-  initialUserData: UserData;
+    initialUserData: UserData;
 }
 
 export default function PublicProfileClientPage({ initialUserData }: PublicProfileClientPageProps) {
-  const [userData] = React.useState<UserData>(initialUserData);
-  const [selectedTaskFilterId, setSelectedTaskFilterId] = React.useState<string | null>(null);
+    const [userData] = useState<UserData>(initialUserData);
+    const [isLoading, setIsLoading] = useState(false); // Can be used for future client-side updates
+    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
 
-  const userLevelInfo: UserLevelInfo | null = React.useMemo(() => {
-    if (!userData) return null;
-    const totalRecordValue = userData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
-    const totalExperience = totalRecordValue + (userData.bonusPoints || 0);
-    return calculateUserLevelInfo(totalExperience);
-  }, [userData]);
-  
-  if (!userData) {
+    const userLevelInfo: UserLevelInfo | null = useMemo(() => {
+        if (!userData) return null;
+        const totalRecordValue = userData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
+        const totalExperience = totalRecordValue + (userData.bonusPoints || 0);
+        return calculateUserLevelInfo(totalExperience);
+    }, [userData]);
+    
+    // Client-side effect for animations or other browser-specific tasks
+    useEffect(() => {
+        // e.g., trigger animations on load
+    }, []);
+
+    if (isLoading || !userData) {
+        return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
+    }
+
+    const { username, bio, photoURL, records, taskDefinitions, unlockedAchievements } = userData;
+    const userAvatar = photoURL || `/avatars/avatar${(simpleHash(userData.uid || '') % 12) + 1}.jpeg`;
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        User not found.
-      </div>
+        <div className={cn("min-h-screen flex flex-col", userLevelInfo ? `page-tier-group-${userLevelInfo.tierGroup}` : 'page-tier-group-1')}>
+            <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
+            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
+                <Button variant="outline" onClick={() => window.history.back()} className="hidden md:inline-flex mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                </Button>
+                <div className="pt-6 md:p-0">
+                    <div className="flex flex-col md:flex-row items-start gap-4">
+                        <div className="flex items-center gap-4 md:items-start">
+                             <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
+                                <AvatarImage src={userAvatar} />
+                                <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                             <div className="md:hidden">
+                                <h1 className="text-lg font-semibold">{username}</h1>
+                            </div>
+                        </div>
+
+                        <div className="w-full">
+                            <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                                <h1 className="text-xl font-semibold">{username}</h1>
+                               <div className="hidden md:block">
+                                    {userLevelInfo && <LevelIndicator levelInfo={userLevelInfo} />}
+                                </div>
+                            </div>
+                             <div className="mt-1 md:hidden">
+                                {userLevelInfo && <LevelIndicator levelInfo={userLevelInfo} />}
+                            </div>
+                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
+                                {bio || "No bio yet."}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <Tabs defaultValue="activity" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+                    <TabsTrigger value="achievements"><Award className="mr-2 h-4 w-4" />Achievements ({unlockedAchievements?.length || 0})</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="activity" className="mt-6">
+                     <div className="mb-8 max-w-4xl mx-auto">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                            <Tabs defaultValue="today" className="w-auto">
+                                <TabsList>
+                                    <TabsTrigger value="today">Today</TabsTrigger>
+                                    <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                        </div>
+                        <ScrollArea className="w-full whitespace-nowrap">
+                            <Tabs defaultValue="today" className="w-full inline-block min-w-full">
+                                <TabsContent value="today" className="mt-4">
+                                    <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
+                                        <DailyTimeBreakdownChart
+                                            date={today}
+                                            records={records}
+                                            taskDefinitions={taskDefinitions}
+                                            hideFooter={true}
+                                        />
+                                    </div>
+                                </TabsContent>
+                                <TabsContent value="yesterday" className="mt-4">
+                                    <div className="w-full md:mx-auto">
+                                        <DailyTimeBreakdownChart
+                                            date={yesterday}
+                                            records={records}
+                                            taskDefinitions={taskDefinitions}
+                                            hideFooter={true}
+                                        />
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
+                            <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                    </div>
+                     <div>
+                        <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                        <TaskFilterBar
+                            taskDefinitions={taskDefinitions || []}
+                            selectedTaskId={selectedTaskFilterId}
+                            onSelectTask={setSelectedTaskFilterId}
+                        />
+                        <ContributionGraph 
+                            year={new Date().getFullYear()}
+                            onDayClick={() => {}} 
+                            selectedTaskFilterId={selectedTaskFilterId}
+                            records={records} 
+                            taskDefinitions={taskDefinitions}
+                            displayMode="full"
+                        />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="stats" className="mt-6">
+                    <StatsPanel friendData={userData} selectedTaskFilterId={selectedTaskFilterId} />
+                  </TabsContent>
+                  
+                  <TabsContent value="achievements" className="mt-6">
+                     <div className="text-center text-muted-foreground py-10">
+                        Feature coming soon.
+                    </div>
+                  </TabsContent>
+                  
+                </Tabs>
+            </main>
+        </div>
     );
-  }
-
-  const userAvatar = userData.photoURL || `/avatars/avatar${(simpleHash(userData.uid || '') % 12) + 1}.jpeg`;
-  const displayName = userData.username;
-  const pageTierClass = userLevelInfo ? `page-tier-group-${userLevelInfo.tierGroup}` : 'page-tier-group-1';
-
-  return (
-    <div className={cn("min-h-screen flex flex-col bg-background", pageTierClass)}>
-      <header className="py-4 px-4 md:px-6 sticky top-0 z-50 transition-colors duration-500 backdrop-blur-md border-b border-border/50">
-        <div className="container mx-auto flex items-center justify-between">
-           <Link href="/" className="text-xl font-semibold">S.I.G.I.L.</Link>
-           {userLevelInfo && <LevelIndicator levelInfo={userLevelInfo} />}
-        </div>
-      </header>
-      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-        <div className="pt-6 md:p-0">
-          <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-            <Avatar className="h-24 w-24 ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
-              <AvatarImage src={userAvatar} alt={displayName} />
-              <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="w-full">
-              <h1 className="text-3xl font-bold">{displayName}</h1>
-              <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap max-w-xl mx-auto md:mx-0">
-                {userData.bio || "No bio yet."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <Tabs defaultValue="stats" className="w-full">
-          <TabsList>
-            <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-            <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="stats" className="mt-6">
-            <StatsPanel friendData={userData} />
-          </TabsContent>
-          
-          <TabsContent value="activity" className="mt-6 space-y-8">
-            <ContributionGraph
-                year={new Date().getFullYear()}
-                onDayClick={() => {}}
-                selectedTaskFilterId={selectedTaskFilterId}
-                records={userData.records}
-                taskDefinitions={userData.taskDefinitions}
-                displayMode="full"
-            />
-            <DailyTimeBreakdownChart
-                date={new Date()}
-                records={userData.records}
-                taskDefinitions={userData.taskDefinitions}
-                hideFooter={true}
-            />
-          </TabsContent>
-        </Tabs>
-
-        <div className="text-center mt-8">
-            <Button asChild variant="outline">
-                <Link href="/">
-                    Return to the App
-                </Link>
-            </Button>
-        </div>
-      </main>
-      <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
-          This is a public profile on S.I.G.I.L.
-      </footer>
-    </div>
-  );
 };
