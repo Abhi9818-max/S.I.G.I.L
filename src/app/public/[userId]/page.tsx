@@ -1,10 +1,9 @@
-import React from 'react';
 import type { Metadata } from 'next';
 import { getPublicUserData } from '@/lib/server/get-public-data';
-import PublicProfileClientPage from '@/components/public/PublicProfileClient';
+import PublicProfileClientPage from '@/components/public/PublicProfileClientPage';
 import { notFound } from 'next/navigation';
 
-interface Props {
+type Props = {
     params: { userId: string }
 }
 
@@ -19,9 +18,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  const title = `${userData.username}'s Public Profile | S.I.G.I.L.`;
-  const description = userData.bio || `View the public profile and contribution graph for ${userData.username} on S.I.G.I.L.`;
-  const imageUrl = userData.photoURL || 'https://www.sigil.gg/default-og-image.png'; // A default OG image is good practice
+  // Use a high-quality default image if no photoURL is set. 
+  // This placeholder is better than a broken image link.
+  const imageUrl = userData.photoURL || 'https://placehold.co/1200x630.png';
+
+  const title = `${userData.username}'s Profile on S.I.G.I.L.`;
+  const description = userData.bio || 'View their progress and achievements.';
 
   return {
     title: title,
@@ -32,31 +34,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [
         {
           url: imageUrl,
-          width: 800,
-          height: 600,
+          width: 1200,
+          height: 630,
           alt: `${userData.username}'s profile picture`,
         },
       ],
-      siteName: 'S.I.G.I.L.',
+      type: 'profile',
+      username: userData.username,
     },
     twitter: {
-      card: 'summary_large_image',
-      title: title,
-      description: description,
-      images: [imageUrl],
-    },
+        card: 'summary_large_image',
+        title: title,
+        description: description,
+        images: [imageUrl],
+    }
   }
 }
 
-// This is now a Server Component
-export default async function PublicProfilePage({ params }: Props) {
-    const userId = params.userId;
-    const userData = await getPublicUserData(userId);
 
-    if (!userData) {
-        notFound();
-    }
-    
-    // Pass the server-fetched data to the client component
-    return <PublicProfileClientPage initialUserData={userData} userId={userId} />;
+export default async function PublicProfilePage({ params }: Props) {
+  const userData = await getPublicUserData(params.userId);
+
+  if (!userData) {
+    notFound();
+  }
+
+  return <PublicProfileClientPage userData={userData} />;
 }
