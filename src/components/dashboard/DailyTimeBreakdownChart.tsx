@@ -209,12 +209,9 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     });
 
     return (
-        <Card className="shadow-lg">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-6 w-6 text-accent" />
-                  <CardTitle>{chartTitle}</CardTitle>
-                </div>
+        <Card className="shadow-lg border-0 bg-transparent">
+            <CardHeader className="items-center text-center">
+                <CardTitle>{chartTitle}</CardTitle>
                 <CardDescription>{chartDescription}</CardDescription>
             </CardHeader>
             <CardContent>

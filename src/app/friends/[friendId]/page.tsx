@@ -153,17 +153,6 @@ export default function FriendProfilePage() {
         return calculateUserLevelInfo(totalExperience);
     }, [friendData]);
     
-    const friendPacts = useMemo(() => {
-        if (!friendData?.todoItems) return [];
-        return friendData.todoItems.filter(pact => {
-            try {
-                return isToday(new Date(pact.createdAt));
-            } catch {
-                return false;
-            }
-        })
-    }, [friendData?.todoItems]);
-
     useEffect(() => {
         const fetchFriendData = async () => {
             if (friendId) {
@@ -187,6 +176,17 @@ export default function FriendProfilePage() {
 
         fetchFriendData();
     }, [friendId, getFriendData, router, toast]);
+
+    const friendPacts = useMemo(() => {
+        if (!friendData?.todoItems) return [];
+        return friendData.todoItems.filter(pact => {
+            try {
+                return isToday(new Date(pact.createdAt));
+            } catch {
+                return false;
+            }
+        })
+    }, [friendData?.todoItems]);
     
     const handleUpdateNickname = async (newNickname: string) => {
         if (!friendId) return;
