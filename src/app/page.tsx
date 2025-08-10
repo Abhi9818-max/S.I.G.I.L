@@ -26,6 +26,7 @@ import ProgressOverTimeChart from '@/components/progress/ProgressOverTimeChart';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -187,9 +188,15 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   {dashboardSettings.showTimeBreakdownChart && (
-                      <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-                          <DailyTimeBreakdownChart />
-                      </div>
+                      <Card className="animate-fade-in-up shadow-lg" style={{ animationDelay: '500ms' }}>
+                          <CardHeader>
+                            <CardTitle>Shit Done Today</CardTitle>
+                            <CardDescription>A 24-hour visualization of your time-based tasks.</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <DailyTimeBreakdownChart />
+                          </CardContent>
+                      </Card>
                   )}
                 </div>
             </div>
