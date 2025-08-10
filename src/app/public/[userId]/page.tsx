@@ -1,11 +1,9 @@
 
-import React from 'react';
 import type { Metadata } from 'next';
 import { getPublicUserData } from '@/lib/server/get-public-data';
-import PublicProfileClient from '@/components/public/PublicProfileClientPage';
-import { notFound } from 'next/navigation';
+import PublicProfilePage from '@/components/public/PublicProfilePage';
 
-interface Props {
+type Props = {
     params: { userId: string }
 }
 
@@ -16,49 +14,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!userData) {
     return {
-      title: 'User Not Found',
+      title: 'Profile Not Found',
     }
   }
 
-  const title = `${userData.username}'s Public Profile | S.I.G.I.L.`;
-  const description = userData.bio || `View the public profile and progress of ${userData.username}.`;
-  
+  const title = `${userData.username}'s Public Profile`;
+  const description = userData.bio || `View the progress and achievements of ${userData.username} on S.I.G.I.L.`;
+  const imageUrl = userData.photoURL || `${process.env.NEXT_PUBLIC_BASE_URL}/og-image.png`;
+
   return {
-    title,
-    description,
+    title: title,
+    description: description,
     openGraph: {
       title: title,
       description: description,
       images: [
         {
-          url: userData.photoURL || '/icons/icon-512x512.png',
-          width: 800,
-          height: 600,
-          alt: `${userData.username}'s avatar`,
+          url: imageUrl,
+          width: 1200,
+          height: 630,
         },
       ],
-      type: 'profile',
-      profile: {
-        username: userData.username,
-      }
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       title: title,
       description: description,
-      images: [userData.photoURL || '/icons/icon-512x512.png'],
+      images: [imageUrl],
     },
-  };
+  }
 }
 
-// This is now a Server Component
-export default async function PublicProfilePage({ params }: Props) {
-    const userData = await getPublicUserData(params.userId);
 
-    if (!userData) {
-        notFound();
+export default async function Page({ params }: Props) {
+    const { userId } = params;
+    const initialUserData = await getPublicUserData(userId);
+
+    if (!initialUserData) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold">Profile Not Found</h1>
+                    <p className="text-muted-foreground">The requested user profile does not exist.</p>
+                </div>
+            </div>
+        );
     }
-
-    // Render the client component, passing the server-fetched data as props
-    return <PublicProfileClient initialUserData={userData} />;
+    
+    return <PublicProfilePage initialUserData={initialUserData} />;
 }
