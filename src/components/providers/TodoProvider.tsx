@@ -21,9 +21,10 @@ interface TodoContextType {
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
-  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded, getTaskDefinitionById } = useUserRecords();
+  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
   const { toast } = useToast();
+  
+  const todoItems = userData?.todoItems || [];
 
   // Load initial data and handle penalties on mount
   useEffect(() => {
@@ -39,7 +40,6 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (item.penalty && item.penalty > 0) {
               totalPenalty += item.penalty;
               try {
-                // Since this might be for a task, we can try to find the task name
                 const taskName = item.text; // Assume pact text is descriptive enough
                 dare = await generateDare(taskName);
               } catch (e) {
@@ -53,10 +53,9 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         const processedItems = await Promise.all(promises);
-        setTodoItems(processedItems);
-
+        
         if (itemsChanged) {
-          if (totalPenalty > 0) {
+           if (totalPenalty > 0) {
             deductBonusPoints(totalPenalty);
             toast({
               title: "Pacts Judged",
@@ -65,16 +64,13 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               duration: 7000,
             });
           }
-          // Save the updated penalty status
           updateUserDataInDb({ todoItems: processedItems });
         }
       }
 
       checkAndApplyPenalties();
-    } else if (isUserDataLoaded) {
-      setTodoItems([]);
     }
-  }, [userData, isUserDataLoaded, deductBonusPoints, updateUserDataInDb, toast]);
+  }, [isUserDataLoaded]); // simplified dependencies
 
   const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;
@@ -90,7 +86,6 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const newItems = [newItem, ...todoItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    setTodoItems(newItems);
     updateUserDataInDb({ todoItems: newItems });
   };
 
@@ -101,13 +96,11 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return item;
     });
-    setTodoItems(newItems);
     updateUserDataInDb({ todoItems: newItems });
   };
 
   const deleteTodoItem = (id: string) => {
     const newItems = todoItems.filter(i => i.id !== id);
-    setTodoItems(newItems);
     updateUserDataInDb({ todoItems: newItems });
   };
 
