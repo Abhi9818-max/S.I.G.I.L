@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -203,6 +202,7 @@ export default function SettingsPage() {
           title: "Import Failed",
           description: "The file was not valid JSON or was corrupted.",
           variant: "destructive",
+          
         });
         setIsImporting(false);
       }
@@ -351,8 +351,8 @@ export default function SettingsPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
             <div className="p-6 md:p-0 pt-6 space-y-8">
-              <div className="flex justify-between items-center border-b pb-2">
-                  <div className="flex items-center gap-3">
+              <div className="flex md:hidden justify-between items-center border-b pb-1">
+                  <div className="flex items-center gap-2">
                     <SettingsIcon className="h-5 w-5 text-primary" />
                   </div>
                   <DropdownMenu>
@@ -871,3 +871,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
