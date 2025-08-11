@@ -180,14 +180,14 @@ export default function TodoPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-2xl mx-auto">
           <div className="p-6 md:p-0">
-            <div className="flex justify-between items-center">
+             <div className="flex justify-between items-center gap-2">
                 <div className="flex items-center gap-2">
                     <ListChecks className="h-6 w-6 text-primary" />
-                    <h1 className="text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
                 </div>
                  <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
                     <RotateCcw className="mr-2 h-4 w-4" />
-                    View {view === 'today' ? 'Yesterday' : 'Today'}
+                    <span className="hidden sm:inline">View </span>{view === 'today' ? 'Yesterday' : 'Today'}
                 </Button>
             </div>
              <p className="text-sm text-muted-foreground mt-2">
