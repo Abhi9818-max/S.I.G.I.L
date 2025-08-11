@@ -53,6 +53,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import ProfileCard from '@/components/profile/ProfileCard';
+import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -114,6 +115,7 @@ export default function SettingsPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
+  const [isManageTasksModalOpen, setIsManageTasksModalOpen] = useState(false);
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -377,8 +379,8 @@ export default function SettingsPage() {
                   </DropdownMenu>
 
                   <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" asChild>
-                         <Link href="/friends"><UserPlus className="h-6 w-6" /></Link>
+                      <Button variant="ghost" size="icon" onClick={() => setIsManageTasksModalOpen(true)}>
+                         <SettingsIcon className="h-6 w-6" />
                       </Button>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -708,6 +710,10 @@ export default function SettingsPage() {
         currentBio={userData?.bio || ''}
         onSave={updateBio}
     />
+     <ManageTasksModal
+        isOpen={isManageTasksModalOpen}
+        onOpenChange={setIsManageTasksModalOpen}
+      />
     </>
   );
 }
