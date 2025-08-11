@@ -354,25 +354,6 @@ export default function SettingsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:px-8 md:pt-2 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-            <div className="md:hidden py-2 px-1 flex items-center justify-between">
-                <h2 className="text-xl font-bold">Settings</h2>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><MoreVertical className="h-6 w-6" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setActiveTab('profile')}>
-                            <User className="mr-2 h-4 w-4" />Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setActiveTab('layout')}>
-                            <LayoutDashboard className="mr-2 h-4 w-4" />Layout
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setActiveTab('data')}>
-                            <Database className="mr-2 h-4 w-4" />Data
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
             <div className="hidden md:flex gap-8">
                  <div className="w-1/3 space-y-2">
                     <Button variant={activeTab === 'profile' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('profile')} className="w-full justify-start"><User className="mr-2 h-4 w-4"/>Profile</Button>
