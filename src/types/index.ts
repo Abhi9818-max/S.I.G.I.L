@@ -172,6 +172,7 @@ export interface HighGoal {
 }
 
 // For Settings
+export type DareCategory = 'standard' | '18+' | 'serious';
 export type ProfileCardStat = 'tierName' | 'currentStreak' | 'totalXp';
 export interface DashboardSettings {
   showTotalLast30Days: boolean;
@@ -188,6 +189,7 @@ export interface DashboardSettings {
   showTimeBreakdownChart: boolean;
   pieChartLabelFormat?: 'percentage' | 'time';
   profileCardStat?: ProfileCardStat;
+  dareCategory?: DareCategory;
 }
 
 // NEW: For Task Mastery

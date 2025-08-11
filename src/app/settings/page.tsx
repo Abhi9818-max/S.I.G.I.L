@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat, DareCategory } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -540,6 +540,29 @@ export default function SettingsPage() {
                    <AccordionItem value="chart-display" className="border rounded-lg p-4">
                     <AccordionTrigger>Chart &amp; Card Display</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
+                       <div>
+                          <Label className="font-normal flex items-center gap-2"><Drama className="h-4 w-4" />Dare Category</Label>
+                          <p className="text-xs text-muted-foreground mt-1">Select the type of dares you want for failed pacts and alliances.</p>
+                          <RadioGroup 
+                              value={dashboardSettings.dareCategory || 'standard'}
+                              onValueChange={(value: DareCategory) => updateDashboardSetting('dareCategory', value)}
+                              className="mt-2 grid grid-cols-2 gap-2"
+                          >
+                              <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="standard" id="r-standard" />
+                                  <Label htmlFor="r-standard" className="font-normal">Standard</Label>
+                              </div>
+                               <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="18+" id="r-18" />
+                                  <Label htmlFor="r-18" className="font-normal">18+</Label>
+                              </div>
+                               <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="serious" id="r-serious" />
+                                  <Label htmlFor="r-serious" className="font-normal">Serious</Label>
+                              </div>
+                          </RadioGroup>
+                      </div>
+                      <Separator/>
                       <div>
                           <Label className="font-normal">Progress Chart Time Range</Label>
                           <RadioGroup 
@@ -732,7 +755,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
-
-    

@@ -4,6 +4,7 @@
 import type { TodoItem } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
+import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
 import { isPast, startOfDay, format, parseISO, isToday, isYesterday } from 'date-fns';
 import { useAuth } from './AuthProvider';
@@ -22,6 +23,7 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
+  const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
@@ -50,7 +52,7 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               totalPenalty += item.penalty;
               try {
                 const taskName = item.text; // Assume pact text is descriptive enough
-                dare = await generateDare(taskName);
+                dare = await generateDare(taskName, dashboardSettings.dareCategory);
               } catch (e) {
                 console.error("Failed to generate dare:", e);
               }
@@ -79,7 +81,7 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       checkAndApplyPenalties();
     }
-  }, [isUserDataLoaded]); // simplified dependencies
+  }, [isUserDataLoaded, dashboardSettings.dareCategory]); // Re-check when category changes
 
   const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import type { Alliance, UserData, TaskDefinition, Friend } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -141,6 +142,7 @@ export default function AllianceDetailPage() {
     
     const { user } = useAuth();
     const { friends, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
+    const { dashboardSettings } = useSettings();
     const [alliance, setAlliance] = useState<Alliance | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -159,7 +161,7 @@ export default function AllianceDetailPage() {
                     const isEnded = isPast(parseISO(data.endDate));
                     const isFailed = data.progress < data.target;
                     if (isEnded && isFailed && !data.dare) {
-                        const newDare = await generateAllianceDare(data.name);
+                        const newDare = await generateAllianceDare(data.name, dashboardSettings.dareCategory);
                         await setAllianceDare(data.id, newDare);
                         setAlliance(prev => prev ? {...prev, dare: newDare} : null);
                     }
@@ -176,7 +178,7 @@ export default function AllianceDetailPage() {
                 setIsLoading(false);
             }
         }
-    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare]);
+    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare, dashboardSettings.dareCategory]);
     
     useEffect(() => {
         fetchAllianceData();

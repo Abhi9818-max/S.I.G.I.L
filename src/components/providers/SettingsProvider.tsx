@@ -23,6 +23,7 @@ const defaultSettings: DashboardSettings = {
   showTimeBreakdownChart: true,
   pieChartLabelFormat: 'percentage',
   profileCardStat: 'currentStreak',
+  dareCategory: 'standard',
 };
 
 interface SettingsContextType {
