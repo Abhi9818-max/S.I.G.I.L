@@ -360,7 +360,6 @@ export default function SettingsPage() {
               <div className="flex justify-between items-center border-b pb-4">
                   <div className="flex items-center gap-3">
                     <SettingsIcon className="h-6 w-6 text-primary" />
-                    <h1 className="text-2xl font-semibold">{tabTitles[activeTab]}</h1>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
