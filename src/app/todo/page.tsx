@@ -183,11 +183,11 @@ export default function TodoPage() {
              <div className="flex justify-between items-center gap-2">
                 <div className="flex items-center gap-2">
                     <ListChecks className="h-6 w-6 text-primary" />
-                    <h1 className="text-xl sm:text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
+                    <h1 className="text-lg sm:text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
                 </div>
-                 <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">View </span>{view === 'today' ? 'Yesterday' : 'Today'}
+                 <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')} className="sm:w-auto w-10 p-0 sm:px-3 sm:py-2">
+                    <RotateCcw className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
                 </Button>
             </div>
              <p className="text-sm text-muted-foreground mt-2">
