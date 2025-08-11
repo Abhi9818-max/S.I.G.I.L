@@ -17,7 +17,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Accordion,
   AccordionContent,
@@ -174,12 +174,12 @@ export default function FriendsPage() {
                                     {friends.length === 0 ? (
                                         <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                                     ) : (
-                                        <ScrollArea className="h-[50vh] mt-4">
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
-                                                {friends.map((friend, index) => (
-                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid}>
-                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1">
-                                                            <div className="relative w-full aspect-[3/4]">
+                                        <ScrollArea className="w-full whitespace-nowrap">
+                                            <div className="flex space-x-4 pb-4">
+                                                {friends.map((friend) => (
+                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid} className="flex-shrink-0">
+                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1 w-[180px] h-[240px]">
+                                                            <div className="relative w-full h-full">
                                                                 <Image 
                                                                     src={getAvatarForId(friend.uid, friend.photoURL)} 
                                                                     alt={friend.username} 
@@ -201,6 +201,7 @@ export default function FriendsPage() {
                                                      </Link>
                                                 ))}
                                             </div>
+                                            <ScrollBar orientation="horizontal" />
                                         </ScrollArea>
                                     )}
                                 </AccordionContent>
@@ -370,3 +371,5 @@ export default function FriendsPage() {
         </div>
     );
 };
+
+    
