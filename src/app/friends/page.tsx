@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,66 @@ const simpleHash = (s: string) => {
     }
     return Math.abs(hash);
 };
+
+const FriendCard3D = ({ friend }: { friend: Friend }) => {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - left;
+        const y = e.clientY - top;
+        const rotateX = (y / height - 0.5) * -20;
+        const rotateY = (x / width - 0.5) * 20;
+        cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+        cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+    };
+
+    const handleMouseLeave = () => {
+        if (!cardRef.current) return;
+        cardRef.current.style.setProperty('--rotate-x', '0deg');
+        cardRef.current.style.setProperty('--rotate-y', '0deg');
+    };
+
+    const getAvatarForId = (id: string, url?: string | null) => {
+        if (url) return url;
+        const avatarNumber = (simpleHash(id) % 12) + 1;
+        return `/avatars/avatar${avatarNumber}.jpeg`;
+    }
+
+    return (
+        <Link href={`/friends/${friend.uid}`} className="flex-shrink-0">
+             <div 
+                ref={cardRef} 
+                className="card-3d w-[180px] h-[240px]"
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+            >
+                <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
+                    <div className="relative w-full h-full">
+                        <Image 
+                            src={getAvatarForId(friend.uid, friend.photoURL)} 
+                            alt={friend.username} 
+                            fill 
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                        <div className="absolute bottom-0 left-0 p-3 text-white">
+                             <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
+                              {friend.relationship && (
+                                <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
+                                    <Heart className="h-3 w-3" />
+                                    {friend.relationship}
+                                </CardDescription>
+                              )}
+                        </div>
+                    </div>
+                </Card>
+             </div>
+        </Link>
+    );
+};
+
 
 export default function FriendsPage() {
     const { user, userData } = useAuth();
@@ -186,28 +246,7 @@ export default function FriendsPage() {
                                         <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
                                             <div className="flex space-x-4 pb-4">
                                                 {friends.map((friend) => (
-                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid} className="flex-shrink-0 card-3d">
-                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-[180px] h-[240px] card-3d-content">
-                                                            <div className="relative w-full h-full">
-                                                                <Image 
-                                                                    src={getAvatarForId(friend.uid, friend.photoURL)} 
-                                                                    alt={friend.username} 
-                                                                    fill 
-                                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                                                />
-                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                                                                <div className="absolute bottom-0 left-0 p-3 text-white">
-                                                                     <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
-                                                                      {friend.relationship && (
-                                                                        <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
-                                                                            <Heart className="h-3 w-3" />
-                                                                            {friend.relationship}
-                                                                        </CardDescription>
-                                                                      )}
-                                                                </div>
-                                                            </div>
-                                                        </Card>
-                                                     </Link>
+                                                    <FriendCard3D key={friend.uid} friend={friend} />
                                                 ))}
                                             </div>
                                             <ScrollBar orientation="horizontal" className="invisible"/>
