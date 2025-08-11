@@ -606,12 +606,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                         <Button asChild variant="outline" size="sm" className="flex-1">
-                            <Link href="/friends">
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Manage Friends
-                            </Link>
-                        </Button>
                          <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="flex-1">
                             <CreditCard className="mr-2 h-4 w-4" />
                             Download Card
