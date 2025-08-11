@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -78,10 +78,11 @@ interface UserRecordsContextType {
   getDailyConsistency: (days: number, taskId?: string | null) => number;
   getCurrentStreak: (taskId?: string | null) => number;
   taskDefinitions: TaskDefinition[];
-  addTaskDefinition: (taskData: Omit<TaskDefinition, 'id'>) => string;
+  addTaskDefinition: (taskData: Omit<TaskDefinition, 'id' | 'status'>) => string;
   updateTaskDefinition: (task: TaskDefinition) => void;
   deleteTaskDefinition: (taskId: string) => void;
   getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
   getStatsForCompletedWeek: (weekOffset: number, taskId?: string | null) => WeeklyProgressStats | null;
   getAggregatesForChart: (timeRange: ProgressChartTimeRange, taskId: string | null) => AggregatedTimeDataPoint[];
   getUserLevelInfo: () => UserLevelInfo | null;
@@ -124,18 +125,35 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isUserDataLoaded) {
+    if (isUserDataLoaded && authUserData) {
+      // Data migration for tasks without a status
+      const needsMigration = authUserData.taskDefinitions?.some(task => !task.status);
+      if (needsMigration) {
+        const migratedTasks = authUserData.taskDefinitions.map(task => 
+          task.status ? task : { ...task, status: 'active' as TaskStatus }
+        );
+        const migratedUserData = { ...authUserData, taskDefinitions: migratedTasks };
+        setUserData(migratedUserData);
+        if (user) {
+          updateUserDataInDb({ taskDefinitions: migratedTasks });
+        }
+      } else {
         setUserData(authUserData);
+      }
+    } else if (isUserDataLoaded) {
+      setUserData(authUserData);
     }
-  }, [authUserData, isUserDataLoaded]);
+  }, [authUserData, isUserDataLoaded, user]);
 
   const records = useMemo(() => userData?.records || [], [userData]);
   const taskDefinitions = useMemo(() => {
     if (userData?.taskDefinitions && userData.taskDefinitions.length > 0) {
       return userData.taskDefinitions;
     }
-    return DEFAULT_TASK_DEFINITIONS;
+    // Ensure default tasks also have a status
+    return DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active'}));
   }, [userData]);
+
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
   const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);
   const spentSkillPoints = useMemo(() => userData?.spentSkillPoints || {}, [userData]);
@@ -335,11 +353,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   
   }, [getRecordsForDateRange, getTaskDefinitionById, isUserDataLoaded]);
 
-  const addTaskDefinition = useCallback((taskData: Omit<TaskDefinition, 'id'>): string => {
+  const addTaskDefinition = useCallback((taskData: Omit<TaskDefinition, 'id' | 'status'>): string => {
     const newId = uuidv4();
     const newTask: TaskDefinition = {
       ...taskData,
       id: newId,
+      status: 'active',
     };
     const updatedTasks = [...taskDefinitions, newTask];
     updateUserDataInDb({ taskDefinitions: updatedTasks });
@@ -356,6 +375,20 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const updatedRecords = records.map(rec => rec.taskType === taskId ? {...rec, taskType: undefined} : rec);
     updateUserDataInDb({ taskDefinitions: updatedTasks, records: updatedRecords });
   }, [taskDefinitions, records, updateUserDataInDb]);
+
+  const updateTaskStatus = useCallback((taskId: string, status: TaskStatus) => {
+    const updatedTasks = taskDefinitions.map(task => {
+        if (task.id === taskId) {
+            const updatedTask = { ...task, status };
+            if (status === 'completed') {
+                updatedTask.completedDate = new Date().toISOString();
+            }
+            return updatedTask;
+        }
+        return task;
+    });
+    updateUserDataInDb({ taskDefinitions: updatedTasks });
+  }, [taskDefinitions, updateUserDataInDb]);
 
   const getStatsForCompletedWeek = useCallback((weekOffset: number, taskId?: string | null): WeeklyProgressStats | null => {
     if (records.length === 0) return null;
@@ -719,6 +752,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     addTaskDefinition,
     updateTaskDefinition,
     deleteTaskDefinition,
+    updateTaskStatus,
     getTaskDefinitionById,
     getStatsForCompletedWeek,
     getAggregatesForChart,
@@ -762,6 +796,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       addTaskDefinition,
       updateTaskDefinition,
       deleteTaskDefinition,
+      updateTaskStatus,
       getTaskDefinitionById,
       getStatsForCompletedWeek,
       getAggregatesForChart,

@@ -2,6 +2,7 @@
 
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
+export type TaskStatus = 'active' | 'paused' | 'completed';
 
 export interface RecordEntry {
   id: string; // Unique identifier for each record
@@ -37,6 +38,7 @@ export interface TaskDefinition {
   id: string;
   name: string;
   color: string; // HSL color string e.g., 'hsl(210 90% 70%)'
+  status: TaskStatus; // 'active', 'paused', or 'completed'
   priority?: 'normal' | 'high'; // Task priority
   unit?: TaskUnit; // The unit of measurement for this task's value
   customUnitName?: string; // Optional: name for the custom unit
@@ -44,6 +46,7 @@ export interface TaskDefinition {
   darkStreakEnabled?: boolean; // Optional: Enable high-stakes daily streak for this task
   frequencyType?: TaskFrequency; // 'daily' or 'weekly'
   frequencyCount?: number; // e.g., for 'weekly', how many times per week
+  completedDate?: string; // ISO date string for when a task was completed
 }
 
 // For progress charts

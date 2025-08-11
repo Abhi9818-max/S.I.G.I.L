@@ -48,14 +48,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from '@/components/ui/separator';
-import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck, Flame } from 'lucide-react';
+import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck, Flame, Pause, Play, CheckCircle } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import type { TaskDefinition, TaskUnit } from '@/types';
+import type { TaskDefinition, TaskUnit, TaskStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { VALUE_THRESHOLDS } from '@/lib/config'; 
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
 
 const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: string | null) => z.object({
   name: z.string()
@@ -132,7 +134,7 @@ interface ManageTasksModalProps {
 }
 
 const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChange }) => {
-  const { taskDefinitions, addTaskDefinition, updateTaskDefinition, deleteTaskDefinition } = useUserRecords();
+  const { taskDefinitions, addTaskDefinition, updateTaskDefinition, deleteTaskDefinition, updateTaskStatus } = useUserRecords();
   const { toast } = useToast();
   const [editingTask, setEditingTask] = useState<TaskDefinition | null>(null);
 
@@ -220,6 +222,14 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
       resetFormFields(null);
     }
   };
+
+  const handleStatusChange = (taskId: string, status: TaskStatus) => {
+    updateTaskStatus(taskId, status);
+    toast({
+        title: "Task Status Updated",
+        description: `Task has been marked as ${status}.`
+    });
+  }
   
   const watchUnit = form.watch('unit');
   const watchFrequencyType = form.watch('frequencyType');
@@ -408,7 +418,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                 <TooltipProvider>
                   <div className="space-y-3">
                     {taskDefinitions.map((task) => (
-                      <div key={task.id} className={cn("p-3 border rounded-lg transition-all", editingTask?.id === task.id ? 'bg-muted border-primary/50' : 'bg-card-foreground/5')}>
+                      <div key={task.id} className={cn("p-3 border rounded-lg transition-all", editingTask?.id === task.id ? 'bg-muted border-primary/50' : 'bg-card-foreground/5', task.status !== 'active' && 'opacity-60')}>
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-10 rounded-sm flex-shrink-0" style={{ backgroundColor: task.color }} />
@@ -425,21 +435,59 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                                   )}
                                 </p>
                                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs mt-1">
-                                <Tooltip><TooltipTrigger className="flex items-center gap-1"><CalendarCheck className="h-4 w-4" /><span>{getFrequencyLabel(task)}</span></TooltipTrigger><TooltipContent><p>Task Frequency</p></TooltipContent></Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Badge variant={
+                                                task.status === 'completed' ? 'secondary' : task.status === 'paused' ? 'outline' : 'default'
+                                            } className={cn(task.status === 'active' && 'bg-green-500/20 text-green-400 border-green-500/30')}>
+                                                {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {task.status === 'completed' && task.completedDate ? `Completed on ${format(parseISO(task.completedDate), 'MMM d, yyyy')}` : `Task Status: ${task.status}`}
+                                        </TooltipContent>
+                                    </Tooltip>
 
-                                {task.darkStreakEnabled && (
-                                    <Tooltip><TooltipTrigger><Zap className="h-4 w-4 text-yellow-400" /></TooltipTrigger><TooltipContent><p>Dark Streak Enabled</p></TooltipContent></Tooltip>
-                                )}
-                                {task.intensityThresholds && (
-                                     <Tooltip><TooltipTrigger className="flex items-center gap-1"><Timer className="h-4 w-4" /><span>Phases ({getUnitLabel(task)})</span></TooltipTrigger><TooltipContent>
-                                     <p>Custom Phases: {task.intensityThresholds.join(', ')}</p>
-                                     </TooltipContent></Tooltip>
-                                )}
+                                    <Tooltip><TooltipTrigger className="flex items-center gap-1"><CalendarCheck className="h-4 w-4" /><span>{getFrequencyLabel(task)}</span></TooltipTrigger><TooltipContent><p>Task Frequency</p></TooltipContent></Tooltip>
+
+                                    {task.darkStreakEnabled && (
+                                        <Tooltip><TooltipTrigger><Zap className="h-4 w-4 text-yellow-400" /></TooltipTrigger><TooltipContent><p>Dark Streak Enabled</p></TooltipContent></Tooltip>
+                                    )}
+                                    {task.intensityThresholds && (
+                                         <Tooltip><TooltipTrigger className="flex items-center gap-1"><Timer className="h-4 w-4" /><span>Phases ({getUnitLabel(task)})</span></TooltipTrigger><TooltipContent>
+                                         <p>Custom Phases: {task.intensityThresholds.join(', ')}</p>
+                                         </TooltipContent></Tooltip>
+                                    )}
                                 </div>
                             </div>
                           </div>
                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => resetFormFields(task)}>
+                                {task.status === 'active' && (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange(task.id, 'paused')}><Pause className="h-4 w-4" /></Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Pause Task</p></TooltipContent>
+                                    </Tooltip>
+                                )}
+                                {task.status === 'paused' && (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange(task.id, 'active')}><Play className="h-4 w-4" /></Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Resume Task</p></TooltipContent>
+                                    </Tooltip>
+                                )}
+                                {task.status !== 'completed' && (
+                                     <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange(task.id, 'completed')}><CheckCircle className="h-4 w-4" /></Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>Complete Task</p></TooltipContent>
+                                    </Tooltip>
+                                )}
+
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => resetFormFields(task)} disabled={task.status === 'completed'}>
                                 <Pencil className="h-4 w-4" />
                                 <span className="sr-only">Edit {task.name}</span>
                               </Button>

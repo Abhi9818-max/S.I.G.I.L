@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -75,6 +75,10 @@ const RecordModal: React.FC<RecordModalProps> = ({
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   const dailyRecords = selectedDate ? getRecordsByDate(selectedDate) : [];
+  
+  const activeTaskDefinitions = useMemo(() => {
+    return taskDefinitions.filter(task => task.status === 'active');
+  }, [taskDefinitions]);
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),
@@ -96,7 +100,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
         id: undefined,
         date: selectedDate ? parseISO(selectedDate) : new Date(),
         value: undefined,
-        taskType: defaultTaskTypeId ?? taskDefinitions[0]?.id,
+        taskType: defaultTaskTypeId ?? activeTaskDefinitions[0]?.id,
         notes: '',
       });
     }
@@ -280,8 +284,8 @@ const RecordModal: React.FC<RecordModalProps> = ({
                         <SelectValue placeholder="Select a task type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {taskDefinitions.length === 0 && <SelectItem value="" disabled>No tasks defined</SelectItem>}
-                        {taskDefinitions.map((task) => (
+                        {activeTaskDefinitions.length === 0 && <SelectItem value="" disabled>No active tasks defined</SelectItem>}
+                        {activeTaskDefinitions.map((task) => (
                           <SelectItem key={task.id} value={task.id}>
                             {task.name}
                           </SelectItem>
@@ -312,7 +316,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
                      New Record
                   </Button>
                 )}
-                <Button type="submit" disabled={form.formState.isSubmitting || taskDefinitions.length === 0}>
+                <Button type="submit" disabled={form.formState.isSubmitting || activeTaskDefinitions.length === 0}>
                   {form.formState.isSubmitting ? "Saving..." : (editingRecordId ? 'Save Changes' : 'Add Record')}
                 </Button>
               </DialogFooter>
