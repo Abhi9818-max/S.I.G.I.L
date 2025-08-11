@@ -380,7 +380,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" onClick={() => setIsManageTasksModalOpen(true)}>
-                         <SettingsIcon className="h-6 w-6" />
+                         <PlusSquare className="h-6 w-6" />
                       </Button>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
