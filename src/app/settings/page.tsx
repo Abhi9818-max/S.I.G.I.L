@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -36,7 +36,7 @@ import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
 import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat } from '@/types';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
@@ -120,6 +120,13 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileCardRef = useRef<HTMLDivElement>(null);
   const [showLoading, setShowLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('profile');
+
+  const tabTitles: { [key: string]: string } = {
+    profile: 'Profile Settings',
+    layout: 'Layout & Display',
+    data: 'Data Management',
+  };
   
   useEffect(() => {
     // This effect ensures the loading screen is only shown on the client
@@ -350,14 +357,28 @@ export default function SettingsPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
             <div className="p-6 md:p-0 pt-6 space-y-8">
-            <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="profile"><User className="mr-2 h-4 w-4" />Profile</TabsTrigger>
-                <TabsTrigger value="layout"><LayoutDashboard className="mr-2 h-4 w-4" />Layout</TabsTrigger>
-                <TabsTrigger value="data"><Database className="mr-2 h-4 w-4" />Data</TabsTrigger>
-              </TabsList>
-              
-               <TabsContent value="profile" className="mt-6">
+              <div className="flex justify-between items-center border-b pb-4">
+                  <div className="flex items-center gap-3">
+                    <SettingsIcon className="h-6 w-6 text-primary" />
+                    <h1 className="text-2xl font-semibold">{tabTitles[activeTab]}</h1>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-5 w-5" />
+                        <span className="sr-only">Open settings menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem onSelect={() => setActiveTab('profile')}><User className="mr-2 h-4 w-4" />Profile</DropdownMenuItem>
+                       <DropdownMenuItem onSelect={() => setActiveTab('layout')}><LayoutDashboard className="mr-2 h-4 w-4" />Layout</DropdownMenuItem>
+                       <DropdownMenuItem onSelect={() => setActiveTab('data')}><Database className="mr-2 h-4 w-4" />Data</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+              </div>
+
+              {activeTab === 'profile' && (
+               <div className="animate-fade-in-up">
                  {/* Desktop Layout */}
                   <div className="hidden md:grid md:grid-cols-3 md:gap-8">
                     <div className="md:col-span-1 flex justify-center md:justify-start">
@@ -612,9 +633,11 @@ export default function SettingsPage() {
                         </Button>
                     </div>
                 </div>
-              </TabsContent>
+              </div>
+              )}
 
-              <TabsContent value="layout" className="mt-6">
+              {activeTab === 'layout' && (
+              <div className="animate-fade-in-up">
                 <Accordion type="multiple" className="w-full space-y-4">
                   <AccordionItem value="dashboard-components" className="border rounded-lg p-4">
                     <AccordionTrigger>Main Dashboard Components</AccordionTrigger>
@@ -726,10 +749,11 @@ export default function SettingsPage() {
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-              </TabsContent>
+              </div>
+              )}
               
-              <TabsContent value="data" className="mt-6">
-                <div className="space-y-8">
+              {activeTab === 'data' && (
+                <div className="space-y-8 animate-fade-in-up">
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-primary">Data Backup & Restore</h3>
                         <div className="p-4 border rounded-lg space-y-4">
@@ -820,8 +844,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
             </div>
         </div>
       </main>
