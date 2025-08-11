@@ -642,19 +642,6 @@ export default function SettingsPage() {
                                 </Label>
                                 <Input id="import-file" type="file" accept=".json" className="hidden" onChange={handleImportData} disabled={isImporting}/>
                             </div>
-                            <Button
-                                variant="secondary"
-                                onClick={() => {
-                                    toast({
-                                        title: "Pact Judged: Dare Assigned!",
-                                        description: "Record a 5-second video of you singing 'Happy Birthday' to your water bottle.",
-                                        variant: "destructive",
-                                        duration: 10000,
-                                    });
-                                }}
-                            >
-                                Test Dare Notification
-                            </Button>
                         </div>
                     </div>
                     
