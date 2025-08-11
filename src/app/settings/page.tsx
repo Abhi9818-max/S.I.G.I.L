@@ -35,7 +35,7 @@ import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
 import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat } from '@/types';
 import { Separator } from '@/components/ui/separator';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
@@ -368,6 +368,7 @@ export default function SettingsPage() {
                         <DropdownMenuItem onSelect={() => handleShareProfile()}>
                             <Share2 className="mr-2 h-4 w-4" /> Share Profile
                         </DropdownMenuItem>
+                         <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
                              <LogOut className="mr-2 h-4 w-4" />
                             Logout
@@ -392,7 +393,7 @@ export default function SettingsPage() {
                </div>
                
                {/* Profile Info */}
-               <div className="flex items-center gap-4 py-4">
+                <div className="flex items-center gap-4 py-4">
                   <button
                     onClick={() => setIsAvatarDialogOpen(true)}
                     className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -409,25 +410,28 @@ export default function SettingsPage() {
                     </div>
                   </button>
 
-                  <div className="flex-grow grid grid-cols-3 text-center">
-                    <div>
-                        <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
-                        <p className="text-sm text-muted-foreground">Level</p>
-                    </div>
-                    <Link href="/friends">
+                  <div className="flex flex-col w-full">
+                     <h2 className="text-xl font-bold">{userData?.username}</h2>
+                      <div className="flex-grow grid grid-cols-3 text-left mt-2">
                         <div>
-                            <p className="font-bold text-lg">{friends.length}</p>
-                            <p className="text-sm text-muted-foreground">Friends</p>
+                            <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
+                            <p className="text-sm text-muted-foreground">Level</p>
                         </div>
-                    </Link>
-                    <Link href="/friends">
-                        <div>
-                            <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
-                            <p className="text-sm text-muted-foreground">Pending</p>
-                        </div>
-                    </Link>
-                  </div>
-               </div>
+                        <Link href="/friends">
+                            <div>
+                                <p className="font-bold text-lg">{friends.length}</p>
+                                <p className="text-sm text-muted-foreground">Friends</p>
+                            </div>
+                        </Link>
+                        <Link href="/friends">
+                            <div>
+                                <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
+                                <p className="text-sm text-muted-foreground">Pending</p>
+                            </div>
+                        </Link>
+                      </div>
+                   </div>
+                </div>
 
                 {/* Bio */}
                 <div className="text-sm text-muted-foreground whitespace-pre-wrap">
