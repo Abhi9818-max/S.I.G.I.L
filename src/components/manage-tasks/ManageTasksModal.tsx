@@ -497,7 +497,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleStatusChange(task.id, 'completed')}>Yes, complete</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleStatusChange(task.id, 'completed')} className={buttonVariants({ variant: "destructive" })}>Yes, complete</AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
