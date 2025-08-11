@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, CalendarDays, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -348,289 +348,118 @@ export default function SettingsPage() {
     <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
+      <main className="flex-grow container mx-auto p-4 md:px-8 md:pt-2 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-            <div className="p-6 md:p-0 pt-6 space-y-8">
-              <div className="flex md:hidden justify-between items-center border-b pb-1">
-                  <div className="flex items-center gap-2">
-                    <SettingsIcon className="h-5 w-5 text-primary" />
-                  </div>
+            <div className="md:p-0 pt-2 space-y-4">
+               {/* New Header */}
+               <div className="flex justify-between items-center py-2">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-5 w-5" />
-                        <span className="sr-only">Open settings menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       <DropdownMenuItem onSelect={() => setActiveTab('profile')}><User className="mr-2 h-4 w-4" />Profile</DropdownMenuItem>
-                       <DropdownMenuItem onSelect={() => setActiveTab('layout')}><LayoutDashboard className="mr-2 h-4 w-4" />Layout</DropdownMenuItem>
-                       <DropdownMenuItem onSelect={() => setActiveTab('data')}><Database className="mr-2 h-4 w-4" />Data</DropdownMenuItem>
-                    </DropdownMenuContent>
+                      <DropdownMenuTrigger asChild>
+                         <div className="flex items-center gap-1 cursor-pointer">
+                            <h2 className="text-xl font-bold">{userData?.username}</h2>
+                            <ChevronDown className="h-5 w-5 mt-1" />
+                         </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => handleShareProfile()}>
+                            <Share2 className="mr-2 h-4 w-4" /> Share Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => logout()} className="text-destructive">
+                             <LogOut className="mr-2 h-4 w-4" />
+                            Logout
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
                   </DropdownMenu>
+
+                  <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" asChild>
+                         <Link href="/friends"><UserPlus className="h-6 w-6" /></Link>
+                      </Button>
+                       <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon"><Menu className="h-6 w-6" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                           <DropdownMenuItem onSelect={() => setActiveTab('layout')}><LayoutDashboard className="mr-2 h-4 w-4" />Layout</DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => setActiveTab('data')}><Database className="mr-2 h-4 w-4" />Data</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                  </div>
+               </div>
+               
+               {/* Profile Info */}
+               <div className="flex items-center gap-4 py-4">
+                  <button
+                    onClick={() => setIsAvatarDialogOpen(true)}
+                    className="avatar-overlay-container rounded-full flex-shrink-0"
+                    aria-label="Change profile picture"
+                  >
+                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-primary/20">
+                        <AvatarImage src={userAvatar} alt={userData?.username}/>
+                        <AvatarFallback className="text-4xl">
+                            {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="avatar-overlay">
+                        <Camera className="h-6 w-6 text-white/90" />
+                    </div>
+                  </button>
+
+                  <div className="flex-grow grid grid-cols-3 text-center">
+                    <div>
+                        <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
+                        <p className="text-sm text-muted-foreground">Level</p>
+                    </div>
+                    <Link href="/friends">
+                        <div>
+                            <p className="font-bold text-lg">{friends.length}</p>
+                            <p className="text-sm text-muted-foreground">Friends</p>
+                        </div>
+                    </Link>
+                    <Link href="/friends">
+                        <div>
+                            <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
+                            <p className="text-sm text-muted-foreground">Pending</p>
+                        </div>
+                    </Link>
+                  </div>
+               </div>
+
+                {/* Bio */}
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {userData?.bio || "No bio yet."}
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-2">
+                    <Button variant="secondary" className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
+                    <Button variant="secondary" className="flex-1" onClick={handleShareProfile}>Share Profile</Button>
+                     <Button asChild variant="secondary" size="icon">
+                        <Link href="/friends"><UserPlus /></Link>
+                    </Button>
+                </div>
+              
+              <div className="border-b">
+                 <div className="flex justify-around">
+                      <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
+                      <button className={cn("p-3", activeTab === 'layout' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('layout')}><LayoutDashboard/></button>
+                      <button className={cn("p-3", activeTab === 'data' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('data')}><Database/></button>
+                  </div>
               </div>
+
 
               {activeTab === 'profile' && (
-               <div className="animate-fade-in-up">
-                 {/* Desktop Layout */}
-                  <div className="hidden md:grid md:grid-cols-3 md:gap-8">
-                    <div className="md:col-span-1 flex justify-center md:justify-start">
-                        <button
-                          onClick={() => setIsAvatarDialogOpen(true)}
-                          className="avatar-overlay-container rounded-full"
-                          aria-label="Change profile picture"
-                        >
-                          <Avatar className="h-36 w-36 ring-2 ring-primary/50 ring-offset-4 ring-offset-background">
-                              <AvatarImage src={userAvatar} alt={userData?.username}/>
-                              <AvatarFallback className="text-5xl">
-                                  {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                              </AvatarFallback>
-                          </Avatar>
-                          <div className="avatar-overlay">
-                              <Pencil className="h-8 w-8 text-white/90" />
-                          </div>
-                        </button>
-                    </div>
-
-                    <div className="md:col-span-2 space-y-4">
-                        <div className="flex items-center gap-2">
-                           <h2 className="text-2xl font-light">{userData?.username}</h2>
-                        </div>
-                         <div className="flex items-start gap-2">
-                            <p className="text-sm text-muted-foreground italic flex-grow whitespace-pre-wrap">
-                                {userData?.bio || "No bio yet."}
-                            </p>
-                            <div className="flex items-center">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsBioDialogOpen(true)}>
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
-                                    <Share2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        
-                        <Separator />
-
-                        <div className="flex items-center gap-4 flex-wrap">
-                             <Button asChild variant="outline" size="sm">
-                                <Link href="/friends">
-                                    <UserPlus className="mr-2 h-4 w-4" />
-                                    Manage Friends
-                                </Link>
-                            </Button>
-                            <Button onClick={handleDownloadProfileCard} variant="outline" size="sm">
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Download Card
-                            </Button>
-                        </div>
-                        
-                        <Separator />
-
-                        <div className="flex items-center gap-8">
-                            <div>
-                                <span className="font-bold">{levelInfo?.currentLevel}</span>
-                                <span className="text-muted-foreground ml-1">Level</span>
-                            </div>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <div className="cursor-pointer hover:underline">
-                                        <span className="font-bold">{friends.length}</span>
-                                        <span className="text-muted-foreground ml-1">Friends</span>
-                                    </div>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className="grid gap-4">
-                                        <div className="space-y-2">
-                                            <h4 className="font-medium leading-none">Friends</h4>
-                                            <p className="text-sm text-muted-foreground">Your connections.</p>
-                                        </div>
-                                        <ScrollArea className="h-[200px]">
-                                        {friends.length === 0 ? (
-                                            <p className="text-center text-sm text-muted-foreground py-4">No friends yet.</p>
-                                        ) : (
-                                            <div className="space-y-2 pr-2">
-                                                {friends.map(friend => (
-                                                <Link key={friend.uid} href={`/friends/${friend.uid}`}>
-                                                    <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                        <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="font-medium text-sm">{friend.nickname || friend.username}</span>
-                                                    </div>
-                                                </Link>
-                                                ))}
-                                            </div>
-                                        )}
-                                        </ScrollArea>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <div className="cursor-pointer hover:underline">
-                                        <span className="font-bold">{pendingRequests.length + incomingRequests.length}</span>
-                                        <span className="text-muted-foreground ml-1">Pending</span>
-                                    </div>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className="grid gap-4">
-                                        <div className="space-y-2">
-                                            <h4 className="font-medium leading-none">Pending Requests</h4>
-                                            <p className="text-sm text-muted-foreground">Manage your requests.</p>
-                                        </div>
-                                        <ScrollArea className="h-[200px]">
-                                            <h5 className="text-xs font-semibold text-muted-foreground mb-2">INCOMING ({incomingRequests.length})</h5>
-                                            {incomingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : incomingRequests.map(req => (
-                                                <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
-                                                    <span className="font-medium text-xs">{req.senderUsername}</span>
-                                                    <div className="flex gap-1">
-                                                        <Button size="sm" className="h-6 px-2 text-xs" onClick={() => acceptFriendRequest(req)}>Accept</Button>
-                                                        <Button size="sm" variant="destructive" className="h-6 px-2 text-xs" onClick={() => declineFriendRequest(req.id)}>Decline</Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            <Separator className="my-2" />
-                                            <h5 className="text-xs font-semibold text-muted-foreground mb-2">SENT ({pendingRequests.length})</h5>
-                                            {pendingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : pendingRequests.map(req => (
-                                                <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
-                                                    <span className="font-medium text-xs">{req.recipientUsername}</span>
-                                                    <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
-                                                </div>
-                                            ))}
-                                        </ScrollArea>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                    </div>
+                <div className="animate-fade-in-up py-4 space-y-4">
+                  <h3 className="text-lg font-medium text-primary">Profile Actions</h3>
+                   <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="w-full">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Download Profile Card
+                    </Button>
                 </div>
-                 {/* Mobile Layout */}
-                <div className="md:hidden space-y-4">
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => setIsAvatarDialogOpen(true)}
-                            className="avatar-overlay-container rounded-full flex-shrink-0"
-                            aria-label="Change profile picture"
-                        >
-                            <Avatar className="h-24 w-24">
-                                <AvatarImage src={userAvatar} alt={userData?.username}/>
-                                <AvatarFallback className="text-4xl">
-                                    {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div className="avatar-overlay">
-                                <Pencil className="h-6 w-6 text-white/90" />
-                            </div>
-                        </button>
-                        <div className="flex-grow flex flex-col items-start space-y-2">
-                             <h2 className="font-semibold text-lg">{userData?.username}</h2>
-                              <div className="flex justify-around items-center gap-4 text-center w-full">
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <div className="cursor-pointer">
-                                        <p className="font-bold text-lg">{friends.length}</p>
-                                        <p className="text-sm text-muted-foreground">Friends</p>
-                                    </div>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-80">
-                                      <div className="grid gap-4">
-                                          <div className="space-y-2">
-                                              <h4 className="font-medium leading-none">Friends</h4>
-                                              <p className="text-sm text-muted-foreground">Your connections.</p>
-                                          </div>
-                                          <ScrollArea className="h-[200px]">
-                                          {friends.length === 0 ? (
-                                              <p className="text-center text-sm text-muted-foreground py-4">No friends yet.</p>
-                                          ) : (
-                                              <div className="space-y-2 pr-2">
-                                                  {friends.map(friend => (
-                                                  <Link key={friend.uid} href={`/friends/${friend.uid}`}>
-                                                      <div className="p-2 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                      <Avatar className="h-8 w-8">
-                                                          <AvatarImage src={friend.photoURL || getAvatarForId(friend.uid)} />
-                                                          <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
-                                                      </Avatar>
-                                                      <span className="font-medium text-sm">{friend.nickname || friend.username}</span>
-                                                      </div>
-                                                  </Link>
-                                                  ))}
-                                              </div>
-                                          )}
-                                          </ScrollArea>
-                                      </div>
-                                  </PopoverContent>
-                                </Popover>
-                                <div>
-                                    <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
-                                    <p className="text-sm text-muted-foreground">Level</p>
-                                </div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                      <div className="cursor-pointer">
-                                          <p className="font-bold text-lg">{pendingRequests.length + incomingRequests.length}</p>
-                                          <p className="text-sm text-muted-foreground">Pending</p>
-                                      </div>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80">
-                                      <div className="grid gap-4">
-                                          <div className="space-y-2">
-                                              <h4 className="font-medium leading-none">Pending Requests</h4>
-                                              <p className="text-sm text-muted-foreground">Manage your requests.</p>
-                                          </div>
-                                          <ScrollArea className="h-[200px]">
-                                              <h5 className="text-xs font-semibold text-muted-foreground mb-2">INCOMING ({incomingRequests.length})</h5>
-                                              {incomingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : incomingRequests.map(req => (
-                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
-                                                      <span className="font-medium text-xs">{req.senderUsername}</span>
-                                                      <div className="flex gap-1">
-                                                          <Button size="sm" className="h-6 px-2 text-xs" onClick={() => acceptFriendRequest(req)}>Accept</Button>
-                                                          <Button size="sm" variant="destructive" className="h-6 px-2 text-xs" onClick={() => declineFriendRequest(req.id)}>Decline</Button>
-                                                      </div>
-                                                  </div>
-                                              ))}
-                                              <Separator className="my-2" />
-                                              <h5 className="text-xs font-semibold text-muted-foreground mb-2">SENT ({pendingRequests.length})</h5>
-                                              {pendingRequests.length === 0 ? <p className="text-center text-xs text-muted-foreground py-2">None</p> : pendingRequests.map(req => (
-                                                  <div key={req.id} className="p-2 border rounded-lg flex items-center justify-between bg-card mb-2">
-                                                      <span className="font-medium text-xs">{req.recipientUsername}</span>
-                                                      <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
-                                                  </div>
-                                              ))}
-                                          </ScrollArea>
-                                      </div>
-                                  </PopoverContent>
-                                </Popover>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-2">
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-grow">
-                            {userData?.bio || "No bio yet."}
-                        </p>
-                         <div className="flex items-center">
-                            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsBioDialogOpen(true)}>
-                                <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
-                                <Share2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                         <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="flex-1">
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            Download Card
-                        </Button>
-                    </div>
-                </div>
-              </div>
               )}
 
               {activeTab === 'layout' && (
-              <div className="animate-fade-in-up">
+              <div className="animate-fade-in-up py-4">
                 <Accordion type="multiple" className="w-full space-y-4">
                   <AccordionItem value="dashboard-components" className="border rounded-lg p-4">
                     <AccordionTrigger>Main Dashboard Components</AccordionTrigger>
@@ -746,7 +575,7 @@ export default function SettingsPage() {
               )}
               
               {activeTab === 'data' && (
-                <div className="space-y-8 animate-fade-in-up">
+                <div className="space-y-8 animate-fade-in-up py-4">
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-primary">Data Backup & Restore</h3>
                         <div className="p-4 border rounded-lg space-y-4">
@@ -873,3 +702,5 @@ export default function SettingsPage() {
 }
 
     
+
+      
