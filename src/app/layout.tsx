@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AppProviders } from '@/components/providers/AppProviders';
+import BottomNavBar from '@/components/layout/BottomNavBar';
 
 export const metadata: Metadata = {
   title: 'S.I.G.I.L.',
@@ -35,9 +36,10 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased bg-background text-foreground`}>
         <AppProviders>
-            <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out">
+            <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out pb-20 md:pb-0">
                 {children}
             </div>
+            <BottomNavBar />
             <Toaster />
         </AppProviders>
       </body>
