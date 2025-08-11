@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from '@/components/ui/separator';
-import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck } from 'lucide-react';
+import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck, Flame } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import type { TaskDefinition, TaskUnit } from '@/types';
 import { useToast } from "@/hooks/use-toast";
@@ -71,6 +71,7 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
       { message: "This task name already exists." }
     ),
   color: z.string().regex(/^(#[0-9A-Fa-f]{6}|hsl\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\))$/, "Color must be a valid hex or HSL string."),
+  priority: z.enum(['normal', 'high']).optional(),
   unit: z.enum(['count', 'minutes', 'hours', 'pages', 'generic', 'custom']).optional(),
   customUnitName: z.string().max(20, "Custom unit must be 20 characters or less.").optional(),
   threshold1: z.preprocess(val => val === "" || val === null || val === undefined ? undefined : Number(val), z.number().positive("Must be > 0").optional()),
@@ -144,6 +145,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     defaultValues: {
       name: '',
       color: `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
+      priority: 'normal',
       unit: 'count',
       customUnitName: '',
       threshold1: undefined,
@@ -160,6 +162,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     form.reset({
       name: task?.name || '',
       color: task?.color || `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
+      priority: task?.priority || 'normal',
       unit: task?.unit ?? 'count',
       customUnitName: task?.customUnitName || '',
       threshold1: task?.intensityThresholds?.[0] ?? undefined,
@@ -191,6 +194,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     const taskData = {
       name: data.name,
       color: data.color,
+      priority: data.priority,
       intensityThresholds: intensityThresholds,
       unit: data.unit,
       customUnitName: data.unit === 'custom' ? data.customUnitName : undefined,
@@ -276,6 +280,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                         </Button>
                     )}
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="taskName">Task Name</Label>
                     <Input id="taskName" {...form.register('name')} className="mt-1" />
@@ -292,8 +297,21 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                     {form.formState.errors.color && (<p className="text-sm text-destructive mt-1">{form.formState.errors.color.message}</p>)}
                   </div>
                 </div>
+                <div>
+                  <Label htmlFor="priority">Priority</Label>
+                  <Controller name="priority" control={form.control} render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value ?? 'normal'}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select priority" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )} />
+                </div>
+              </div>
                 
-                <Accordion type="multiple" className="w-full space-y-2">
+              <Accordion type="multiple" className="w-full space-y-2">
                   <AccordionItem value="scheduling" className="border-b-0">
                     <AccordionTrigger className="text-sm py-2 px-3 bg-muted/50 rounded-md hover:bg-muted/80 [&[data-state=open]]:rounded-b-none">
                       <div className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-muted-foreground" />Task Scheduling</div>
@@ -395,7 +413,17 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                           <div className="flex items-center gap-3">
                             <div className="w-3 h-10 rounded-sm flex-shrink-0" style={{ backgroundColor: task.color }} />
                             <div>
-                                <p className="font-semibold">{task.name}</p>
+                                <p className="font-semibold flex items-center gap-2">
+                                  {task.name}
+                                  {task.priority === 'high' && (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Flame className="h-4 w-4 text-orange-400" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>High Priority</TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </p>
                                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs mt-1">
                                 <Tooltip><TooltipTrigger className="flex items-center gap-1"><CalendarCheck className="h-4 w-4" /><span>{getFrequencyLabel(task)}</span></TooltipTrigger><TooltipContent><p>Task Frequency</p></TooltipContent></Tooltip>
 

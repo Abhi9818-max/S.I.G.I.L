@@ -68,6 +68,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
     getRecordsByDate, 
     taskDefinitions,
     getTaskDefinitionById,
+    awardBonusPoints,
   } = useUserRecords();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -123,6 +124,16 @@ const RecordModal: React.FC<RecordModalProps> = ({
     } else {
       addRecord(recordData);
       toast({ title: "Record Added", description: `New record for ${recordData.date} added.` });
+      
+      const taskDef = getTaskDefinitionById(data.taskType);
+      if (taskDef?.priority === 'high') {
+        const priorityBonus = 10;
+        awardBonusPoints(priorityBonus);
+        toast({
+            title: `✨ High Priority Bonus!`,
+            description: `You earned an extra ${priorityBonus} XP for completing a high priority task.`,
+        });
+      }
     }
     resetAndPrepareForm(null); // Reset form for another new entry
   };

@@ -37,6 +37,7 @@ export interface TaskDefinition {
   id: string;
   name: string;
   color: string; // HSL color string e.g., 'hsl(210 90% 70%)'
+  priority?: 'normal' | 'high'; // Task priority
   unit?: TaskUnit; // The unit of measurement for this task's value
   customUnitName?: string; // Optional: name for the custom unit
   intensityThresholds?: readonly number[]; // Optional: Array of 4 numbers for custom intensity levels [T1, T2, T3, T4]
