@@ -74,7 +74,7 @@ const ProductivityByDayChart: React.FC<ProductivityByDayChartProps> = ({ startDa
                 axisLine={false}
                 tickMargin={8}
                 className="text-xs"
-                width={30}
+                width={50}
               />
               <ChartTooltip
                 cursor={false}
