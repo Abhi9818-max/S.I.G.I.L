@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { isPast, startOfDay, format, parseISO, isToday, isYesterday } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
+import { generateDare } from '@/lib/server/dare';
 
 interface TodoContextType {
   todoItems: TodoItem[];
@@ -21,7 +22,7 @@ const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
-  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
+  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded, getTaskDefinitionById } = useUserRecords();
   const { toast } = useToast();
 
   // Load initial data and handle penalties on mount
@@ -31,32 +32,45 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       let totalPenalty = 0;
       let itemsChanged = false;
 
-      const processedItems = allStoredItems.map(item => {
-        if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
-          if (item.penalty && item.penalty > 0) {
-            totalPenalty += item.penalty;
+      const checkAndApplyPenalties = async () => {
+        const promises = allStoredItems.map(async (item) => {
+          if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
+            let dare: string | undefined = undefined;
+            if (item.penalty && item.penalty > 0) {
+              totalPenalty += item.penalty;
+              try {
+                // Since this might be for a task, we can try to find the task name
+                const taskName = item.text; // Assume pact text is descriptive enough
+                dare = await generateDare(taskName);
+              } catch (e) {
+                console.error("Failed to generate dare:", e);
+              }
+            }
+            itemsChanged = true;
+            return { ...item, penaltyApplied: true, dare };
           }
-          itemsChanged = true;
-          return { ...item, penaltyApplied: true };
-        }
-        return item;
-      });
+          return item;
+        });
+        
+        const processedItems = await Promise.all(promises);
+        setTodoItems(processedItems);
 
-      setTodoItems(processedItems);
-
-      if (itemsChanged) {
-        if (totalPenalty > 0) {
-          deductBonusPoints(totalPenalty);
-          toast({
-            title: "Pacts Judged",
-            description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP.`,
-            variant: "destructive",
-            duration: 7000,
-          });
+        if (itemsChanged) {
+          if (totalPenalty > 0) {
+            deductBonusPoints(totalPenalty);
+            toast({
+              title: "Pacts Judged",
+              description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
+              variant: "destructive",
+              duration: 7000,
+            });
+          }
+          // Save the updated penalty status
+          updateUserDataInDb({ todoItems: processedItems });
         }
-        // Save the updated penalty status
-        updateUserDataInDb({ todoItems: processedItems });
       }
+
+      checkAndApplyPenalties();
     } else if (isUserDataLoaded) {
       setTodoItems([]);
     }

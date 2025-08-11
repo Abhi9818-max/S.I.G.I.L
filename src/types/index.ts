@@ -103,6 +103,7 @@ export interface TodoItem {
   dueDate?: string; // Optional: YYYY-MM-DD format
   penalty?: number; // Optional: XP penalty if overdue
   penaltyApplied?: boolean; // Optional: whether the penalty has been applied
+  dare?: string; // Optional: A dare for failing the pact
 }
 
 // For Constellations
