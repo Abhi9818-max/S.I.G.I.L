@@ -40,11 +40,15 @@ export default function HomePage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   
   const { isUserDataLoaded } = useAuth();
-  const userRecords = useUserRecords();
+  const { 
+    taskDefinitions, 
+    getUserLevelInfo, 
+    awardTierEntryBonus,
+  } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
 
-  const currentLevelInfo = userRecords.getUserLevelInfo();
+  const currentLevelInfo = getUserLevelInfo();
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
@@ -93,7 +97,7 @@ export default function HomePage() {
           let toastDescription = newTierData.welcomeMessage;
 
           if (newTierData.tierEntryBonus && newTierData.tierEntryBonus > 0 && newTierData.minLevel > TIER_INFO[0].minLevel) {
-            userRecords.awardTierEntryBonus(newTierData.tierEntryBonus);
+            awardTierEntryBonus(newTierData.tierEntryBonus);
             toastDescription += ` You earned ${newTierData.tierEntryBonus} bonus XP!`;
           }
 
@@ -112,7 +116,7 @@ export default function HomePage() {
         }
       }
     }
-  }, [currentLevelInfo, toast, userRecords]);
+  }, [currentLevelInfo, toast, awardTierEntryBonus]);
 
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
@@ -151,7 +155,7 @@ export default function HomePage() {
 
         {dashboardSettings.showTaskFilterBar && (
           <TaskFilterBar
-            taskDefinitions={userRecords.taskDefinitions}
+            taskDefinitions={taskDefinitions}
             selectedTaskId={selectedTaskFilterId}
             onSelectTask={(taskId) => setSelectedTaskFilterId(taskId)}
           />
