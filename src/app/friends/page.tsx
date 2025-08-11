@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -173,7 +174,7 @@ export default function FriendsPage() {
                                         <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                                     ) : (
                                         <ScrollArea className="h-[40vh] mt-4">
-                                            <div className="space-y-3 pr-4">
+                                             <div className="space-y-3 pr-4">
                                                 {friends.map((friend, index) => (
                                                     <div
                                                       key={friend.uid}
@@ -181,23 +182,26 @@ export default function FriendsPage() {
                                                       style={{ animationDelay: `${index * 50}ms` }}
                                                     >
                                                       <Link href={`/friends/${friend.uid}`}>
-                                                          <div className="p-3 border rounded-lg flex items-center justify-between bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                          <Card className="p-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                                            <CardHeader className="p-0 flex flex-row items-center justify-between">
                                                               <div className="flex items-center gap-3">
                                                                   <Avatar>
                                                                       <AvatarImage src={getAvatarForId(friend.uid, friend.photoURL)} />
                                                                       <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                                   </Avatar>
                                                                   <div>
-                                                                      <span className="font-medium">{friend.nickname || friend.username}</span>
+                                                                      <CardTitle className="text-md">{friend.nickname || friend.username}</CardTitle>
                                                                       {friend.relationship && (
-                                                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                        <CardDescription className="text-xs flex items-center gap-1 mt-1">
                                                                             <Heart className="h-3 w-3" />
                                                                             {friend.relationship}
-                                                                        </p>
+                                                                        </CardDescription>
                                                                       )}
                                                                   </div>
                                                               </div>
-                                                          </div>
+                                                              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                                                            </CardHeader>
+                                                          </Card>
                                                       </Link>
                                                     </div>
                                                 ))}
@@ -371,3 +375,5 @@ export default function FriendsPage() {
         </div>
     );
 };
+
+    
