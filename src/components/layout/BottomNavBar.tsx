@@ -20,12 +20,11 @@ export default function BottomNavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 md:hidden bg-transparent flex justify-center items-center z-50 p-4">
-        <div className="flex items-center justify-around w-full max-w-sm h-full bg-black/50 backdrop-blur-lg rounded-full border border-white/10 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 md:hidden bg-background border-t border-border flex justify-around items-center z-50">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link href={item.href} key={item.href}>
+            <Link href={item.href} key={item.href} className="flex-1 flex justify-center items-center h-full">
                 <div
                     className={cn(
                     'flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300',
@@ -37,7 +36,6 @@ export default function BottomNavBar() {
             </Link>
           );
         })}
-      </div>
     </nav>
   );
 }
