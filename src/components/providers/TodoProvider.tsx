@@ -42,12 +42,12 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let processedItems = [...userData.todoItems];
         
         const checkAndApplyPenalties = async () => {
-            const yesterdayStr = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
+            const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
             
             const incompleteYesterday = processedItems.filter(item =>
                 !item.completed &&
                 !item.penaltyApplied &&
-                isSameDay(parseISO(item.createdAt), parseISO(yesterdayStr))
+                isSameDay(parseISO(item.createdAt), yesterday)
             );
 
             if (incompleteYesterday.length > 0) {
@@ -63,10 +63,10 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (dare) {
                     toast({
-                        title: "Pact Judged",
-                        description: `A pact from yesterday was incomplete. A new dare has been assigned.`,
+                        title: "Pact Judged: Dare Assigned!",
+                        description: dare,
                         variant: "destructive",
-                        duration: 7000,
+                        duration: 10000,
                     });
                 }
                 
@@ -177,7 +177,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleTodoItem,
       deleteTodoItem,
       getTodoItemById,
-  }), [todoItems, getTodoItemById]);
+  }), [todoItems, getTodoItemById, addTodoItem, toggleTodoItem, deleteTodoItem]);
 
   return (
     <TodoContext.Provider value={value}>
