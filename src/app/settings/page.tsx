@@ -393,7 +393,7 @@ export default function SettingsPage() {
                </div>
                
                {/* Profile Info */}
-                <div className="flex items-center gap-6 py-4">
+                <div className="flex items-center gap-8 py-4">
                   <button
                     onClick={() => setIsAvatarDialogOpen(true)}
                     className="avatar-overlay-container rounded-full flex-shrink-0"
