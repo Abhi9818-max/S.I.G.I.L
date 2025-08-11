@@ -10,6 +10,7 @@ import { useAuth } from './AuthProvider';
 import {
   TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS,
   calculateUserLevelInfo,
+  calculateXpForRecord, // Import the new XP calculation function
   STREAK_MILESTONES_FOR_CRYSTALS,
 } from '@/lib/config';
 import { CONSTELLATIONS } from '@/lib/constellations';
@@ -483,16 +484,23 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
 }, [records, getAggregateSum]);
 
-  const getTotalBaseRecordValue = useCallback((): number => {
-    return records.reduce((sum, record) => sum + (Number(record.value) || 0), 0);
-  }, [records]);
+  const calculateTotalXp = useCallback((levelInfo: UserLevelInfo | null): number => {
+    if (!levelInfo) return 0;
+    return records.reduce((sum, record) => {
+        const task = getTaskDefinitionById(record.taskType || '');
+        const recordXp = calculateXpForRecord(record.value, task, levelInfo.currentLevel);
+        return sum + recordXp;
+    }, 0);
+  }, [records, getTaskDefinitionById]);
 
   const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
     if (!isUserDataLoaded) return null;
-    const sumOfRecordValues = getTotalBaseRecordValue();
-    const totalExperience = sumOfRecordValues + totalBonusPoints;
+    // Temporarily calculate level based on a placeholder to avoid circular dependency
+    const tempLevelInfo = calculateUserLevelInfo(0);
+    const sumOfRecordXp = calculateTotalXp(tempLevelInfo);
+    const totalExperience = sumOfRecordXp + totalBonusPoints;
     return calculateUserLevelInfo(totalExperience);
-  }, [getTotalBaseRecordValue, totalBonusPoints, isUserDataLoaded]);
+  }, [calculateTotalXp, totalBonusPoints, isUserDataLoaded]);
 
   const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
@@ -528,10 +536,20 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Constellation Functions
   const getAvailableSkillPoints = useCallback((taskId: string): number => {
     if (records.length === 0) return 0;
-    const totalPoints = getAggregateSum(new Date("1900-01-01"), new Date(), taskId);
+    const levelInfo = getUserLevelInfo();
+    if (!levelInfo) return 0;
+
+    const totalPoints = records
+      .filter(r => r.taskType === taskId)
+      .reduce((sum, r) => {
+          const task = getTaskDefinitionById(r.taskType || '');
+          const recordXp = calculateXpForRecord(r.value, task, levelInfo.currentLevel);
+          return sum + recordXp;
+      }, 0);
+
     const spentPoints = spentSkillPoints[taskId] || 0;
     return totalPoints - spentPoints;
-  }, [getAggregateSum, records, spentSkillPoints]);
+  }, [records, spentSkillPoints, getTaskDefinitionById, getUserLevelInfo]);
 
   const isSkillUnlocked = useCallback((skillId: string): boolean => {
     return unlockedSkills.includes(skillId);

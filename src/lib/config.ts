@@ -1,5 +1,3 @@
-
-
 import type { TaskDefinition, UserLevelInfo, TierConfig } from '@/types';
 
 export const LOCAL_STORAGE_KEY = 'recordTrackerData';
@@ -128,29 +126,88 @@ export const TIER_INFO: readonly TierConfig[] = [
     { name: "Final Forms", slug: "final-forms", icon: "🌑", minLevel: 91, maxLevel: 100, tierGroup: 5, welcomeMessage: "No more trials. No more thresholds. This is not potential — this is you, fully formed and feared.", tierEntryBonus: 5000 },
 ];
 
-
 export const LEVEL_THRESHOLDS: readonly number[] = (() => {
-    const xpPerLevel = [
-        30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,
-        46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62,
-        63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-        138, 140, 142, 144, 146, 148, 150, 152, 154, 156, 158, 160, 162,
-        164, 166, 168, 170, 172, 174, 176, 178, 180, 182, 184, 186, 188,
-        190, 192, 194, 196, 198, 200, 202, 204, 206, 380, 385, 390, 395,
-        400, 405, 410, 415, 420, 425, 1125, 1150, 1175, 1200, 1225, 2750,
-        2875, 3000, 3125, 3250
-    ];
-    const thresholds = [0];
-    let currentTotal = 0;
-    for (const xp of xpPerLevel) {
-        currentTotal += xp;
-        thresholds.push(Math.round(currentTotal));
+  const levels = 100;
+  const totalMonths = 17;
+  // Based on ~100xp/day average
+  const totalTargetXP = totalMonths * 30 * 100;
+
+  const thresholds: number[] = [0];
+  let accumulatedXP = 0;
+
+  for (let level = 1; level < levels; level++) {
+    let xpForNextLevel;
+
+    if (level < 50) {
+      // Levels 1-50 (4.5 months)
+      const base = 50;
+      const increment = 5;
+      xpForNextLevel = base + (level - 1) * increment;
+    } else if (level < 85) {
+      // Levels 51-85 (5.5 months)
+      const base = 300;
+      const exponent = 1.05;
+      xpForNextLevel = base * Math.pow(exponent, level - 50);
+    } else if (level < 95) {
+      // Levels 86-95 (2.5 months)
+      const base = 2000;
+      const exponent = 1.15;
+      xpForNextLevel = base * Math.pow(exponent, level - 85);
+    } else {
+      // Levels 96-100 (4.5 months)
+      const base = 10000;
+      const exponent = 1.4;
+      xpForNextLevel = base * Math.pow(exponent, level - 95);
     }
-    return thresholds;
+
+    accumulatedXP += Math.round(xpForNextLevel);
+    thresholds.push(accumulatedXP);
+  }
+
+  // Normalize to the total target XP
+  const actualTotalXP = thresholds[thresholds.length - 1];
+  const scalingFactor = totalTargetXP / actualTotalXP;
+
+  const finalThresholds = thresholds.map(t => Math.round(t * scalingFactor));
+  // Ensure the first element is exactly 0
+  finalThresholds[0] = 0;
+
+  return finalThresholds;
 })();
 
 
 export const MAX_USER_LEVEL = LEVEL_THRESHOLDS.length;
+
+// XP CALCULATION LOGIC
+const PHASE_XP = [10, 25, 50, 100]; // Base XP for phases 1, 2, 3, 4
+const PRIORITY_MULTIPLIER = 1.5; // High priority tasks get 50% more XP
+const LEVEL_SCALING_FACTOR = 0.05; // 5% bonus XP per level
+
+export const calculateXpForRecord = (
+    recordValue: number,
+    task: TaskDefinition | undefined,
+    userLevel: number
+): number => {
+    if (!task) return 0; // No XP for unassigned tasks
+
+    const level = getContributionLevel(recordValue, task.intensityThresholds);
+    if (level === 0) return 0;
+
+    const phaseIndex = level - 1;
+    let baseXP = PHASE_XP[phaseIndex] || 0;
+
+    // Apply priority multiplier
+    if (task.priority === 'high') {
+        baseXP *= PRIORITY_MULTIPLIER;
+    }
+
+    // Apply level scaling bonus
+    const levelBonus = baseXP * (userLevel - 1) * LEVEL_SCALING_FACTOR;
+    const finalXP = Math.round(baseXP + levelBonus);
+
+    return finalXP;
+};
+
 
 // totalExperiencePoints is the sum of all record values PLUS any awarded bonuses
 export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevelInfo => {
