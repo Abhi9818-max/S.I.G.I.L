@@ -41,15 +41,15 @@ const ProductivityByDayChart: React.FC<ProductivityByDayChartProps> = ({ startDa
   }, [startDate, endDate, taskId, getProductivityByDay]);
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
+    <div>
+      <div className="mb-4">
         <div className="flex items-center gap-2">
           <BarChart2 className="h-6 w-6 text-accent" />
-          <CardTitle>Productivity by Day</CardTitle>
+          <h3 className="text-lg font-semibold">Productivity by Day</h3>
         </div>
-        <CardDescription>Which days of the week are your most active?</CardDescription>
-      </CardHeader>
-      <CardContent>
+        <p className="text-sm text-muted-foreground">Which days of the week are your most active?</p>
+      </div>
+      <div>
         {isLoading ? (
           <div className="h-[250px] w-full p-4">
             <Skeleton className="h-full w-full" />
@@ -84,8 +84,8 @@ const ProductivityByDayChart: React.FC<ProductivityByDayChartProps> = ({ startDa
             </BarChart>
           </ChartContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
