@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -146,17 +146,25 @@ export default function FriendsPage() {
                                             </Avatar>
                                             <span className="font-medium">{searchedUser.username}</span>
                                         </div>
-                                        {isAlreadyFriend ? (
-                                            <p className="text-sm text-green-500">Already Friends</p>
-                                        ) : hasIncomingRequest ? (
-                                             <p className="text-sm text-blue-500">Check incoming requests</p>
-                                        ) : requestAlreadySent ? (
-                                            <p className="text-sm text-muted-foreground">Request Sent</p>
-                                        ) : (
-                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
-                                                <UserPlus className="h-4 w-4 mr-2" /> Add Friend
+                                        <div className="flex items-center gap-2">
+                                            <Button asChild variant="outline" size="sm">
+                                                <Link href={`/friends/${searchedUser.uid}`}>
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    View Profile
+                                                </Link>
                                             </Button>
-                                        )}
+                                            {isAlreadyFriend ? (
+                                                <Badge variant="secondary">Already Friends</Badge>
+                                            ) : hasIncomingRequest ? (
+                                                <Badge variant="outline">Check incoming</Badge>
+                                            ) : requestAlreadySent ? (
+                                                <Badge variant="outline">Request Sent</Badge>
+                                            ) : (
+                                                <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
+                                                    <UserPlus className="h-4 w-4 mr-2" /> Add Friend
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -371,5 +379,3 @@ export default function FriendsPage() {
         </div>
     );
 };
-
-    
