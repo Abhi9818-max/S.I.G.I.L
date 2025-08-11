@@ -209,7 +209,7 @@ export default function FriendsPage() {
                                                      </Link>
                                                 ))}
                                             </div>
-                                            <ScrollBar orientation="horizontal" />
+                                            <ScrollBar orientation="horizontal" className="invisible" />
                                         </ScrollArea>
                                     )}
                                 </AccordionContent>
