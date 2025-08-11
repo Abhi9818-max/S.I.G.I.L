@@ -99,7 +99,7 @@ export default function InsightsPage() {
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Your Insights</h1>
             </div>
           </div>
-          <div className="p-6 md:p-0 pt-6">
+          <div className="p-6 md:p-0 pt-2">
              <div className="p-4 mb-8">
                 <div className="flex flex-col md:flex-row flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2 w-full md:w-auto">
