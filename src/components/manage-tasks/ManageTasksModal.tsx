@@ -479,12 +479,28 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                                     </Tooltip>
                                 )}
                                 {task.status !== 'completed' && (
-                                     <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange(task.id, 'completed')}><CheckCircle className="h-4 w-4" /></Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent><p>Complete Task</p></TooltipContent>
+                                  <AlertDialog>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8"><CheckCircle className="h-4 w-4" /></Button>
+                                        </AlertDialogTrigger>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>Complete Task</p></TooltipContent>
                                     </Tooltip>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Complete this task?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Marking this task as complete will archive it. You will not be able to log new records for it. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleStatusChange(task.id, 'completed')}>Yes, complete</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 )}
 
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => resetFormFields(task)} disabled={task.status === 'completed'}>
