@@ -8,6 +8,9 @@ import {
   Crown,
   Sparkles,
   Award as AwardIcon,
+  BookUser,
+  BrainCircuit,
+  Dumbbell,
 } from 'lucide-react';
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -98,5 +101,34 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: BookOpen,
     isSecret: true,
     check: ({ loreEntryCount }) => loreEntryCount >= 5,
+  },
+  
+  // Titles
+  {
+    id: 'title-scholar',
+    name: 'Scholar',
+    description: 'Log over 1,000 pages read.',
+    category: 'title',
+    icon: BookUser,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('reading') >= 1000,
+  },
+  {
+    id: 'title-initiate',
+    name: 'Initiate',
+    description: 'Log over 100 hours of learning.',
+    category: 'title',
+    icon: BrainCircuit,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('learning') >= 100,
+  },
+  {
+    id: 'title-athlete',
+    name: 'Athlete',
+    description: 'Log over 100 hours of exercise.',
+    category: 'title',
+    icon: Dumbbell,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('exercise') >= 100,
   },
 ];

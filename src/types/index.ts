@@ -141,7 +141,7 @@ export interface DailyTimeBreakdownData {
 
 
 // For Achievements
-export type AchievementCategory = 'level' | 'streak' | 'skills' | 'creation';
+export type AchievementCategory = 'level' | 'streak' | 'skills' | 'creation' | 'title';
 
 export interface Achievement {
   id: string;
@@ -150,11 +150,13 @@ export interface Achievement {
   category: AchievementCategory;
   icon: React.ElementType;
   isSecret?: boolean; // If true, hide details until unlocked
+  isTitle?: boolean; // If true, can be displayed as a user title
   check: (context: {
     levelInfo: UserLevelInfo;
     streaks: Record<string, number>;
     unlockedSkillCount: number;
     loreEntryCount: number;
+    getAggregateSumForTask: (taskId: string) => number;
   }) => boolean;
 }
 

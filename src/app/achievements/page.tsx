@@ -1,14 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Trophy, Lock } from 'lucide-react';
+import { Trophy, Lock, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
 
 const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achievement: typeof ACHIEVEMENTS[0], isUnlocked: boolean, newlyUnlocked: boolean }) => {
   const Icon = achievement.icon;
@@ -70,9 +71,30 @@ export default function AchievementsPage() {
   const levelInfo = getUserLevelInfo();
   const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
   
-  const totalAchievements = ACHIEVEMENTS.length;
-  const unlockedCount = unlockedAchievements.length;
+  const standardAchievements = useMemo(() => ACHIEVEMENTS.filter(a => !a.isTitle), []);
+  const titleAchievements = useMemo(() => ACHIEVEMENTS.filter(a => a.isTitle), []);
+
+  const totalAchievements = standardAchievements.length;
+  const unlockedCount = unlockedAchievements.filter(id => standardAchievements.some(a => a.id === id)).length;
   const progress = totalAchievements > 0 ? (unlockedCount / totalAchievements) * 100 : 0;
+
+  const renderAchievementList = (achievements: typeof ACHIEVEMENTS) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {achievements.map((ach, index) => (
+        <div
+          key={ach.id}
+          className="animate-fade-in-up"
+          style={{ animationDelay: `${index * 50}ms` }}
+        >
+          <AchievementCard
+            achievement={ach}
+            isUnlocked={unlockedAchievements.includes(ach.id)}
+            newlyUnlocked={newlyUnlockedAchievements.includes(ach.id)}
+          />
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -88,7 +110,7 @@ export default function AchievementsPage() {
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Achievements</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Milestones that mark your journey. Unlocking achievements grants permanent recognition of your efforts.
+              Milestones that mark your journey of growth and consistency.
             </p>
             <div className="pt-4">
               <p className="text-sm text-muted-foreground">Unlocked: {unlockedCount} / {totalAchievements}</p>
@@ -99,23 +121,29 @@ export default function AchievementsPage() {
           </div>
           <div className="p-6 md:p-0 pt-6">
             <TooltipProvider>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ACHIEVEMENTS.map((ach, index) => (
-                  <div
-                    key={ach.id}
-                    className="animate-fade-in-up"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <AchievementCard
-                      achievement={ach}
-                      isUnlocked={unlockedAchievements.includes(ach.id)}
-                      newlyUnlocked={newlyUnlockedAchievements.includes(ach.id)}
-                    />
-                  </div>
-                ))}
-              </div>
+                {renderAchievementList(standardAchievements)}
             </TooltipProvider>
           </div>
+
+          {titleAchievements.length > 0 && (
+            <>
+              <Separator className="my-8" />
+              <div className="p-6 md:p-0">
+                <div className="flex items-center gap-2">
+                  <Award className="h-6 w-6 text-yellow-400" />
+                  <h1 className="text-2xl font-semibold leading-none tracking-tight">Titles</h1>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Special accolades earned for significant accomplishments. Your most recently earned title is displayed on your profile.
+                </p>
+              </div>
+               <div className="p-6 md:p-0 pt-6">
+                <TooltipProvider>
+                    {renderAchievementList(titleAchievements)}
+                </TooltipProvider>
+              </div>
+            </>
+          )}
         </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">

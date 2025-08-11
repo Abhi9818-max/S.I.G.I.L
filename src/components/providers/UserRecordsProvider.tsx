@@ -647,6 +647,19 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const clearNewlyUnlockedAchievements = useCallback(() => {
     setNewlyUnlockedAchievements([]);
   }, []);
+  
+  const getAggregateSumForTask = useCallback((taskId: string): number => {
+    const allTimeRecords = records.filter(r => r.taskType === taskId);
+    const sum = allTimeRecords.reduce((total, r) => total + r.value, 0);
+
+    const taskDef = getTaskDefinitionById(taskId);
+    if (!taskDef) return sum;
+
+    // Handle unit conversion for titles (e.g. learning is stored in minutes, title is for hours)
+    if (taskDef.unit === 'minutes') return sum / 60; // Convert to hours
+    
+    return sum;
+  }, [records, getTaskDefinitionById]);
 
   // Achievement Check
   useEffect(() => {
@@ -661,7 +674,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const unlockedSkillCount = unlockedSkills.length;
     let loreEntryCount = 0;
 
-    const context = { levelInfo, streaks, unlockedSkillCount, loreEntryCount };
+    const context = { levelInfo, streaks, unlockedSkillCount, loreEntryCount, getAggregateSumForTask };
     
     const justUnlocked: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
@@ -679,7 +692,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const updatedAchievements = [...new Set([...unlockedAchievements, ...justUnlocked])];
       updateUserDataInDb({ unlockedAchievements: updatedAchievements });
     }
-  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb, userData]);
+  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb, userData, getAggregateSumForTask]);
 
   // High Goal Functions
   const addHighGoal = useCallback((goalData: Omit<HighGoal, 'id'>) => {

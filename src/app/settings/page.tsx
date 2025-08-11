@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/accordion";
 import ProfileCard from '@/components/profile/ProfileCard';
 import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
+import { ACHIEVEMENTS } from '@/lib/achievements';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -106,7 +107,7 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
 
 
 export default function SettingsPage() {
-  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak } = useUserRecords();
+  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout } = useAuth();
@@ -301,6 +302,14 @@ export default function SettingsPage() {
   }
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);
+  
+  const latestTitle = useMemo(() => {
+    const titles = ACHIEVEMENTS.filter(a => a.isTitle && unlockedAchievements.includes(a.id));
+    if (titles.length === 0) return null;
+    // This assumes the latest unlocked is the last one in the main array. A more robust
+    // solution might need timestamps, but this is fine for now.
+    return titles[titles.length - 1];
+  }, [unlockedAchievements]);
 
   const handleUnlockMasterControl = () => {
     if (secretCodeInput === SECRET_CODE) {
@@ -354,11 +363,11 @@ export default function SettingsPage() {
     <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-      <main className="flex-grow container mx-auto px-4 pb-4 md:px-8 md:pt-2 animate-fade-in-up">
+      <main className="flex-grow container mx-auto px-4 pb-4 md:px-8 md:pt-0 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
             <div className="md:p-0 pt-0 space-y-4">
                {/* New Header */}
-               <div className="flex justify-between items-center py-2 md:hidden">
+               <div className="flex justify-between items-center py-1 md:hidden">
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                          <div className="flex items-center gap-1 cursor-pointer">
@@ -414,6 +423,12 @@ export default function SettingsPage() {
 
                   <div className="flex flex-col w-full">
                      <h2 className="text-xl font-bold">{userData?.username}</h2>
+                      {latestTitle && (
+                        <div className="flex items-center gap-1.5 mt-1 text-sm text-yellow-400">
+                          <Award className="h-4 w-4" />
+                          <span className="font-semibold">{latestTitle.name}</span>
+                        </div>
+                      )}
                       <div className="flex-grow grid grid-cols-3 text-left mt-2">
                         <div>
                             <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
