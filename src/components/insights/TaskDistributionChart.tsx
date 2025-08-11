@@ -108,9 +108,10 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
     </div>
   );
   
-  const noDataMessage = !taskId && chartData.length <= 1 
-    ? "Select a specific task or log data for multiple tasks to see a distribution."
-    : "No data to display for this period.";
+  const noDataMessage = !taskId 
+    ? "Select a specific task to see its distribution." 
+    : "No data to display for this task in this period.";
+
 
   return (
     <Card className="shadow-lg">
@@ -126,12 +127,12 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
           <div className="h-[250px] w-full p-4">
             <Skeleton className="h-full w-full" />
           </div>
-        ) : taskId ? (
-          <SingleTaskView />
-        ) : chartData.length === 0 || totalValue === 0 || chartData.length <=1 ? (
-          <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">
-             {noDataMessage}
-          </p>
+        ) : !taskId || chartData.length === 0 || totalValue === 0 ? (
+          <div className="h-[250px] w-full p-4 flex items-center justify-center">
+             <p className="text-center text-muted-foreground py-10 h-[250px] flex items-center justify-center">
+                {noDataMessage}
+             </p>
+          </div>
         ) : (
           <ChartContainer config={chartConfig} className="min-h-[250px] w-full mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-8 min-h-[250px]">
