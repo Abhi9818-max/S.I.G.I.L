@@ -601,21 +601,21 @@ export default function SettingsPage() {
                         </Button>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                         <Button onClick={handleShareProfile} variant="outline" className="w-full">
+                         <Button onClick={handleShareProfile} variant="outline" size="sm" className="flex-1">
                             <Share2 className="mr-2 h-4 w-4" />
                             Share Profile
                         </Button>
-                         <Button asChild variant="outline" className="w-full">
+                         <Button asChild variant="outline" size="sm" className="flex-1">
                             <Link href="/friends">
                                 <UserPlus className="mr-2 h-4 w-4" />
                                 Manage Friends
                             </Link>
                         </Button>
+                         <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="flex-1">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Download Card
+                        </Button>
                     </div>
-                     <Button onClick={handleDownloadProfileCard} variant="outline" className="w-full">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Download Card
-                    </Button>
                 </div>
               </TabsContent>
 
