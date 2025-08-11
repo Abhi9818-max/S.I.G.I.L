@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import Image from 'next/image';
 
 
 // Simple hash function to get a number from a string
@@ -173,37 +174,31 @@ export default function FriendsPage() {
                                     {friends.length === 0 ? (
                                         <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                                     ) : (
-                                        <ScrollArea className="h-[40vh] mt-4">
-                                             <div className="space-y-3 pr-4">
+                                        <ScrollArea className="h-[50vh] mt-4">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
                                                 {friends.map((friend, index) => (
-                                                    <div
-                                                      key={friend.uid}
-                                                      className="animate-fade-in-up"
-                                                      style={{ animationDelay: `${index * 50}ms` }}
-                                                    >
-                                                      <Link href={`/friends/${friend.uid}`}>
-                                                          <Card className="p-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                                            <CardHeader className="p-0 flex flex-row items-center justify-between">
-                                                              <div className="flex items-center gap-3">
-                                                                  <Avatar>
-                                                                      <AvatarImage src={getAvatarForId(friend.uid, friend.photoURL)} />
-                                                                      <AvatarFallback>{(friend.nickname || friend.username).charAt(0).toUpperCase()}</AvatarFallback>
-                                                                  </Avatar>
-                                                                  <div>
-                                                                      <CardTitle className="text-md">{friend.nickname || friend.username}</CardTitle>
+                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid}>
+                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1">
+                                                            <div className="relative w-full aspect-[3/4]">
+                                                                <Image 
+                                                                    src={getAvatarForId(friend.uid, friend.photoURL)} 
+                                                                    alt={friend.username} 
+                                                                    fill 
+                                                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                />
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                                                                <div className="absolute bottom-0 left-0 p-3 text-white">
+                                                                     <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
                                                                       {friend.relationship && (
-                                                                        <CardDescription className="text-xs flex items-center gap-1 mt-1">
+                                                                        <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
                                                                             <Heart className="h-3 w-3" />
                                                                             {friend.relationship}
                                                                         </CardDescription>
                                                                       )}
-                                                                  </div>
-                                                              </div>
-                                                              <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                                                            </CardHeader>
-                                                          </Card>
-                                                      </Link>
-                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </Card>
+                                                     </Link>
                                                 ))}
                                             </div>
                                         </ScrollArea>
@@ -375,5 +370,3 @@ export default function FriendsPage() {
         </div>
     );
 };
-
-    
