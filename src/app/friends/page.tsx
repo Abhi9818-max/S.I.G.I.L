@@ -182,11 +182,11 @@ export default function FriendsPage() {
                                     {friends.length === 0 ? (
                                         <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
                                     ) : (
-                                        <ScrollArea className="w-full whitespace-nowrap">
+                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
                                             <div className="flex space-x-4 pb-4">
                                                 {friends.map((friend) => (
-                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid} className="flex-shrink-0">
-                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1 w-[180px] h-[240px]">
+                                                     <Link href={`/friends/${friend.uid}`} key={friend.uid} className="flex-shrink-0 card-3d">
+                                                        <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-[180px] h-[240px] card-3d-content">
                                                             <div className="relative w-full h-full">
                                                                 <Image 
                                                                     src={getAvatarForId(friend.uid, friend.photoURL)} 
@@ -209,7 +209,6 @@ export default function FriendsPage() {
                                                      </Link>
                                                 ))}
                                             </div>
-                                            <ScrollBar orientation="horizontal" />
                                         </ScrollArea>
                                     )}
                                 </AccordionContent>

@@ -232,12 +232,12 @@
   }
   
   /* Hide horizontal scrollbar but allow scrolling */
-  .friends-scroller-container [data-radix-scroll-area-viewport] > div {
+  .friends-scroller-container [data-radix-scroll-area-viewport] {
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For IE and Edge */
   }
 
-  .friends-scroller-container [data-radix-scroll-area-viewport] > div::-webkit-scrollbar {
+  .friends-scroller-container [data-radix-scroll-area-viewport]::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
   }
 }
