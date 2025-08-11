@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -12,6 +12,7 @@ import {
   calculateUserLevelInfo,
   calculateXpForRecord, // Import the new XP calculation function
   STREAK_MILESTONES_FOR_CRYSTALS,
+  calculateMasteryLevelInfo,
 } from '@/lib/config';
 import { CONSTELLATIONS } from '@/lib/constellations';
 import { ACHIEVEMENTS } from '@/lib/achievements';
@@ -92,6 +93,8 @@ interface UserRecordsContextType {
   awardBonusPoints: (bonusAmount: number, isMasterBonus?: boolean) => void;
   deductBonusPoints: (penalty: number) => void;
   updateUserDataInDb: (dataToUpdate: Partial<UserData>) => Promise<void>;
+  userData: UserData | null;
+  isUserDataLoaded: boolean;
   // Constellations
   getAvailableSkillPoints: (taskId: string) => number;
   unlockSkill: (skillId: string, taskId: string, cost: number) => boolean;
@@ -115,6 +118,7 @@ interface UserRecordsContextType {
   deleteHighGoal: (goalId: string) => void;
   getHighGoalProgress: (goal: HighGoal) => number;
   masterBonusAwarded: boolean;
+  getTaskMasteryInfo: (taskId: string) => TaskMasteryInfo | null;
 }
 
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
@@ -163,23 +167,24 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const awardedStreakMilestones = useMemo(() => userData?.awardedStreakMilestones || {}, [userData]);
   const highGoals = useMemo(() => userData?.highGoals || [], [userData]);
   const masterBonusAwarded = useMemo(() => userData?.masterBonusAwarded || false, [userData]);
+  const taskMastery = useMemo(() => userData?.taskMastery || {}, [userData]);
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
+      const getNewState = (prevData: UserData | null) => {
+        const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
+        return newState as UserData;
+      }
+      setUserData(getNewState);
+
     if (isGuest) {
       const guestDataString = localStorage.getItem('guest-userData');
       const guestData = guestDataString ? JSON.parse(guestDataString) : {};
       const updatedGuestData = { ...guestData, ...dataToUpdate };
       localStorage.setItem('guest-userData', JSON.stringify(updatedGuestData));
-      setUserData(updatedGuestData);
       return;
     }
     
     if (user) {
-        setUserData(prevData => {
-            const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
-            return newState as UserData;
-        });
-
       const userDocRef = doc(db, 'users', user.uid);
       try {
         const sanitizedData = removeUndefinedValues(dataToUpdate);
@@ -243,6 +248,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return streak;
   }, [records, getTaskDefinitionById, isUserDataLoaded]);
 
+  const getTaskMasteryInfo = useCallback((taskId: string): TaskMasteryInfo | null => {
+    const masteryData = taskMastery[taskId];
+    if (!masteryData) return calculateMasteryLevelInfo(0);
+
+    return calculateMasteryLevelInfo(masteryData.xp);
+  }, [taskMastery]);
+
   const addRecord = useCallback((entry: Omit<RecordEntry, 'id'>) => {
     const newRecord: RecordEntry = {
       ...entry,
@@ -251,8 +263,25 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
 
     const updatedRecords = [...records, newRecord].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    updateUserDataInDb({ records: updatedRecords });
-  }, [records, updateUserDataInDb]);
+    
+    // Update task mastery
+    const dataToUpdate: Partial<UserData> = { records: updatedRecords };
+    if (newRecord.taskType) {
+        const task = getTaskDefinitionById(newRecord.taskType);
+        const masteryInfo = getTaskMasteryInfo(newRecord.taskType);
+        const recordXp = calculateXpForRecord(newRecord.value, task, 1, masteryInfo?.xpBonus);
+        
+        const currentMastery = taskMastery[newRecord.taskType] || { level: 1, xp: 0 };
+        const newMasteryXp = (currentMastery.xp || 0) + recordXp;
+        const updatedTaskMastery = {
+            ...taskMastery,
+            [newRecord.taskType]: { ...currentMastery, xp: newMasteryXp }
+        };
+        dataToUpdate.taskMastery = updatedTaskMastery;
+    }
+    
+    updateUserDataInDb(dataToUpdate);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getTaskMasteryInfo]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       const updatedRecords = records.map(r => r.id === entry.id ? { ...entry, value: Number(entry.value) } : r);
@@ -338,7 +367,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           const d = parseISO(dateStr);
           return isWithinInterval(d, { start: weekStart, end: weekEnd })
         }).length;
-  
+        
         if(isWithinInterval(weekStart, {start: startDate, end: today}) || isWithinInterval(weekEnd, {start: startDate, end: today})) {
             totalWeeks++;
             if (recordsThisWeek >= freqCount) {
@@ -484,23 +513,29 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
 }, [records, getAggregateSum]);
 
-  const calculateTotalXp = useCallback((levelInfo: UserLevelInfo | null): number => {
+  const calculateTotalXp = useCallback((): number => {
+    const levelInfo = getUserLevelInfo(); // Get the current level info
     if (!levelInfo) return 0;
+
     return records.reduce((sum, record) => {
         const task = getTaskDefinitionById(record.taskType || '');
-        const recordXp = calculateXpForRecord(record.value, task, levelInfo.currentLevel);
+        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
+        const recordXp = calculateXpForRecord(record.value, task, levelInfo.currentLevel, masteryInfo?.xpBonus);
         return sum + recordXp;
     }, 0);
-  }, [records, getTaskDefinitionById]);
+  }, [records, getTaskDefinitionById, getTaskMasteryInfo, getUserLevelInfo]);
 
   const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
     if (!isUserDataLoaded) return null;
-    // Temporarily calculate level based on a placeholder to avoid circular dependency
-    const tempLevelInfo = calculateUserLevelInfo(0);
-    const sumOfRecordXp = calculateTotalXp(tempLevelInfo);
+    const sumOfRecordXp = records.reduce((sum, record) => {
+        const task = getTaskDefinitionById(record.taskType || '');
+        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
+        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); // Use level 1 for base XP sum
+        return sum + recordXp;
+    }, 0);
     const totalExperience = sumOfRecordXp + totalBonusPoints;
     return calculateUserLevelInfo(totalExperience);
-  }, [calculateTotalXp, totalBonusPoints, isUserDataLoaded]);
+  }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, getTaskMasteryInfo]);
 
   const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
@@ -543,13 +578,14 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       .filter(r => r.taskType === taskId)
       .reduce((sum, r) => {
           const task = getTaskDefinitionById(r.taskType || '');
-          const recordXp = calculateXpForRecord(r.value, task, levelInfo.currentLevel);
+          const masteryInfo = getTaskMasteryInfo(taskId);
+          const recordXp = calculateXpForRecord(r.value, task, levelInfo.currentLevel, masteryInfo?.xpBonus);
           return sum + recordXp;
       }, 0);
 
     const spentPoints = spentSkillPoints[taskId] || 0;
     return totalPoints - spentPoints;
-  }, [records, spentSkillPoints, getTaskDefinitionById, getUserLevelInfo]);
+  }, [records, spentSkillPoints, getTaskDefinitionById, getUserLevelInfo, getTaskMasteryInfo]);
 
   const isSkillUnlocked = useCallback((skillId: string): boolean => {
     return unlockedSkills.includes(skillId);
@@ -793,6 +829,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     awardBonusPoints,
     deductBonusPoints,
     updateUserDataInDb,
+    userData,
+    isUserDataLoaded,
     getAvailableSkillPoints,
     unlockSkill,
     isSkillUnlocked,
@@ -811,6 +849,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     deleteHighGoal,
     getHighGoalProgress,
     masterBonusAwarded,
+    getTaskMasteryInfo,
   }), [
       records,
       addRecord,
@@ -837,6 +876,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       awardBonusPoints,
       deductBonusPoints,
       updateUserDataInDb,
+      userData,
+      isUserDataLoaded,
       getAvailableSkillPoints,
       unlockSkill,
       isSkillUnlocked,
@@ -855,6 +896,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       deleteHighGoal,
       getHighGoalProgress,
       masterBonusAwarded,
+      getTaskMasteryInfo,
   ]);
 
 

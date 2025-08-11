@@ -24,7 +24,16 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
   const { toast } = useToast();
   
-  const todoItems = userData?.todoItems || [];
+  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+
+  useEffect(() => {
+    if (isUserDataLoaded && userData?.todoItems) {
+      setTodoItems(userData.todoItems);
+    } else if (isUserDataLoaded) {
+      setTodoItems([]);
+    }
+  }, [isUserDataLoaded, userData?.todoItems]);
+
 
   // Load initial data and handle penalties on mount
   useEffect(() => {
@@ -75,33 +84,42 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;
     
-    const newItem: TodoItem = {
-      id: uuidv4(),
-      text,
-      completed: false,
-      createdAt: new Date().toISOString(),
-      ...(dueDate && { dueDate }),
-      ...(dueDate && penalty && penalty > 0 && { penalty }),
-      penaltyApplied: false,
-    };
+    setTodoItems(prevItems => {
+        const newItem: TodoItem = {
+          id: uuidv4(),
+          text,
+          completed: false,
+          createdAt: new Date().toISOString(),
+          ...(dueDate && { dueDate }),
+          ...(dueDate && penalty && penalty > 0 && { penalty }),
+          penaltyApplied: false,
+        };
 
-    const newItems = [newItem, ...todoItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    updateUserDataInDb({ todoItems: newItems });
+        const newItems = [newItem, ...prevItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        updateUserDataInDb({ todoItems: newItems });
+        return newItems;
+    });
   };
 
   const toggleTodoItem = (id: string) => {
-    const newItems = todoItems.map(item => {
-      if (item.id === id) {
-        return { ...item, completed: !item.completed };
-      }
-      return item;
+    setTodoItems(prevItems => {
+        const newItems = prevItems.map(item => {
+          if (item.id === id) {
+            return { ...item, completed: !item.completed };
+          }
+          return item;
+        });
+        updateUserDataInDb({ todoItems: newItems });
+        return newItems;
     });
-    updateUserDataInDb({ todoItems: newItems });
   };
 
   const deleteTodoItem = (id: string) => {
-    const newItems = todoItems.filter(i => i.id !== id);
-    updateUserDataInDb({ todoItems: newItems });
+    setTodoItems(prevItems => {
+        const newItems = prevItems.filter(i => i.id !== id);
+        updateUserDataInDb({ todoItems: newItems });
+        return newItems;
+    });
   };
 
   const getTodoItemById = useCallback((id: string): TodoItem | undefined => {
