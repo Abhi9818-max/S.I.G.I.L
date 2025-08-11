@@ -352,11 +352,11 @@ export default function SettingsPage() {
     <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-      <main className="flex-grow container mx-auto p-4 md:px-8 md:pt-2 animate-fade-in-up">
+      <main className="flex-grow container mx-auto px-4 pb-4 md:px-8 md:pt-2 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-            <div className="md:p-0 pt-2 space-y-4">
+            <div className="md:p-0 pt-0 space-y-4">
                {/* New Header */}
-               <div className="flex justify-between items-center py-1 md:hidden">
+               <div className="flex justify-between items-center py-2 md:hidden">
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                          <div className="flex items-center gap-1 cursor-pointer">
