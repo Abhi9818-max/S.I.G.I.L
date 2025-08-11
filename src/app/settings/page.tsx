@@ -596,15 +596,16 @@ export default function SettingsPage() {
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-grow">
                             {userData?.bio || "No bio yet."}
                         </p>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsBioDialogOpen(true)}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
+                         <div className="flex items-center">
+                            <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => setIsBioDialogOpen(true)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleShareProfile}>
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                         <Button onClick={handleShareProfile} variant="outline" size="sm" className="flex-1">
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share Profile
-                        </Button>
                          <Button asChild variant="outline" size="sm" className="flex-1">
                             <Link href="/friends">
                                 <UserPlus className="mr-2 h-4 w-4" />
