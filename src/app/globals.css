@@ -230,4 +230,14 @@
   .whitespace-pre-wrap {
     white-space: pre-wrap;
   }
+  
+  /* Hide horizontal scrollbar but allow scrolling */
+  .friends-scroller-container [data-radix-scroll-area-viewport] > div {
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For IE and Edge */
+  }
+
+  .friends-scroller-container [data-radix-scroll-area-viewport] > div::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+  }
 }
