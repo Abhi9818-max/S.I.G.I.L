@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -201,6 +201,25 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return taskDefinitions.find(task => task.id === taskId);
   }, [taskDefinitions]);
     
+  const getTaskMasteryInfo = useCallback((taskId: string): TaskMasteryInfo | null => {
+    const masteryData = taskMastery[taskId];
+    if (!masteryData) return calculateMasteryLevelInfo(0);
+
+    return calculateMasteryLevelInfo(masteryData.xp);
+  }, [taskMastery]);
+
+  const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
+    if (!isUserDataLoaded) return null;
+    const sumOfRecordXp = records.reduce((sum, record) => {
+        const task = getTaskDefinitionById(record.taskType || '');
+        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
+        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); // Use level 1 for base XP sum
+        return sum + recordXp;
+    }, 0);
+    const totalExperience = sumOfRecordXp + totalBonusPoints;
+    return calculateUserLevelInfo(totalExperience);
+  }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, getTaskMasteryInfo]);
+
   const getCurrentStreak = useCallback((taskId: string | null = null): number => {
     if (!isUserDataLoaded) return 0;
   
@@ -247,13 +266,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   
     return streak;
   }, [records, getTaskDefinitionById, isUserDataLoaded]);
-
-  const getTaskMasteryInfo = useCallback((taskId: string): TaskMasteryInfo | null => {
-    const masteryData = taskMastery[taskId];
-    if (!masteryData) return calculateMasteryLevelInfo(0);
-
-    return calculateMasteryLevelInfo(masteryData.xp);
-  }, [taskMastery]);
 
   const addRecord = useCallback((entry: Omit<RecordEntry, 'id'>) => {
     const newRecord: RecordEntry = {
@@ -524,18 +536,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return sum + recordXp;
     }, 0);
   }, [records, getTaskDefinitionById, getTaskMasteryInfo, getUserLevelInfo]);
-
-  const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
-    if (!isUserDataLoaded) return null;
-    const sumOfRecordXp = records.reduce((sum, record) => {
-        const task = getTaskDefinitionById(record.taskType || '');
-        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
-        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); // Use level 1 for base XP sum
-        return sum + recordXp;
-    }, 0);
-    const totalExperience = sumOfRecordXp + totalBonusPoints;
-    return calculateUserLevelInfo(totalExperience);
-  }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, getTaskMasteryInfo]);
 
   const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
