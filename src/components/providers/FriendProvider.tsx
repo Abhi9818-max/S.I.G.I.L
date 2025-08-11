@@ -55,6 +55,7 @@ interface FriendContextType {
     declineAllianceInvitation: (invitationId: string) => Promise<void>;
     getPendingAllianceInvitesFor: (allianceId: string) => Promise<AllianceInvitation[]>;
     incomingAllianceInvitations: AllianceInvitation[];
+    setAllianceDare: (allianceId: string, dare: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -559,6 +560,11 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation));
     }, []);
 
+    const setAllianceDare = useCallback(async (allianceId: string, dare: string) => {
+        const allianceRef = doc(db, 'alliances', allianceId);
+        await updateDoc(allianceRef, { dare });
+    }, []);
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -591,6 +597,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             declineAllianceInvitation,
             getPendingAllianceInvitesFor,
             incomingAllianceInvitations,
+            setAllianceDare,
         }}>
             {children}
         </FriendContext.Provider>

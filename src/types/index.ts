@@ -290,6 +290,7 @@ export interface Alliance {
   createdAt: string; // ISO
   members: AllianceMember[];
   memberIds: string[];
+  dare?: string; // Optional dare for failed alliances
 }
 
 export interface AllianceInvitation {

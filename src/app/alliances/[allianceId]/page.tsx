@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import type { Alliance, UserData, TaskDefinition, Friend } from '@/types';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, isPast } from 'date-fns';
 import { toPng } from 'html-to-image';
 import {
   AlertDialog,
@@ -33,6 +33,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import AllianceCard from '@/components/alliances/AllianceCard';
+import { generateAllianceDare } from '@/lib/server/alliance-dare';
 
 
 // Simple hash function to get a number from a string
@@ -139,7 +140,7 @@ export default function AllianceDetailPage() {
     const allianceId = params.allianceId as string;
     
     const { user } = useAuth();
-    const { friends, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor } = useFriends();
+    const { friends, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
     const [alliance, setAlliance] = useState<Alliance | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -153,6 +154,16 @@ export default function AllianceDetailPage() {
                 const data = await getAllianceWithMembers(allianceId);
                 if (data) {
                     setAlliance(data);
+
+                    // Check for dare logic
+                    const isEnded = isPast(parseISO(data.endDate));
+                    const isFailed = data.progress < data.target;
+                    if (isEnded && isFailed && !data.dare) {
+                        const newDare = await generateAllianceDare(data.name);
+                        await setAllianceDare(data.id, newDare);
+                        setAlliance(prev => prev ? {...prev, dare: newDare} : null);
+                    }
+
                 } else {
                     toast({ title: 'Error', description: 'Alliance not found.', variant: 'destructive' });
                     router.push('/alliances');
@@ -165,7 +176,7 @@ export default function AllianceDetailPage() {
                 setIsLoading(false);
             }
         }
-    }, [allianceId, getAllianceWithMembers, router, toast]);
+    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare]);
     
     useEffect(() => {
         fetchAllianceData();
@@ -247,7 +258,7 @@ export default function AllianceDetailPage() {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
     }
 
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare } = alliance;
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((progress / target) * 100, 100);
@@ -322,6 +333,16 @@ export default function AllianceDetailPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {dare && (
+                                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50 text-center">
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <ShieldAlert className="h-5 w-5 text-destructive" />
+                                        <h3 className="font-semibold text-lg text-destructive">Dare for Failure</h3>
+                                    </div>
+                                    <p className="text-destructive/90">{dare}</p>
+                                </div>
+                            )}
+
                             <div className="p-4 rounded-lg bg-muted/50">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Target className="h-5 w-5" style={{ color: taskColor }} />
