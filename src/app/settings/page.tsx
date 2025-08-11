@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -320,7 +320,7 @@ export default function SettingsPage() {
   const handleAwardBonusXp = () => {
     const bonus = 10000;
     if (masterBonusAwarded) {
-        toast({ title: "Bonus Already Awarded", description: "The master bonus can only be claimed once.", variant: "destructive" });
+        toast({ title: "Bonus Already Awarded", description: "The master bonus can only be claimed once.", variant = "destructive" });
         return;
     }
     awardBonusPoints(bonus, true); // Pass true for isMasterBonus
@@ -352,7 +352,7 @@ export default function SettingsPage() {
         <div className="w-full max-w-4xl mx-auto">
             <div className="md:p-0 pt-2 space-y-4">
                {/* New Header */}
-               <div className="flex justify-between items-center py-2">
+               <div className="flex justify-between items-center py-2 md:hidden">
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                          <div className="flex items-center gap-1 cursor-pointer">
@@ -433,10 +433,6 @@ export default function SettingsPage() {
                 {/* Buttons */}
                 <div className="flex gap-2">
                     <Button variant="secondary" className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
-                    <Button variant="secondary" className="flex-1" onClick={handleShareProfile}>Share Profile</Button>
-                     <Button asChild variant="secondary" size="icon">
-                        <Link href="/friends"><UserPlus /></Link>
-                    </Button>
                 </div>
               
               <div className="border-b">
@@ -510,7 +506,7 @@ export default function SettingsPage() {
                     </AccordionContent>
                   </AccordionItem>
                    <AccordionItem value="chart-display" className="border rounded-lg p-4">
-                    <AccordionTrigger>Chart & Card Display</AccordionTrigger>
+                    <AccordionTrigger>Chart &amp; Card Display</AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
                       <div>
                           <Label className="font-normal">Progress Chart Time Range</Label>
@@ -577,7 +573,7 @@ export default function SettingsPage() {
               {activeTab === 'data' && (
                 <div className="space-y-8 animate-fade-in-up py-4">
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Data Backup & Restore</h3>
+                        <h3 className="text-lg font-medium text-primary">Data Backup &amp; Restore</h3>
                         <div className="p-4 border rounded-lg space-y-4">
                             <p className="text-sm text-muted-foreground">Export all your data to a JSON file for backup, or import a previous backup.</p>
                             <div className="flex flex-col sm:flex-row gap-4">
@@ -704,3 +700,5 @@ export default function SettingsPage() {
     
 
       
+
+    
