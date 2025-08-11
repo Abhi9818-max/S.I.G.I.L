@@ -58,6 +58,7 @@ export default function FriendsPage() {
         incomingAllianceInvitations,
         acceptAllianceInvitation,
         declineAllianceInvitation,
+        unfriend
     } = useFriends();
 
     const [usernameQuery, setUsernameQuery] = useState('');
@@ -209,6 +210,7 @@ export default function FriendsPage() {
                                                      </Link>
                                                 ))}
                                             </div>
+                                            <ScrollBar orientation="horizontal" className="invisible"/>
                                         </ScrollArea>
                                     )}
                                 </AccordionContent>
