@@ -2,7 +2,7 @@
 "use client";
 
 import type { TodoItem } from '@/types';
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -19,28 +19,38 @@ interface TodoContextType {
   getTodoItemById: (id: string) => TodoItem | undefined;
 }
 
-const TodoContext = createContext<TodoContextType | undefined>(undefined);
+const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
 
-export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY = 'sigil-shown-pact-notifications';
+
+export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   
-  const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
+  const todoItems = React.useMemo(() => {
+    if (!isUserDataLoaded || !userData?.todoItems) return [];
+    
+    // Filter to only show pacts from today or yesterday
+    const now = new Date();
+    const today = startOfDay(now);
+    const yesterday = startOfDay(new Date(now.setDate(now.getDate() - 1)));
 
-  useEffect(() => {
-    if (isUserDataLoaded && userData?.todoItems) {
-      setTodoItems(userData.todoItems);
-    } else if (isUserDataLoaded) {
-      setTodoItems([]);
-    }
+    return userData.todoItems.filter(item => {
+        try {
+            const itemDate = startOfDay(new Date(item.createdAt));
+            return isSameDay(itemDate, today) || isSameDay(itemDate, yesterday);
+        } catch (e) {
+            return false;
+        }
+    });
   }, [isUserDataLoaded, userData?.todoItems]);
 
 
-  // Load initial data and handle penalties on mount
-  useEffect(() => {
-    if (isUserDataLoaded && userData) {
-        const allStoredItems = userData.todoItems || [];
+  // Effect for handling pact penalties
+  React.useEffect(() => {
+    if (isUserDataLoaded && userData?.todoItems) {
+        const allStoredItems = userData.todoItems;
         let itemsChanged = false;
         let processedItems = [...allStoredItems];
         let totalPenalty = 0;
@@ -48,7 +58,7 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const checkAndApplyPenalties = async () => {
             const overdueDates = new Set<string>();
             processedItems.forEach(item => {
-                if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
+                if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate))) && !isToday(parseISO(item.dueDate))) {
                     overdueDates.add(item.dueDate);
                 }
             });
@@ -88,13 +98,13 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (itemsChanged) {
                 if (totalPenalty > 0) {
                     deductBonusPoints(totalPenalty);
-                    toast({
-                        title: "Pacts Judged",
-                        description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
-                        variant: "destructive",
-                        duration: 7000,
-                    });
                 }
+                toast({
+                    title: "Pacts Judged",
+                    description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
+                    variant: "destructive",
+                    duration: 7000,
+                });
                 updateUserDataInDb({ todoItems: processedItems });
             }
         };
@@ -103,64 +113,89 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isUserDataLoaded, dashboardSettings.dareCategory]);
 
-  const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
+  // Effect for handling notifications
+  React.useEffect(() => {
+    if (!isUserDataLoaded || !userData?.todoItems || typeof window === 'undefined' || !('Notification' in window)) {
+      return;
+    }
+    
+    const checkAndShowNotifications = () => {
+      if (Notification.permission !== 'granted') {
+        return;
+      }
+      
+      const shownNotifications: string[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY) || '[]');
+      
+      const todayPactsWithDueDate = userData.todoItems.filter(item => 
+        !item.completed && item.dueDate && isToday(parseISO(item.dueDate)) && !shownNotifications.includes(item.id)
+      );
+
+      if (todayPactsWithDueDate.length > 0) {
+        const firstPact = todayPactsWithDueDate[0];
+        const title = `Pact Due Today: ${firstPact.text}`;
+        const body = todayPactsWithDueDate.length > 1 
+          ? `You have ${todayPactsWithDueDate.length} pacts due today. Don't forget!`
+          : `Your pact "${firstPact.text}" is due today.`;
+        
+        new Notification(title, { body });
+
+        const newShownNotifications = [...shownNotifications, ...todayPactsWithDueDate.map(p => p.id)];
+        localStorage.setItem(LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY, JSON.stringify(newShownNotifications));
+      }
+    };
+    
+    checkAndShowNotifications();
+
+  }, [isUserDataLoaded, userData?.todoItems]);
+
+
+  const addTodoItem = async (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;
     
-    setTodoItems(prevItems => {
-        const newItem: TodoItem = {
-          id: uuidv4(),
-          text,
-          completed: false,
-          createdAt: new Date().toISOString(),
-          ...(dueDate && { dueDate }),
-          ...(dueDate && penalty && penalty > 0 && { penalty }),
-          penaltyApplied: false,
-        };
-
-        const newItems = [newItem, ...prevItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        updateUserDataInDb({ todoItems: newItems });
-        return newItems;
-    });
+    if (dueDate && typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    }
+    
+    const allItems = userData?.todoItems || [];
+    const newItem: TodoItem = {
+      id: uuidv4(),
+      text,
+      completed: false,
+      createdAt: new Date().toISOString(),
+      ...(dueDate && { dueDate }),
+      ...(dueDate && penalty && penalty > 0 && { penalty }),
+      penaltyApplied: false,
+    };
+    const newItems = [newItem, ...allItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    updateUserDataInDb({ todoItems: newItems });
   };
 
   const toggleTodoItem = (id: string) => {
-    setTodoItems(prevItems => {
-        const newItems = prevItems.map(item => {
-          if (item.id === id) {
-            return { ...item, completed: !item.completed };
-          }
-          return item;
-        });
-        updateUserDataInDb({ todoItems: newItems });
-        return newItems;
+    const allItems = userData?.todoItems || [];
+    const newItems = allItems.map(item => {
+      if (item.id === id) {
+        return { ...item, completed: !item.completed };
+      }
+      return item;
     });
+    updateUserDataInDb({ todoItems: newItems });
   };
 
   const deleteTodoItem = (id: string) => {
-    setTodoItems(prevItems => {
-        const newItems = prevItems.filter(i => i.id !== id);
-        updateUserDataInDb({ todoItems: newItems });
-        return newItems;
-    });
+    const allItems = userData?.todoItems || [];
+    const newItems = allItems.filter(i => i.id !== id);
+    updateUserDataInDb({ todoItems: newItems });
   };
 
-  const getTodoItemById = useCallback((id: string): TodoItem | undefined => {
-    return todoItems.find(item => item.id === id);
-  }, [todoItems]);
-
-  const displayedPacts = todoItems.filter(item => {
-      try {
-        const itemDate = new Date(item.createdAt);
-        return isToday(itemDate) || isYesterday(itemDate);
-      } catch (e) {
-        return false;
-      }
-  });
-
+  const getTodoItemById = React.useCallback((id: string): TodoItem | undefined => {
+    return userData?.todoItems?.find(item => item.id === id);
+  }, [userData?.todoItems]);
 
   return (
     <TodoContext.Provider value={{ 
-      todoItems: displayedPacts,
+      todoItems,
       addTodoItem, 
       toggleTodoItem, 
       deleteTodoItem,
@@ -172,7 +207,7 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 export const useTodos = (): TodoContextType => {
-  const context = useContext(TodoContext);
+  const context = React.useContext(TodoContext);
   if (context === undefined) {
     throw new Error('useTodos must be used within a TodoProvider');
   }
