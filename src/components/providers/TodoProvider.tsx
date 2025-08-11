@@ -2,11 +2,11 @@
 "use client";
 
 import type { TodoItem } from '@/types';
-import React, from 'react';
+import React, { useMemo } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
-import { isPast, startOfDay, format, parseISO, isToday, isSameDay } from 'date-fns';
+import { isPast, startOfDay, format, parseISO, isToday, isSameDay, isYesterday } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDare } from '@/lib/server/dare';
@@ -24,7 +24,7 @@ const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
 const LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY = 'sigil-shown-pact-notifications';
 
 export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { updateUserDataInDb, deductBonusPoints, userData, isUserDataLoaded } = useUserRecords();
+  const { updateUserDataInDb, userData, isUserDataLoaded } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   
@@ -38,55 +38,49 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Effect for handling pact penalties
   React.useEffect(() => {
     if (isUserDataLoaded && userData?.todoItems) {
-        const allStoredItems = userData.todoItems;
         let itemsChanged = false;
-        let processedItems = [...allStoredItems];
+        let processedItems = [...userData.todoItems];
         
         const checkAndApplyPenalties = async () => {
-            const overdueDates = new Set<string>();
-            processedItems.forEach(item => {
-                if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate))) && !isToday(parseISO(item.dueDate))) {
-                    overdueDates.add(item.dueDate);
-                }
-            });
+            const yesterdayStr = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
+            
+            const incompleteYesterday = processedItems.filter(item =>
+                !item.completed &&
+                !item.penaltyApplied &&
+                isSameDay(parseISO(item.createdAt), parseISO(yesterdayStr))
+            );
 
-            for (const date of overdueDates) {
-                const itemsForDate = processedItems.filter(item => item.dueDate === date && !item.completed && !item.penaltyApplied);
-                if (itemsForDate.length === 0) continue;
-
+            if (incompleteYesterday.length > 0) {
                 itemsChanged = true;
-                
-                const firstFailedPact = itemsForDate[0];
+                const firstFailedPact = incompleteYesterday[0];
                 let dare: string | undefined;
-                let penaltyApplied = false;
 
                 try {
                     dare = await generateDare(firstFailedPact.text, dashboardSettings.dareCategory);
-                    penaltyApplied = true;
                 } catch (e) {
                     console.error("Failed to generate dare:", e);
+                }
+
+                if (dare) {
+                    toast({
+                        title: "Pact Judged",
+                        description: `A pact from yesterday was incomplete. A new dare has been assigned.`,
+                        variant: "destructive",
+                        duration: 7000,
+                    });
                 }
                 
                 let dareAssigned = false;
                 processedItems = processedItems.map(item => {
-                    if (item.dueDate === date && !item.completed && !item.penaltyApplied) {
+                    if (incompleteYesterday.some(p => p.id === item.id)) {
                         if (dare && !dareAssigned) {
                             dareAssigned = true;
-                            return { ...item, penaltyApplied: true, dare };
+                            return { ...item, penaltyApplied: true, dare: dare };
                         }
                         return { ...item, penaltyApplied: true };
                     }
                     return item;
                 });
-                
-                 if (penaltyApplied) {
-                    toast({
-                        title: "Pact Judged",
-                        description: `A pact from a previous day was incomplete. A new dare has been assigned.`,
-                        variant: "destructive",
-                        duration: 7000,
-                    });
-                }
             }
 
             if (itemsChanged) {
@@ -177,14 +171,16 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return userData?.todoItems?.find(item => item.id === id);
   }, [userData?.todoItems]);
 
-  return (
-    <TodoContext.Provider value={{ 
+  const value = useMemo(() => ({
       todoItems,
-      addTodoItem, 
-      toggleTodoItem, 
+      addTodoItem,
+      toggleTodoItem,
       deleteTodoItem,
-      getTodoItemById 
-    }}>
+      getTodoItemById,
+  }), [todoItems, getTodoItemById]);
+
+  return (
+    <TodoContext.Provider value={value}>
       {children}
     </TodoContext.Provider>
   );

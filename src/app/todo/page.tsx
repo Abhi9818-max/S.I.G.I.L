@@ -28,6 +28,13 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
     }
   };
   
+  const handleAddItemKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && newItemText.trim()) {
+      e.preventDefault(); // Prevent form submission if any
+      onAddItem();
+    }
+  };
+
   useEffect(() => {
     // If advanced options are hidden, clear the values
     if (!showAdvanced) {
@@ -44,11 +51,7 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="What needs to be done?"
           className="flex-grow"
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && newItemText.trim()) {
-              onAddItem();
-            }
-          }}
+          onKeyPress={handleAddItemKeyPress}
         />
         <Button 
             onClick={onAddItem} 
@@ -105,7 +108,7 @@ export default function TodoPage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [view, setView] = useState<'today' | 'yesterday'>('today');
 
-  const { todoItems, addTodoItem, toggleTodoItem, deleteTodoItem } = useTodos();
+  const { todoItems, addTodoItem } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
 
   const todaysPacts = todoItems.filter(item => {
@@ -188,8 +191,6 @@ export default function TodoPage() {
                     <ScrollArea className="h-[400px] pr-3">
                         <PactList 
                           items={displayedPacts}
-                          toggleTodoItem={toggleTodoItem}
-                          deleteTodoItem={deleteTodoItem}
                           isEditable={view === 'today'}
                         />
                          {displayedPacts.length === 0 && view === 'today' && (

@@ -10,26 +10,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTodos } from '@/components/providers/TodoProvider';
 import { ListChecks, Trash2, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, startOfDay } from 'date-fns';
+import { format, isPast, startOfDay, isToday, parseISO } from 'date-fns';
 
 const TodoListCard = () => {
   const { todoItems, toggleTodoItem, deleteTodoItem } = useTodos();
 
-  const incompleteItems = todoItems.filter(item => !item.completed).slice(0, 5);
+  const incompleteItems = todoItems
+    .filter(item => !item.completed && isToday(parseISO(item.createdAt)))
+    .slice(0, 5);
 
   return (
     <Card className="shadow-lg h-full flex flex-col">
       <CardHeader>
         <div className="flex items-center gap-2">
           <ListChecks className="h-6 w-6 text-accent" />
-          <CardTitle>Pacts</CardTitle>
+          <CardTitle>Today's Pacts</CardTitle>
         </div>
-        <CardDescription>Your most important tasks at a glance.</CardDescription>
+        <CardDescription>Your most important tasks for today.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         {incompleteItems.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-center text-muted-foreground py-4">All pacts honored! ✨</p>
+            <p className="text-center text-muted-foreground py-4">All pacts for today are honored! ✨</p>
           </div>
         ) : (
           <ScrollArea className="h-[240px] pr-3">

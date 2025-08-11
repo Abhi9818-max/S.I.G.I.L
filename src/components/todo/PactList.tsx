@@ -6,26 +6,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { ListChecks, Trash2, CalendarDays, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, startOfDay } from 'date-fns';
+import { format, isPast, startOfDay, isToday, parseISO } from 'date-fns';
 import type { TodoItem } from '@/types';
+import { useTodos } from '@/components/providers/TodoProvider';
 
 interface PactListProps {
   items: TodoItem[];
-  toggleTodoItem?: (id: string) => void;
-  deleteTodoItem?: (id: string) => void;
   isEditable: boolean;
   title?: string;
 }
 
-const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoItem, isEditable, title }) => {
+const PactList: React.FC<PactListProps> = ({ items, isEditable, title }) => {
+  const { toggleTodoItem, deleteTodoItem } = useTodos();
   const [completedPact, setCompletedPact] = useState<string | null>(null);
 
   const handleToggle = (id: string) => {
-    if (toggleTodoItem) {
-        toggleTodoItem(id);
-        setCompletedPact(id);
-        setTimeout(() => setCompletedPact(null), 800); // Duration of the animation
-    }
+    toggleTodoItem(id);
+    setCompletedPact(id);
+    setTimeout(() => setCompletedPact(null), 800); // Duration of the animation
   }
 
   if (items.length === 0) {
@@ -40,7 +38,7 @@ const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoIt
     <ul className="space-y-3">
       {title && <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>}
       {items.map((item) => {
-        const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate)));
+        const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate))) && !isToday(parseISO(item.dueDate));
         return (
           <li
             key={item.id}
@@ -77,14 +75,10 @@ const PactList: React.FC<PactListProps> = ({ items, toggleTodoItem, deleteTodoIt
                     {isOverdue && <span className="ml-1 font-semibold">(Overdue)</span>}
                   </div>
                 )}
-                {item.penalty && item.penalty > 0 && (
-                  <div className={cn(
-                    "text-xs flex items-center",
-                    isOverdue ? "text-destructive" : "text-muted-foreground"
-                  )}
-                  >
+                {item.dare && (
+                  <div className="text-xs flex items-center text-destructive">
                     <ShieldAlert className="h-3.5 w-3.5 mr-1" />
-                    Pact Penalty: {item.penalty} XP
+                    <span className="font-semibold">Dare:</span>&nbsp;{item.dare}
                   </div>
                 )}
               </div>
