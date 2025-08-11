@@ -121,12 +121,6 @@ export default function SettingsPage() {
   const profileCardRef = useRef<HTMLDivElement>(null);
   const [showLoading, setShowLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-
-  const tabTitles: { [key: string]: string } = {
-    profile: 'Profile Settings',
-    layout: 'Layout & Display',
-    data: 'Data Management',
-  };
   
   useEffect(() => {
     // This effect ensures the loading screen is only shown on the client
@@ -357,9 +351,9 @@ export default function SettingsPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
             <div className="p-6 md:p-0 pt-6 space-y-8">
-              <div className="flex justify-between items-center border-b pb-4">
+              <div className="flex justify-between items-center border-b pb-2">
                   <div className="flex items-center gap-3">
-                    <SettingsIcon className="h-6 w-6 text-primary" />
+                    <SettingsIcon className="h-5 w-5 text-primary" />
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
