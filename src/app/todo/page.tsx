@@ -199,6 +199,13 @@ export default function TodoPage() {
               <p className="text-center text-muted-foreground py-4">No pacts were created yesterday.</p>
             ) : (
                 <div className="space-y-6">
+                    {view === 'today' && displayedPacts.length === 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-4">Add a New Pact</h4>
+                        <AddPactForm {...addPactFormProps} />
+                        <Separator className="mt-6" />
+                      </div>
+                    )}
                     <ScrollArea className="h-[400px] pr-3">
                         <PactList 
                           items={displayedPacts}
@@ -210,12 +217,14 @@ export default function TodoPage() {
                             <p className="text-center text-muted-foreground py-4">No pacts for today yet.</p>
                         )}
                     </ScrollArea>
-                    <Separator />
-                    {view === 'today' && (
+                    {view === 'today' && displayedPacts.length > 0 && (
+                      <>
+                        <Separator />
                         <div>
                         <h4 className="text-sm font-medium text-muted-foreground mb-4">Add a New Pact</h4>
                         <AddPactForm {...addPactFormProps} />
                         </div>
+                      </>
                     )}
                 </div>
             )}
