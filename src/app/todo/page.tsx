@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import PactList from '@/components/todo/PactList';
 
-const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate, newPenalty, setNewPenalty }: any) => {
+const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate }: any) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -27,21 +27,13 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
       setNewDueDate(date);
     }
   };
-
-  useEffect(() => {
-    // If due date is removed, also remove the penalty
-    if (!newDueDate) {
-      setNewPenalty(undefined);
-    }
-  }, [newDueDate, setNewPenalty]);
   
   useEffect(() => {
     // If advanced options are hidden, clear the values
     if (!showAdvanced) {
       setNewDueDate(undefined);
-      setNewPenalty(undefined);
     }
-  }, [showAdvanced, setNewDueDate, setNewPenalty]);
+  }, [showAdvanced, setNewDueDate]);
 
   return (
     <div className="space-y-4">
@@ -70,7 +62,7 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
       {!showAdvanced ? (
         <Button variant="outline" size="sm" onClick={() => setShowAdvanced(true)} className="w-full sm:w-auto">
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Details (Due Date, Penalty)
+          Add Details (Due Date)
         </Button>
       ) : (
         <div className="flex flex-col sm:flex-row gap-2 animate-fade-in-up">
@@ -101,17 +93,6 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex-grow">
-            <Label htmlFor="penalty" className="sr-only">Penalty</Label>
-            <Input
-              id="penalty"
-              type="number"
-              value={newPenalty || ''}
-              onChange={(e) => setNewPenalty(e.target.value === '' ? undefined : Number(e.target.value))}
-              placeholder="Penalty XP (optional)"
-              disabled={!newDueDate}
-            />
-          </div>
         </div>
       )}
     </div>
@@ -121,7 +102,6 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
 export default function TodoPage() {
   const [newItemText, setNewItemText] = useState('');
   const [newDueDate, setNewDueDate] = useState<Date | undefined>();
-  const [newPenalty, setNewPenalty] = useState<number | undefined>();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [view, setView] = useState<'today' | 'yesterday'>('today');
 
@@ -151,12 +131,9 @@ export default function TodoPage() {
   const handleAddItem = () => {
     if (newItemText.trim()) {
       const dueDateString = newDueDate ? format(newDueDate, 'yyyy-MM-dd') : undefined;
-      // Ensure we don't pass `undefined` if penalty is not a valid number
-      const penaltyValue = (newPenalty && Number.isFinite(newPenalty)) ? newPenalty : undefined;
-      addTodoItem(newItemText, dueDateString, penaltyValue);
+      addTodoItem(newItemText, dueDateString);
       setNewItemText('');
       setNewDueDate(undefined);
-      setNewPenalty(undefined);
     }
   };
 
@@ -169,8 +146,6 @@ export default function TodoPage() {
     setNewItemText,
     newDueDate,
     setNewDueDate,
-    newPenalty,
-    setNewPenalty,
   };
   
   const displayedPacts = view === 'today' ? todaysPacts : yesterdaysPacts;

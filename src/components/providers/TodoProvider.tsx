@@ -6,14 +6,14 @@ import React, from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
-import { isPast, startOfDay, format, parseISO, isToday, isYesterday } from 'date-fns';
+import { isPast, startOfDay, format, parseISO, isToday, isSameDay } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDare } from '@/lib/server/dare';
 
 interface TodoContextType {
   todoItems: TodoItem[];
-  addTodoItem: (text: string, dueDate?: string, penalty?: number) => void;
+  addTodoItem: (text: string, dueDate?: string) => void;
   toggleTodoItem: (id: string) => void;
   deleteTodoItem: (id: string) => void;
   getTodoItemById: (id: string) => TodoItem | undefined;
@@ -31,19 +31,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const todoItems = React.useMemo(() => {
     if (!isUserDataLoaded || !userData?.todoItems) return [];
     
-    // Filter to only show pacts from today or yesterday
-    const now = new Date();
-    const today = startOfDay(now);
-    const yesterday = startOfDay(new Date(now.setDate(now.getDate() - 1)));
-
-    return userData.todoItems.filter(item => {
-        try {
-            const itemDate = startOfDay(new Date(item.createdAt));
-            return isSameDay(itemDate, today) || isSameDay(itemDate, yesterday);
-        } catch (e) {
-            return false;
-        }
-    });
+    return userData.todoItems;
   }, [isUserDataLoaded, userData?.todoItems]);
 
 
@@ -53,7 +41,6 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const allStoredItems = userData.todoItems;
         let itemsChanged = false;
         let processedItems = [...allStoredItems];
-        let totalPenalty = 0;
         
         const checkAndApplyPenalties = async () => {
             const overdueDates = new Set<string>();
@@ -68,23 +55,21 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (itemsForDate.length === 0) continue;
 
                 itemsChanged = true;
-                const firstItemWithPenalty = itemsForDate.find(item => item.penalty && item.penalty > 0);
+                
+                const firstFailedPact = itemsForDate[0];
                 let dare: string | undefined;
+                let penaltyApplied = false;
 
-                if (firstItemWithPenalty) {
-                    try {
-                        dare = await generateDare(firstItemWithPenalty.text, dashboardSettings.dareCategory);
-                    } catch (e) {
-                        console.error("Failed to generate dare:", e);
-                    }
+                try {
+                    dare = await generateDare(firstFailedPact.text, dashboardSettings.dareCategory);
+                    penaltyApplied = true;
+                } catch (e) {
+                    console.error("Failed to generate dare:", e);
                 }
                 
                 let dareAssigned = false;
                 processedItems = processedItems.map(item => {
                     if (item.dueDate === date && !item.completed && !item.penaltyApplied) {
-                        if (item.penalty && item.penalty > 0) {
-                            totalPenalty += item.penalty;
-                        }
                         if (dare && !dareAssigned) {
                             dareAssigned = true;
                             return { ...item, penaltyApplied: true, dare };
@@ -93,25 +78,25 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                     return item;
                 });
+                
+                 if (penaltyApplied) {
+                    toast({
+                        title: "Pact Judged",
+                        description: `A pact from a previous day was incomplete. A new dare has been assigned.`,
+                        variant: "destructive",
+                        duration: 7000,
+                    });
+                }
             }
 
             if (itemsChanged) {
-                if (totalPenalty > 0) {
-                    deductBonusPoints(totalPenalty);
-                }
-                toast({
-                    title: "Pacts Judged",
-                    description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
-                    variant: "destructive",
-                    duration: 7000,
-                });
                 updateUserDataInDb({ todoItems: processedItems });
             }
         };
 
         checkAndApplyPenalties();
     }
-  }, [isUserDataLoaded, dashboardSettings.dareCategory]);
+  }, [isUserDataLoaded, dashboardSettings.dareCategory, userData?.todoItems, updateUserDataInDb, toast]);
 
   // Effect for handling notifications
   React.useEffect(() => {
@@ -149,7 +134,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isUserDataLoaded, userData?.todoItems]);
 
 
-  const addTodoItem = async (text: string, dueDate?: string, penalty?: number) => {
+  const addTodoItem = async (text: string, dueDate?: string) => {
     if (text.trim() === '') return;
     
     if (dueDate && typeof window !== 'undefined' && 'Notification' in window) {
@@ -165,7 +150,6 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completed: false,
       createdAt: new Date().toISOString(),
       ...(dueDate && { dueDate }),
-      ...(dueDate && penalty && penalty > 0 && { penalty }),
       penaltyApplied: false,
     };
     const newItems = [newItem, ...allItems].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
