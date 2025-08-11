@@ -40,48 +40,68 @@ export const TodoProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Load initial data and handle penalties on mount
   useEffect(() => {
     if (isUserDataLoaded && userData) {
-      const allStoredItems = userData.todoItems || [];
-      let totalPenalty = 0;
-      let itemsChanged = false;
-
-      const checkAndApplyPenalties = async () => {
-        const promises = allStoredItems.map(async (item) => {
-          if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
-            let dare: string | undefined = undefined;
-            if (item.penalty && item.penalty > 0) {
-              totalPenalty += item.penalty;
-              try {
-                const taskName = item.text; // Assume pact text is descriptive enough
-                dare = await generateDare(taskName, dashboardSettings.dareCategory);
-              } catch (e) {
-                console.error("Failed to generate dare:", e);
-              }
-            }
-            itemsChanged = true;
-            return { ...item, penaltyApplied: true, dare };
-          }
-          return item;
-        });
+        const allStoredItems = userData.todoItems || [];
+        let itemsChanged = false;
+        let processedItems = [...allStoredItems];
+        let totalPenalty = 0;
         
-        const processedItems = await Promise.all(promises);
-        
-        if (itemsChanged) {
-           if (totalPenalty > 0) {
-            deductBonusPoints(totalPenalty);
-            toast({
-              title: "Pacts Judged",
-              description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
-              variant: "destructive",
-              duration: 7000,
+        const checkAndApplyPenalties = async () => {
+            const overdueDates = new Set<string>();
+            processedItems.forEach(item => {
+                if (!item.completed && !item.penaltyApplied && item.dueDate && isPast(startOfDay(parseISO(item.dueDate)))) {
+                    overdueDates.add(item.dueDate);
+                }
             });
-          }
-          updateUserDataInDb({ todoItems: processedItems });
-        }
-      }
 
-      checkAndApplyPenalties();
+            for (const date of overdueDates) {
+                const itemsForDate = processedItems.filter(item => item.dueDate === date && !item.completed && !item.penaltyApplied);
+                if (itemsForDate.length === 0) continue;
+
+                itemsChanged = true;
+                const firstItemWithPenalty = itemsForDate.find(item => item.penalty && item.penalty > 0);
+                let dare: string | undefined;
+
+                if (firstItemWithPenalty) {
+                    try {
+                        dare = await generateDare(firstItemWithPenalty.text, dashboardSettings.dareCategory);
+                    } catch (e) {
+                        console.error("Failed to generate dare:", e);
+                    }
+                }
+                
+                let dareAssigned = false;
+                processedItems = processedItems.map(item => {
+                    if (item.dueDate === date && !item.completed && !item.penaltyApplied) {
+                        if (item.penalty && item.penalty > 0) {
+                            totalPenalty += item.penalty;
+                        }
+                        if (dare && !dareAssigned) {
+                            dareAssigned = true;
+                            return { ...item, penaltyApplied: true, dare };
+                        }
+                        return { ...item, penaltyApplied: true };
+                    }
+                    return item;
+                });
+            }
+
+            if (itemsChanged) {
+                if (totalPenalty > 0) {
+                    deductBonusPoints(totalPenalty);
+                    toast({
+                        title: "Pacts Judged",
+                        description: `Incomplete pacts from previous days have been penalized. Total penalty: ${totalPenalty} XP. Check for new dares.`,
+                        variant: "destructive",
+                        duration: 7000,
+                    });
+                }
+                updateUserDataInDb({ todoItems: processedItems });
+            }
+        };
+
+        checkAndApplyPenalties();
     }
-  }, [isUserDataLoaded, dashboardSettings.dareCategory]); // Re-check when category changes
+  }, [isUserDataLoaded, dashboardSettings.dareCategory]);
 
   const addTodoItem = (text: string, dueDate?: string, penalty?: number) => {
     if (text.trim() === '') return;
