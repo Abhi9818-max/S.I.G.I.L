@@ -320,7 +320,11 @@ export default function SettingsPage() {
   const handleAwardBonusXp = () => {
     const bonus = 10000;
     if (masterBonusAwarded) {
-        toast({ title: "Bonus Already Awarded", description: "The master bonus can only be claimed once.", variant = "destructive" });
+        toast({
+            title: "Bonus Already Awarded",
+            description: "The master bonus can only be claimed once.",
+            variant: "destructive"
+        });
         return;
     }
     awardBonusPoints(bonus, true); // Pass true for isMasterBonus
@@ -350,6 +354,36 @@ export default function SettingsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:px-8 md:pt-2 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
+            <div className="md:hidden py-2 px-1 flex items-center justify-between">
+                <h2 className="text-xl font-bold">Settings</h2>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"><MoreVertical className="h-6 w-6" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setActiveTab('profile')}>
+                            <User className="mr-2 h-4 w-4" />Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setActiveTab('layout')}>
+                            <LayoutDashboard className="mr-2 h-4 w-4" />Layout
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setActiveTab('data')}>
+                            <Database className="mr-2 h-4 w-4" />Data
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            <div className="hidden md:flex gap-8">
+                 <div className="w-1/3 space-y-2">
+                    <Button variant={activeTab === 'profile' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('profile')} className="w-full justify-start"><User className="mr-2 h-4 w-4"/>Profile</Button>
+                    <Button variant={activeTab === 'layout' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('layout')} className="w-full justify-start"><LayoutDashboard className="mr-2 h-4 w-4"/>Layout</Button>
+                    <Button variant={activeTab === 'data' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('data')} className="w-full justify-start"><Database className="mr-2 h-4 w-4"/>Data</Button>
+                </div>
+                <div className="w-2/3">
+                    {/* Content will be rendered here based on activeTab */}
+                </div>
+            </div>
+
             <div className="md:p-0 pt-2 space-y-4">
                {/* New Header */}
                <div className="flex justify-between items-center py-2 md:hidden">
@@ -432,7 +466,14 @@ export default function SettingsPage() {
 
                 {/* Buttons */}
                 <div className="flex gap-2">
-                    <Button variant="secondary" className="flex-1" onClick={() => setIsBioDialogOpen(true)}>Edit Profile</Button>
+                    <Button variant="secondary" className="flex-1" onClick={() => setIsBioDialogOpen(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit Bio
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={handleShareProfile}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share Profile
+                    </Button>
                 </div>
               
               <div className="border-b">
@@ -696,9 +737,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
-
-      
-
-    
