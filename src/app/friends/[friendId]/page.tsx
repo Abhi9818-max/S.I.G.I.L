@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -24,6 +24,17 @@ import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -133,7 +144,7 @@ export default function FriendProfilePage() {
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData } = useFriends();
+    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData, unfriend } = useFriends();
     const currentUserRecords = useUserRecords();
     const profileCardRef = useRef<HTMLDivElement>(null);
 
@@ -386,6 +397,30 @@ export default function FriendProfilePage() {
                                         <CreditCard className="mr-2 h-4 w-4" />
                                         Download Card
                                     </Button>
+                                    {isFriend && (
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="sm">
+                                                    <UserX className="mr-2 h-4 w-4" />
+                                                    Unfriend
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will remove {displayName} from your friends list. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => unfriend(friendId)}>
+                                                        Unfriend
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )}
                                 </div>
                             </div>
                         </div>

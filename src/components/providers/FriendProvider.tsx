@@ -43,6 +43,7 @@ interface FriendContextType {
     pendingRelationshipProposalForFriend: (friendId: string) => RelationshipProposal | undefined;
     incomingRelationshipProposalFromFriend: (friendId: string) => RelationshipProposal | undefined;
     getPublicUserData: (userId: string) => Promise<UserData | null>;
+    unfriend: (friendId: string) => Promise<void>;
     // Alliances
     createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress'>) => Promise<string>;
     userAlliances: Alliance[];
@@ -291,6 +292,30 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(friendRef, { nickname });
         await fetchFriendsAndRequests();
     }, [user, fetchFriendsAndRequests]);
+
+    const unfriend = useCallback(async (friendId: string) => {
+        if (!user) throw new Error("You must be logged in.");
+
+        const batch = writeBatch(db);
+
+        // Remove friend from current user's friend list
+        const currentUserFriendRef = doc(db, `users/${user.uid}/friends`, friendId);
+        batch.delete(currentUserFriendRef);
+
+        // Remove current user from friend's friend list
+        const friendUserRef = doc(db, `users/${friendId}/friends`, user.uid);
+        batch.delete(friendUserRef);
+
+        try {
+            await batch.commit();
+            await fetchFriendsAndRequests();
+            toast({ title: "Friend Removed", description: "They are no longer on your friends list." });
+            router.push('/friends');
+        } catch (error) {
+            console.error("Failed to unfriend:", error);
+            toast({ title: 'Error', description: 'Could not remove friend.', variant: 'destructive' });
+        }
+    }, [user, fetchFriendsAndRequests, toast, router]);
 
     const sendRelationshipProposal = useCallback(async (friendId: string, recipientUsername: string, recipientPhotoURL: string | null | undefined, relationship: string) => {
         if (!user || !userData) throw new Error("You must be logged in.");
@@ -555,6 +580,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             pendingRelationshipProposalForFriend,
             incomingRelationshipProposalFromFriend,
             getPublicUserData,
+            unfriend,
             createAlliance,
             userAlliances,
             getAllianceWithMembers,
