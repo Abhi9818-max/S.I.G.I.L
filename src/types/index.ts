@@ -189,6 +189,18 @@ export interface DashboardSettings {
   profileCardStat?: ProfileCardStat;
 }
 
+// NEW: For Task Mastery
+export interface TaskMastery {
+    level: number;
+    xp: number;
+}
+
+export interface TaskMasteryInfo extends TaskMastery {
+    xpForNextLevel: number;
+    progressPercentage: number;
+    xpBonus: number; // The % bonus this level gives
+}
+
 // For Auth/User Data
 export interface UserData {
     uid?: string;
@@ -209,6 +221,7 @@ export interface UserData {
     todoItems?: TodoItem[];
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
+    taskMastery?: Record<string, TaskMastery>;
 }
 
 // For Friends feature

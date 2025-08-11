@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from '@/components/ui/separator';
-import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck, Flame, Pause, Play, CheckCircle } from 'lucide-react';
+import { Pencil, Trash2, Info, Target, Zap, PlusCircle, Timer, CalendarCheck, Flame, Pause, Play, CheckCircle, GraduationCap } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import type { TaskDefinition, TaskUnit, TaskStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +58,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 
 const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: string | null) => z.object({
   name: z.string()
@@ -134,7 +135,7 @@ interface ManageTasksModalProps {
 }
 
 const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChange }) => {
-  const { taskDefinitions, addTaskDefinition, updateTaskDefinition, deleteTaskDefinition, updateTaskStatus } = useUserRecords();
+  const { taskDefinitions, addTaskDefinition, updateTaskDefinition, deleteTaskDefinition, updateTaskStatus, getTaskMasteryInfo } = useUserRecords();
   const { toast } = useToast();
   const [editingTask, setEditingTask] = useState<TaskDefinition | null>(null);
 
@@ -417,7 +418,9 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
               ) : (
                 <TooltipProvider>
                   <div className="space-y-3">
-                    {taskDefinitions.map((task) => (
+                    {taskDefinitions.map((task) => {
+                      const masteryInfo = getTaskMasteryInfo(task.id);
+                      return (
                       <div key={task.id} className={cn("p-3 border rounded-lg transition-all", editingTask?.id === task.id ? 'bg-muted border-primary/50' : 'bg-card-foreground/5', task.status !== 'active' && 'opacity-60')}>
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
@@ -524,8 +527,26 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                               </AlertDialog>
                             </div>
                         </div>
+                        {masteryInfo && (
+                            <div className="mt-2 space-y-1">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <GraduationCap className="h-4 w-4" />
+                                    <span className="font-medium">Mastery Lvl. {masteryInfo.level}</span>
+                                    <span className="font-mono text-primary">(+{masteryInfo.xpBonus * 100}% XP)</span>
+                                </div>
+                                <Tooltip>
+                                    <TooltipTrigger className="w-full">
+                                        <Progress value={masteryInfo.progressPercentage} indicatorClassName="transition-all duration-500" style={{ '--tw-bg-opacity': '1', backgroundColor: task.color }} />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{masteryInfo.xp.toLocaleString()} / {masteryInfo.xpForNextLevel.toLocaleString()} XP to next level</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                        )}
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </TooltipProvider>
               )}

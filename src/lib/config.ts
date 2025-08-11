@@ -129,7 +129,6 @@ export const TIER_INFO: readonly TierConfig[] = [
 export const LEVEL_THRESHOLDS: readonly number[] = (() => {
   const levels = 100;
   const totalMonths = 17;
-  // Based on ~100xp/day average
   const totalTargetXP = totalMonths * 30 * 100;
 
   const thresholds: number[] = [0];
@@ -139,22 +138,18 @@ export const LEVEL_THRESHOLDS: readonly number[] = (() => {
     let xpForNextLevel;
 
     if (level < 50) {
-      // Levels 1-50 (4.5 months)
       const base = 50;
       const increment = 5;
       xpForNextLevel = base + (level - 1) * increment;
     } else if (level < 85) {
-      // Levels 51-85 (5.5 months)
       const base = 300;
       const exponent = 1.05;
       xpForNextLevel = base * Math.pow(exponent, level - 50);
     } else if (level < 95) {
-      // Levels 86-95 (2.5 months)
       const base = 2000;
       const exponent = 1.15;
       xpForNextLevel = base * Math.pow(exponent, level - 85);
     } else {
-      // Levels 96-100 (4.5 months)
       const base = 10000;
       const exponent = 1.4;
       xpForNextLevel = base * Math.pow(exponent, level - 95);
@@ -164,12 +159,10 @@ export const LEVEL_THRESHOLDS: readonly number[] = (() => {
     thresholds.push(accumulatedXP);
   }
 
-  // Normalize to the total target XP
   const actualTotalXP = thresholds[thresholds.length - 1];
   const scalingFactor = totalTargetXP / actualTotalXP;
 
   const finalThresholds = thresholds.map(t => Math.round(t * scalingFactor));
-  // Ensure the first element is exactly 0
   finalThresholds[0] = 0;
 
   return finalThresholds;
@@ -179,31 +172,66 @@ export const LEVEL_THRESHOLDS: readonly number[] = (() => {
 export const MAX_USER_LEVEL = LEVEL_THRESHOLDS.length;
 
 // XP CALCULATION LOGIC
-const PHASE_XP = [10, 25, 50, 100]; // Base XP for phases 1, 2, 3, 4
-const PRIORITY_MULTIPLIER = 1.5; // High priority tasks get 50% more XP
-const LEVEL_SCALING_FACTOR = 0.05; // 5% bonus XP per level
+const PHASE_XP = [10, 25, 50, 100];
+const PRIORITY_MULTIPLIER = 1.5;
+const LEVEL_SCALING_FACTOR = 0.05;
+
+// TASK MASTERY CONFIG
+const MASTERY_BASE_XP = 100;
+const MASTERY_XP_GROWTH_FACTOR = 1.2;
+const MASTERY_XP_BONUS_PER_LEVEL = 0.01; // +1% XP per mastery level for that task
+
+export const calculateMasteryLevelInfo = (masteryXp: number) => {
+    let level = 1;
+    let xpForNextLevel = MASTERY_BASE_XP;
+    let cumulativeXp = 0;
+
+    while (masteryXp >= cumulativeXp + xpForNextLevel) {
+        cumulativeXp += xpForNextLevel;
+        level++;
+        xpForNextLevel = Math.round(MASTERY_BASE_XP * Math.pow(MASTERY_XP_GROWTH_FACTOR, level - 1));
+    }
+    
+    const xpIntoLevel = masteryXp - cumulativeXp;
+    const progressPercentage = (xpIntoLevel / xpForNextLevel) * 100;
+
+    return {
+        level,
+        xp: masteryXp,
+        xpForNextLevel,
+        progressPercentage,
+        xpBonus: (level - 1) * MASTERY_XP_BONUS_PER_LEVEL
+    };
+};
+
 
 export const calculateXpForRecord = (
     recordValue: number,
     task: TaskDefinition | undefined,
-    userLevel: number
+    userLevel: number,
+    taskMasteryBonus: number = 0
 ): number => {
-    if (!task) return 0; // No XP for unassigned tasks
+    if (!task) return 0;
 
-    const level = getContributionLevel(recordValue, task.intensityThresholds);
+    let value = recordValue;
+    if (task.unit === 'hours') {
+        value = recordValue * 60; // Convert hours to minutes for consistent threshold checks
+    }
+
+    const level = getContributionLevel(value, task.intensityThresholds);
     if (level === 0) return 0;
 
     const phaseIndex = level - 1;
     let baseXP = PHASE_XP[phaseIndex] || 0;
 
-    // Apply priority multiplier
     if (task.priority === 'high') {
         baseXP *= PRIORITY_MULTIPLIER;
     }
 
-    // Apply level scaling bonus
     const levelBonus = baseXP * (userLevel - 1) * LEVEL_SCALING_FACTOR;
-    const finalXP = Math.round(baseXP + levelBonus);
+    const masteryBonus = baseXP * taskMasteryBonus;
+
+    const finalXP = Math.round(baseXP + levelBonus + masteryBonus);
 
     return finalXP;
 };

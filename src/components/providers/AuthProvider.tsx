@@ -89,6 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     awardedStreakMilestones: {},
                     highGoals: [],
                     todoItems: [],
+                    taskMastery: {},
                 };
                 setUserData(initialGuestData);
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
@@ -203,6 +204,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             awardedStreakMilestones: {},
             highGoals: [],
             todoItems: [],
+            taskMastery: {},
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
