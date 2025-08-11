@@ -19,6 +19,7 @@ import {
 import LevelDetailsModal from './LevelDetailsModal';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -43,6 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
   const [isLevelDetailsModalOpen, setIsLevelDetailsModalOpen] = useState(false);
   const pathname = usePathname();
   const [levelInfo, setLevelInfo] = useState<UserLevelInfo | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     try {
@@ -53,9 +55,16 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
       setLevelInfo(null);
     }
   }, [getUserLevelInfo]);
+  
+  const isHomePage = pathname === '/';
+
+  // Hide header on non-home pages on mobile for a more app-like feel with bottom nav
+  if (isMobile && !isHomePage) {
+    return null;
+  }
 
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
-  const isDashboardPage = pathname === '/';
+  
 
   const navLinks = [
     { href: "/friends", label: "Friends", icon: Users },
@@ -114,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
               </Button>
             ))}
             
-            {isDashboardPage && (
+            {isHomePage && (
               <>
                 <Button onClick={onManageTasksClick} variant="ghost" size="sm">
                   <Settings className="mr-1.5 h-4 w-4" />
@@ -167,7 +176,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
 
-                {isDashboardPage && (
+                {isHomePage && (
                   <>
                     <DropdownMenuItem onClick={onManageTasksClick} className="flex items-center w-full">
                       <Settings className="mr-2 h-4 w-4" />
