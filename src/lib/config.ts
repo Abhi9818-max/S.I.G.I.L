@@ -130,30 +130,20 @@ export const TIER_INFO: readonly TierConfig[] = [
 
 
 export const LEVEL_THRESHOLDS: readonly number[] = (() => {
-    const thresholds = [0]; // Level 1 starts at 0 points
-    let currentPoints = 0;
-    let increment = 100;
-    let incrementIncreaseBase = 50;
-    const tierPointMultiplier = [1.0, 1.1, 1.2, 1.3, 1.5, 1.7, 2.0, 2.3, 2.7, 3.0]; // Adjusted for 10 tiers
-
-    for (let i = 1; i < 100; i++) {
-        currentPoints += increment;
-        thresholds.push(currentPoints);
-
-        const levelForTierCalc = i + 1;
-        let currentTierIndex = TIER_INFO.findIndex(tier => levelForTierCalc >= tier.minLevel && levelForTierCalc <= tier.maxLevel);
-
-        if (currentTierIndex === -1) {
-            if (levelForTierCalc > TIER_INFO[TIER_INFO.length - 1].maxLevel) {
-                 currentTierIndex = TIER_INFO.length -1;
-            } else {
-                currentTierIndex = 0;
-            }
-        }
-
-        const multiplier = tierPointMultiplier[currentTierIndex] ?? 1.0;
-
-        increment += Math.floor(incrementIncreaseBase * multiplier);
+    const xpPerLevel = [
+        50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 
+        250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 
+        450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600, 610, 620, 630, 640, 
+        768, 921.6, 1105.92, 1327.10, 1592.52, 1911.03, 2293.23, 2751.88, 3302.25, 3962.70, 
+        4755.24, 5706.29, 6847.55, 8217.06, 9860.47, 11832.56, 14199.07, 17038.88, 20446.66, 24535.99, 
+        29443.18, 35331.81, 42398.17, 50877.80, 61053.36, 73264.03, 87916.84, 105500.20, 126600.24, 151920.28, 
+        182304.34, 218765.21, 262518.25, 315021.90, 378026.28, 453631.54, 544357.84, 653229.41, 783875.29
+    ];
+    const thresholds = [0];
+    let currentTotal = 0;
+    for (const xp of xpPerLevel) {
+        currentTotal += xp;
+        thresholds.push(Math.round(currentTotal));
     }
     return thresholds;
 })();
