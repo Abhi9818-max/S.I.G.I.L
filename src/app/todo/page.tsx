@@ -52,7 +52,11 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="What needs to be done?"
           className="flex-grow"
-          onKeyPress={(e) => e.key === 'Enter' && newItemText.trim() && onAddItem()}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && newItemText.trim()) {
+              onAddItem();
+            }
+          }}
         />
         <Button 
             onClick={onAddItem} 
