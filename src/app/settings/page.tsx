@@ -354,17 +354,6 @@ export default function SettingsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:px-8 md:pt-2 animate-fade-in-up">
         <div className="w-full max-w-4xl mx-auto">
-            <div className="hidden md:flex gap-8">
-                 <div className="w-1/3 space-y-2">
-                    <Button variant={activeTab === 'profile' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('profile')} className="w-full justify-start"><User className="mr-2 h-4 w-4"/>Profile</Button>
-                    <Button variant={activeTab === 'layout' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('layout')} className="w-full justify-start"><LayoutDashboard className="mr-2 h-4 w-4"/>Layout</Button>
-                    <Button variant={activeTab === 'data' ? 'secondary' : 'ghost'} onClick={() => setActiveTab('data')} className="w-full justify-start"><Database className="mr-2 h-4 w-4"/>Data</Button>
-                </div>
-                <div className="w-2/3">
-                    {/* Content will be rendered here based on activeTab */}
-                </div>
-            </div>
-
             <div className="md:p-0 pt-2 space-y-4">
                {/* New Header */}
                <div className="flex justify-between items-center py-2 md:hidden">
