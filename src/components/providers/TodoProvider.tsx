@@ -2,7 +2,7 @@
 "use client";
 
 import type { TodoItem } from '@/types';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,21 @@ import { isPast, startOfDay, format, parseISO, isToday, isSameDay, isYesterday }
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDare } from '@/lib/server/dare';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+
+interface DareDialogInfo {
+    isOpen: boolean;
+    title: string;
+    description: string;
+}
 
 interface TodoContextType {
   todoItems: TodoItem[];
@@ -27,6 +42,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { updateUserDataInDb, userData, isUserDataLoaded } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
+  const [dareDialog, setDareDialog] = useState<DareDialogInfo>({ isOpen: false, title: '', description: '' });
   
   const todoItems = React.useMemo(() => {
     if (!isUserDataLoaded || !userData?.todoItems) return [];
@@ -62,11 +78,10 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 if (dare) {
-                    toast({
+                    setDareDialog({
+                        isOpen: true,
                         title: "Pact Judged: Dare Assigned!",
-                        description: dare,
-                        variant: "destructive",
-                        duration: 10000,
+                        description: dare
                     });
                 }
                 
@@ -90,7 +105,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         checkAndApplyPenalties();
     }
-  }, [isUserDataLoaded, dashboardSettings.dareCategory, userData?.todoItems, updateUserDataInDb, toast]);
+  }, [isUserDataLoaded, dashboardSettings.dareCategory, userData?.todoItems, updateUserDataInDb]);
 
   // Effect for handling notifications
   React.useEffect(() => {
@@ -182,6 +197,19 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <TodoContext.Provider value={value}>
       {children}
+       <AlertDialog open={dareDialog.isOpen} onOpenChange={(open) => setDareDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dareDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dareDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogAction onClick={() => setDareDialog(prev => ({...prev, isOpen: false}))}>
+            Understood
+          </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
     </TodoContext.Provider>
   );
 };
