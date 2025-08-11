@@ -133,7 +133,7 @@ export default function FriendProfilePage() {
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend } = useFriends();
+    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData } = useFriends();
     const currentUserRecords = useUserRecords();
     const profileCardRef = useRef<HTMLDivElement>(null);
 
@@ -147,6 +147,8 @@ export default function FriendProfilePage() {
     const levelInfo = currentUserRecords.getUserLevelInfo();
     
     const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
+    const isFriend = !!friendInfo;
+
     const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
     const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
 
@@ -161,16 +163,16 @@ export default function FriendProfilePage() {
         const fetchFriendData = async () => {
             if (friendId) {
                 try {
-                    const data = await getFriendData(friendId);
+                    const data = isFriend ? await getFriendData(friendId) : await getPublicUserData(friendId);
                     if (data) {
                         setFriendData(data);
                     } else {
-                        toast({ title: 'Error', description: 'Friend data not found.', variant: 'destructive' });
-                        router.push('/friends'); // Friend not found or not a friend
+                        toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
+                        router.push('/friends');
                     }
                 } catch (error) {
                     console.error("Error fetching friend data:", error);
-                    toast({ title: 'Error', description: 'Could not fetch friend data.', variant: 'destructive' });
+                    toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
                     router.push('/friends');
                 } finally {
                     setIsLoading(false);
@@ -179,7 +181,7 @@ export default function FriendProfilePage() {
         };
 
         fetchFriendData();
-    }, [friendId, getFriendData, router, toast]);
+    }, [friendId, getFriendData, getPublicUserData, isFriend, router, toast]);
 
     const friendPacts = useMemo(() => {
         if (!friendData?.todoItems) return [];
@@ -282,13 +284,13 @@ export default function FriendProfilePage() {
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     if (isLoading) {
-        return <div className="flex items-center justify-center min-h-screen">Loading friend's profile...</div>;
+        return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
     }
 
-    if (!friendData || !friendInfo) {
+    if (!friendData) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                Could not load friend data.
+                Could not load user data.
                 <Button onClick={() => router.push('/friends')} className="ml-4">Back to Friends</Button>
             </div>
         );
@@ -300,9 +302,10 @@ export default function FriendProfilePage() {
     const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 12) + 1}.jpeg`;
     const today = new Date();
     const yesterday = subDays(today, 1);
-    const displayName = friendInfo.nickname || friendData.username;
+    const displayName = friendInfo?.nickname || friendData.username;
     
     const getRelationshipContent = () => {
+        if (!isFriend) return null;
         if (pendingProposal) {
             return (
                 <Badge variant="secondary" className="cursor-default">
@@ -349,7 +352,9 @@ export default function FriendProfilePage() {
                                  <div className="md:hidden">
                                     <div className="flex items-center gap-2">
                                         <h1 className="text-lg font-semibold">{displayName}</h1>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                        {isFriend && (
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                        )}
                                     </div>
                                     <div className="mt-1">
                                        
@@ -361,7 +366,9 @@ export default function FriendProfilePage() {
                                 <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
                                     <div className="flex items-center gap-2">
                                         <h1 className="text-xl font-semibold">{displayName}</h1>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                        {isFriend && (
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
+                                        )}
                                     </div>
                                    <div className="hidden md:block">
                                         {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
@@ -394,7 +401,7 @@ export default function FriendProfilePage() {
                       <TabsContent value="stats" className="mt-6">
                         <StatsPanel friendData={friendData} />
                         <div className="mt-8">
-                          <TaskComparisonChart friendData={friendData} friendNickname={friendInfo.nickname} />
+                          <TaskComparisonChart friendData={friendData} friendNickname={friendInfo?.nickname} />
                         </div>
                       </TabsContent>
                       
@@ -448,7 +455,8 @@ export default function FriendProfilePage() {
                             />
                             <ContributionGraph 
                                 year={new Date().getFullYear()}
-                                onDayClick={() => {}} 
+                                onDayClick={() => {}}
+                                onDayDoubleClick={() => {}} 
                                 selectedTaskFilterId={selectedTaskFilterId}
                                 records={friendRecords} 
                                 taskDefinitions={friendTasks}
@@ -468,26 +476,30 @@ export default function FriendProfilePage() {
                             levelInfo={friendLevelInfo} 
                             userData={friendData}
                             userAvatar={friendAvatar}
-                            relationship={friendInfo.relationship}
+                            relationship={friendInfo?.relationship}
                             displayStat='currentStreak'
                             currentStreak={getFriendStreak(friendData.records, friendData.taskDefinitions)}
                         />
                     )}
                 </div>
             </div>
-            <NicknameDialog
-                isOpen={isNicknameDialogOpen}
-                onOpenChange={setIsNicknameDialogOpen}
-                currentNickname={friendInfo.nickname || friendData.username}
-                onSave={handleUpdateNickname}
-            />
-            <RelationshipDialog
-                isOpen={isRelationshipDialogOpen}
-                onOpenChange={setIsRelationshipDialogOpen}
-                currentRelationship={friendInfo.relationship || ''}
-                onSave={handleSendRelationshipProposal}
-                friendName={displayName}
-            />
+            {isFriend && (
+                <>
+                    <NicknameDialog
+                        isOpen={isNicknameDialogOpen}
+                        onOpenChange={setIsNicknameDialogOpen}
+                        currentNickname={friendInfo?.nickname || friendData.username}
+                        onSave={handleUpdateNickname}
+                    />
+                    <RelationshipDialog
+                        isOpen={isRelationshipDialogOpen}
+                        onOpenChange={setIsRelationshipDialogOpen}
+                        currentRelationship={friendInfo?.relationship || ''}
+                        onSave={handleSendRelationshipProposal}
+                        friendName={displayName}
+                    />
+                </>
+            )}
         </>
     );
 };
