@@ -194,6 +194,16 @@ export default function AllianceDetailPage() {
         fetchPendingInvites();
     }, [allianceId, getPendingAllianceInvitesFor]);
 
+    const sortedMembers = useMemo(() => {
+        if (!alliance?.members) return [];
+        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
+    }, [alliance?.members]);
+
+    const topContributorId = useMemo(() => {
+        if (!sortedMembers || sortedMembers.length === 0) return null;
+        const topMember = sortedMembers[0];
+        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
+    }, [sortedMembers]);
 
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
@@ -255,16 +265,6 @@ export default function AllianceDetailPage() {
           });
       }, [allianceCardRef, toast, alliance]);
 
-    const sortedMembers = useMemo(() => {
-        if (!alliance?.members) return [];
-        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
-    }, [alliance?.members]);
-
-    const topContributorId = useMemo(() => {
-        if (!sortedMembers || sortedMembers.length === 0) return null;
-        const topMember = sortedMembers[0];
-        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
-    }, [sortedMembers]);
 
     if (isLoading || !alliance) {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
@@ -379,7 +379,10 @@ export default function AllianceDetailPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {sortedMembers.map(member => (
                                         <Link key={member.uid} href={`/friends/${member.uid}`}>
-                                            <div className="p-3 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <div className={cn(
+                                                "p-3 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-all duration-300 cursor-pointer",
+                                                member.uid === topContributorId && "shadow-lg shadow-yellow-400/20 border-yellow-400/50"
+                                            )}>
                                                 <Avatar>
                                                     <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
                                                     <AvatarFallback>{(member.nickname || member.username).charAt(0).toUpperCase()}</AvatarFallback>
