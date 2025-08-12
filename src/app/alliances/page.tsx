@@ -142,7 +142,7 @@ export default function AlliancesPage() {
     try {
       await sendAllianceChallenge(myAlliance, challengedAlliance);
       toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
-    } catch (e) => {
+    } catch (e) {
       toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
