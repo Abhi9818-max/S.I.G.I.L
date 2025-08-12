@@ -273,7 +273,6 @@ export default function AllianceDetailPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 Could not load alliance data.
-                <Button onClick={() => router.push('/alliances')} className="ml-4">Back to Alliances</Button>
             </div>
         );
     }
