@@ -25,7 +25,6 @@ import { Calendar } from 'lucide-react';
 import ProgressOverTimeChart from '@/components/progress/ProgressOverTimeChart';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { useAuth } from '@/components/providers/AuthProvider';
-import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
@@ -135,7 +134,7 @@ export default function HomePage() {
   if (!isUserDataLoaded || !currentLevelInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <Image src="/loading.gif" alt="Loading..." className="w-72 h-72 md:w-96 md:h-96" width={384} height={384} unoptimized />
+        <div className="loader"></div>
       </div>
     );
   }
