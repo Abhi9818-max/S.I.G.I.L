@@ -42,7 +42,7 @@ interface TodoContextType {
   toggleTodoItem: (id: string) => void;
   deleteTodoItem: (id: string) => void;
   getTodoItemById: (id: string) => TodoItem | undefined;
-  toggleDareCompleted: (id: string, completed: boolean) => void;
+  toggleDareCompleted: (id: string, completed?: boolean) => void;
   checkMissedDares: () => void;
 }
 
@@ -198,7 +198,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateUserDataInDb({ todoItems: newItems });
   };
 
-  const toggleDareCompleted = (id: string, completed: boolean) => {
+  const toggleDareCompleted = (id: string, completed?: boolean) => {
     const allItems = userData?.todoItems || [];
     const newItems = allItems.map(item => {
       if (item.id === id) {

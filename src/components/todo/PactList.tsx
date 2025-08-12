@@ -15,7 +15,7 @@ interface PactItemProps {
     isEditable: boolean;
     onToggle: (id: string) => void;
     onDelete: (id: string) => void;
-    onToggleDare: (id: string, completed: boolean) => void;
+    onToggleDare: (id: string, completed?: boolean) => void;
     completedPact: string | null;
 }
 
@@ -61,8 +61,8 @@ const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDar
                            </div>
                            <div className="mt-2 flex items-center justify-end gap-2">
                                 <span className="text-xs font-medium">Completed?</span>
-                                 <Button size="sm" variant={item.dareCompleted === true ? "default" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
-                                <Button size="sm" variant={item.dareCompleted === false || item.dareCompleted === undefined ? "default" : "outline"} onClick={() => onToggleDare(item.id, false)} className="h-7 px-2 text-xs">Not yet</Button>
+                                 <Button size="sm" variant={item.dareCompleted ? "default" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
+                                <Button size="sm" variant={!item.dareCompleted ? "default" : "outline"} onClick={() => onToggleDare(item.id, undefined)} className="h-7 px-2 text-xs">Not yet</Button>
                            </div>
                         </div>
                     )}
