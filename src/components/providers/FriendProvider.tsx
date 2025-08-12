@@ -5,9 +5,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo, AllianceChallenge } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo, AllianceChallenge, AllianceStatus } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { parseISO, isWithinInterval } from 'date-fns';
+import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -439,7 +439,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt'>): Promise<string> => {
         if (!user || !userData) throw new Error("Authentication required.");
         
-        const newAllianceData = {
+        const newAllianceData: Omit<Alliance, 'id'> = {
             ...allianceData,
             creatorId: user.uid,
             members: [{
@@ -450,7 +450,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }],
             memberIds: [user.uid],
             progress: 0,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            status: 'ongoing',
         };
         
         const docRef = await addDoc(collection(db, 'alliances'), newAllianceData);
@@ -503,7 +504,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             };
         });
 
-        return { ...allianceData, members, progress: totalProgress };
+        let status: AllianceStatus = 'ongoing';
+        if (totalProgress >= allianceData.target) {
+            status = 'completed';
+        } else if (isPast(endDate)) {
+            status = 'failed';
+        }
+
+        return { ...allianceData, members, progress: totalProgress, status };
     }, [user]);
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {

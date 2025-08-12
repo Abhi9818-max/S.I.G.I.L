@@ -287,6 +287,8 @@ export interface AllianceMember {
   contribution?: number;
 }
 
+export type AllianceStatus = 'ongoing' | 'completed' | 'failed';
+
 export interface Alliance {
   id: string;
   name: string;
@@ -303,6 +305,7 @@ export interface Alliance {
   members: AllianceMember[];
   memberIds: string[];
   dare?: string; // Optional dare for failed alliances
+  status?: AllianceStatus;
 }
 
 export interface AllianceInvitation {

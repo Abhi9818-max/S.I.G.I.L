@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import AllianceCard from '@/components/alliances/AllianceCard';
 import { generateAllianceDare } from '@/lib/server/alliance-dare';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 
@@ -157,9 +159,7 @@ export default function AllianceDetailPage() {
                     setAlliance(data);
 
                     // Check for dare logic
-                    const isEnded = isPast(parseISO(data.endDate));
-                    const isFailed = data.progress < data.target;
-                    if (isEnded && isFailed && !data.dare) {
+                    if (data.status === 'failed' && !data.dare) {
                         const newDare = await generateAllianceDare(data.name, dashboardSettings.dareCategory);
                         await setAllianceDare(data.id, newDare);
                         setAlliance(prev => prev ? {...prev, dare: newDare} : null);
@@ -196,9 +196,7 @@ export default function AllianceDetailPage() {
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
 
-        const isComplete = alliance.progress >= alliance.target;
-        const isEnded = isPast(parseISO(alliance.endDate));
-        if (!isComplete && !isEnded) {
+        if (alliance.status === 'ongoing') {
             toast({
                 title: "Alliance Active",
                 description: "You cannot leave until the objective is met or the alliance's time expires.",
@@ -219,9 +217,7 @@ export default function AllianceDetailPage() {
     const handleDisbandAlliance = async () => {
         if (!user || !alliance || alliance.creatorId !== user.uid) return;
 
-        const isComplete = alliance.progress >= alliance.target;
-        const isEnded = isPast(parseISO(alliance.endDate));
-        if (!isComplete && !isEnded) {
+        if (alliance.status === 'ongoing') {
             toast({
                 title: "Alliance Active",
                 description: "You cannot disband until the objective is met or the alliance's time expires.",
@@ -300,7 +296,7 @@ export default function AllianceDetailPage() {
         );
     }
 
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare, status } = alliance;
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((progress / target) * 100, 100);
@@ -319,6 +315,18 @@ export default function AllianceDetailPage() {
                                 <div className="flex items-center gap-3">
                                     <Shield className="h-8 w-8 text-primary" />
                                     <h1 className="text-3xl font-bold">{name}</h1>
+                                     {status && (
+                                        <Badge
+                                            variant={status === 'completed' ? 'default' : 'destructive'}
+                                            className={cn(
+                                                status === 'completed' && 'bg-green-600/80',
+                                                status === 'failed' && 'bg-red-600/80'
+                                            )}
+                                        >
+                                            {status === 'completed' ? <CheckCircle className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
+                                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </Badge>
+                                    )}
                                 </div>
                                 <p className="mt-2 text-muted-foreground">{description}</p>
                             </div>
@@ -331,7 +339,7 @@ export default function AllianceDetailPage() {
                                 )}
                                  <Button onClick={handleDownloadCard} variant="outline" size="icon">
                                     <Download className="h-4 w-4" />
-                                </Button>
+                                 </Button>
                                 {isCreator ? (
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
