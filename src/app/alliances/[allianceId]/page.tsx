@@ -265,8 +265,17 @@ export default function AllianceDetailPage() {
         return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
     }, [sortedMembers]);
 
-    if (isLoading || !alliance) {
+    if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
+    }
+    
+    if (!alliance) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                Could not load alliance data.
+                <Button onClick={() => router.push('/alliances')} className="ml-4">Back to Alliances</Button>
+            </div>
+        );
     }
 
     const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare } = alliance;
@@ -353,7 +362,7 @@ export default function AllianceDetailPage() {
                                 </div>
                             )}
 
-                            <div className="p-4 rounded-lg bg-muted/50">
+                            <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Target className="h-5 w-5" style={{ color: taskColor }} />
                                     <h3 className="font-semibold text-lg" style={{ color: taskColor }}>Objective: {taskName}</h3>
