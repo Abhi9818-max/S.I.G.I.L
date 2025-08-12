@@ -476,7 +476,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         if (!allianceSnap.exists()) return null;
 
-        const allianceData = allianceSnap.data() as Alliance;
+        const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
         const memberIds = allianceData.memberIds || [];
         
         if (memberIds.length === 0) {
@@ -524,9 +524,17 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 status = 'failed';
             }
         }
+        
+        // This was the missing part: ensure all properties from Firestore are carried over.
+        const completeAllianceData: Alliance = {
+            ...allianceData,
+            members,
+            progress: totalProgress,
+            status
+        };
 
 
-        return { ...allianceData, members, progress: totalProgress, status };
+        return completeAllianceData;
     }, [user]);
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
