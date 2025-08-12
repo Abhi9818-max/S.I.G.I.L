@@ -5,20 +5,20 @@ import React, { useState, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Alliance } from '@/types';
+import type { Alliance, AllianceChallenge } from '@/types';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
 export default function AlliancesPage() {
   const { user } = useAuth();
-  const { userAlliances, searchAlliances, sendAllianceChallenge } = useFriends();
+  const { userAlliances, searchAlliances, sendAllianceChallenge, incomingAllianceChallenges, acceptAllianceChallenge, declineAllianceChallenge } = useFriends();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
@@ -59,17 +59,43 @@ export default function AlliancesPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
+            
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <Swords className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-semibold">Challengers</h2>
+                </div>
+                {incomingAllianceChallenges.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">No pending challenges.</p>
+                ) : (
+                    <div className="space-y-2">
+                        {incomingAllianceChallenges.map(challenge => (
+                            <Card key={challenge.id} className="p-3">
+                                <div className="flex justify-between items-center">
+                                    <p className="font-semibold">{challenge.challengerAllianceName}</p>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => acceptAllianceChallenge(challenge)}>
+                                            <Check className="h-4 w-4 mr-2" /> Accept
+                                        </Button>
+                                        <Button size="sm" variant="destructive" onClick={() => declineAllianceChallenge(challenge.id)}>
+                                            <X className="h-4 w-4 mr-2" /> Decline
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
+            
+            <Separator />
+            
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Swords className="h-6 w-6 text-primary" />
                     <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
                 </div>
-                <Button asChild variant="ghost" size="icon">
-                  <Link href="/alliances/create">
-                    <PlusCircle className="h-6 w-6" />
-                  </Link>
-                </Button>
               </div>
               <div className="flex gap-2">
                 <Input 
@@ -107,14 +133,21 @@ export default function AlliancesPage() {
           </div>
 
            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">Your Alliances</h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Users className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-semibold">Your Alliances</h2>
+                </div>
+                 <Button asChild variant="ghost" size="icon">
+                  <Link href="/alliances/create">
+                    <PlusCircle className="h-6 w-6" />
+                  </Link>
+                </Button>
               </div>
                 {userAlliances.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">You are not part of any alliance.</p>
                 ) : (
-                    <ScrollArea className="h-[40vh] mt-4">
+                    <ScrollArea className="h-[60vh] mt-4">
                         <div className="space-y-3 pr-4">
                             {userAlliances.map((alliance, index) => (
                                 <div
@@ -128,7 +161,7 @@ export default function AlliancesPage() {
                                            <div className="flex justify-between items-start">
                                                 <div>
                                                     <CardTitle className="text-md flex items-center gap-2">
-                                                        <Swords className="h-4 w-4" />
+                                                        <ShieldCheck className="h-4 w-4" />
                                                         {alliance.name}
                                                     </CardTitle>
                                                     <CardDescription className="text-xs mt-1">{alliance.description}</CardDescription>

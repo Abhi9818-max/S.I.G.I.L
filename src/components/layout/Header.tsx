@@ -80,7 +80,6 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     ...navLinks,
     { isSeparator: true },
     { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/test-api", label: "Test API", icon: Server },
   ];
 
   const getAvatarForId = (id: string | undefined) => {
