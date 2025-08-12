@@ -290,11 +290,7 @@ export default function AllianceDetailPage() {
             <div className="min-h-screen flex flex-col">
                 <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
                 <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-                    <Button variant="outline" onClick={() => router.push('/alliances')}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Alliances
-                    </Button>
-
+                    
                     <div className="space-y-8">
                         <div className="flex flex-col sm:flex-row justify-between gap-4">
                             <div>
