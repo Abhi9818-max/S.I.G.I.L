@@ -521,7 +521,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const disbandAlliance = useCallback(async (allianceId: string) => {
-        await deleteDoc(doc(db, 'alliances', allianceId));
+        const allianceRef = doc(db, 'alliances', allianceId);
+        const challengesRef = collection(allianceRef, 'challenges');
+        
+        // Firestore doesn't support deleting subcollections directly from the client.
+        // We must query the documents and delete them in a batch.
+        const challengesSnapshot = await getDocs(challengesRef);
+        const batch = writeBatch(db);
+        challengesSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        // Delete the main alliance document
+        batch.delete(allianceRef);
+
+        await batch.commit();
     }, []);
 
     const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
