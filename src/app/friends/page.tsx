@@ -80,7 +80,7 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
                             fill 
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
                         <div className="absolute bottom-0 left-0 p-3 text-white">
                              <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
                               {friend.relationship && (
