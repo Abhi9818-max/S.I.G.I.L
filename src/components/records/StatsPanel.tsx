@@ -28,10 +28,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
   const isFriendProfile = !!friendData;
 
   // Use friend's data if provided, otherwise fall back to context for the current user
-  const records = friendData?.records ?? userRecordsContext.records;
-  const taskDefinitions = friendData?.taskDefinitions ?? userRecordsContext.taskDefinitions;
-  const highGoals = friendData?.highGoals ?? userRecordsContext.highGoals;
-  const freezeCrystals = friendData?.freezeCrystals ?? userRecordsContext.freezeCrystals;
+  const records = useMemo(() => friendData?.records ?? userRecordsContext.records, [friendData, userRecordsContext.records]);
+  const taskDefinitions = useMemo(() => friendData?.taskDefinitions ?? userRecordsContext.taskDefinitions, [friendData, userRecordsContext.taskDefinitions]);
+  const highGoals = useMemo(() => friendData?.highGoals ?? userRecordsContext.highGoals, [friendData, userRecordsContext.highGoals]);
+  const freezeCrystals = useMemo(() => friendData?.freezeCrystals ?? userRecordsContext.freezeCrystals, [friendData, userRecordsContext.freezeCrystals]);
 
   const getTaskDefinitionById = useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);
@@ -108,7 +108,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
     const today = new Date();
     const startDate = subDays(today, dashboardSettings.totalDays - 1);
     return getAggregateSum(startDate, today, selectedTaskFilterId);
-  }, [records, selectedTaskFilterId, getAggregateSum, dashboardSettings.totalDays]);
+  }, [selectedTaskFilterId, getAggregateSum, dashboardSettings.totalDays]);
 
   const consistency = useMemo(() => {
     const days = dashboardSettings.consistencyDays;
@@ -121,11 +121,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
     }
     const activeDays = new Set(relevantRecords.map(r => r.date)).size;
     return Math.round((activeDays / days) * 100);
-  }, [records, selectedTaskFilterId, getRecordsForDateRange, dashboardSettings.consistencyDays]);
+  }, [selectedTaskFilterId, getRecordsForDateRange, dashboardSettings.consistencyDays]);
 
   const currentStreak = useMemo(() => {
     return getCurrentStreak(selectedTaskFilterId);
-  }, [records, selectedTaskFilterId, getCurrentStreak]);
+  }, [selectedTaskFilterId, getCurrentStreak]);
 
   const { task, isDarkStreakSelected, unitLabel } = useMemo(() => {
     if (!selectedTaskFilterId) return { task: null, isDarkStreakSelected: false, unitLabel: '' };

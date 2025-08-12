@@ -33,7 +33,6 @@ const TierCard = ({ tier, index, isCurrentTier, isClicked, onClick }: { tier: ty
                     "object-cover",
                     customCropTiers.includes(tier.slug) && 'object-top'
                 )}
-                unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
         </div>

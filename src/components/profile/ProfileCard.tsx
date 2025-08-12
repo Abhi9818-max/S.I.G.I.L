@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Flame, TrendingUp, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LevelIndicator from '@/components/layout/LevelIndicator';
+import Image from 'next/image';
 
 interface ProfileCardProps {
   levelInfo: UserLevelInfo;
@@ -38,7 +39,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
   return (
     <div className="w-[350px] h-[500px] bg-background rounded-2xl shadow-2xl p-4 flex flex-col font-sans border border-white/10">
         <div className="relative w-full h-2/3 rounded-lg overflow-hidden">
-            <img src={userAvatar} alt={userData.username} className="w-full h-full object-cover"/>
+            <Image src={userAvatar} alt={userData.username} fill className="object-cover"/>
             <div className="absolute top-3 right-3 bg-black/50 p-2 rounded-full backdrop-blur-sm">
                  <TrendingUp className="h-5 w-5 text-white" />
             </div>

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -73,4 +72,4 @@ const DaySquare: React.FC<DaySquareProps> = ({ day, onClick, onDoubleClick }) =>
   );
 };
 
-export default DaySquare;
+export default React.memo(DaySquare);

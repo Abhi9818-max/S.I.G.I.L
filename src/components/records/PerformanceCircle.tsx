@@ -63,4 +63,4 @@ const PerformanceCircle: React.FC<PerformanceCircleProps> = ({
   );
 };
 
-export default PerformanceCircle;
+export default React.memo(PerformanceCircle);
