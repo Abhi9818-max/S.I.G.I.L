@@ -95,7 +95,7 @@ export default function CreateAlliancePage() {
         const newAllianceId = await createAlliance(allianceData);
         toast({ title: "Alliance Formed!", description: `The alliance "${data.name}" has been created.` });
         form.reset();
-        router.push(`/alliances/${newAllianceId}`);
+        router.push(`/alliances`);
     } catch(e) {
         toast({ title: "Creation Failed", description: (e as Error).message, variant: 'destructive'});
     }
