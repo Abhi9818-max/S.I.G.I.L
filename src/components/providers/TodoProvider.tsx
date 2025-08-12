@@ -197,14 +197,54 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newItems = allItems.filter(i => i.id !== id);
     updateUserDataInDb({ todoItems: newItems });
   };
+  
+  const showInsultDialog = useCallback((item: TodoItem) => {
+    if (insultDialog.isOpen) return;
+
+    const missedDareCount = (userData?.todoItems || []).filter(i => i.insultApplied).length + 1;
+    const insultKey = String(Math.min(missedDareCount, 10));
+    let insultText = INSULTS.sequential[insultKey as keyof typeof INSULTS.sequential];
+
+    if (missedDareCount > 10) {
+      const randomInsults = INSULTS.random.filter(i => i.type === 'savage' || i.type === '18_plus' || i.type === 'nsfw');
+      insultText = randomInsults[Math.floor(Math.random() * randomInsults.length)].text;
+    }
+
+    if (insultText) {
+      setInsultDialog({
+        isOpen: true,
+        title: "Consequence for Inaction",
+        description: insultText,
+      });
+
+      const updatedItems = (userData?.todoItems || []).map(i => 
+        i.id === item.id ? { ...i, insultApplied: true } : i
+      );
+      updateUserDataInDb({ todoItems: updatedItems });
+    }
+  }, [userData?.todoItems, updateUserDataInDb, insultDialog.isOpen]);
 
   const toggleDareCompleted = (id: string, completed?: boolean) => {
     const allItems = userData?.todoItems || [];
-    const newItems = allItems.map(item => {
-      if (item.id === id) {
-        return { ...item, dareCompleted: completed };
+    const item = allItems.find(item => item.id === id);
+    
+    if (!item) return;
+
+    // If setting to "not completed" (undefined) and the dare is overdue, show insult
+    if (completed === undefined && item.dare && item.dareAssignedAt && !item.insultApplied) {
+        const hoursSinceDare = differenceInHours(new Date(), parseISO(item.dareAssignedAt));
+        if (hoursSinceDare > 24) {
+            showInsultDialog(item);
+            return; // Don't update the dareCompleted status yet, let the insult logic handle it.
+        }
+    }
+    
+    // Otherwise, just update the status
+    const newItems = allItems.map(i => {
+      if (i.id === id) {
+        return { ...i, dareCompleted: completed };
       }
-      return item;
+      return i;
     });
     updateUserDataInDb({ todoItems: newItems });
   };
@@ -215,46 +255,19 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const checkMissedDares = useCallback(() => {
     if (!isUserDataLoaded || !userData?.todoItems || insultDialog.isOpen) return;
-    let itemsChanged = false;
-    let processedItems = [...userData.todoItems];
 
-    const missedDareCount = processedItems.filter(item => item.insultApplied).length;
-    let currentMissedCount = missedDareCount;
+    const overdueUncompletedDare = userData.todoItems.find(item => 
+        item.dare && 
+        item.dareAssignedAt && 
+        !item.dareCompleted && 
+        !item.insultApplied &&
+        differenceInHours(new Date(), parseISO(item.dareAssignedAt)) > 24
+    );
 
-    processedItems.forEach(item => {
-        if (item.dare && item.dareAssignedAt && !item.dareCompleted && !item.insultApplied) {
-            const hoursSinceDare = differenceInHours(new Date(), parseISO(item.dareAssignedAt));
-            if (hoursSinceDare > 24) {
-                currentMissedCount++;
-                const insultKey = String(Math.min(currentMissedCount, 10));
-                let insultText = INSULTS.sequential[insultKey as keyof typeof INSULTS.sequential];
-                
-                if (currentMissedCount > 10) {
-                    const randomInsults = INSULTS.random.filter(i => i.type === 'savage' || i.type === '18_plus' || i.type === 'nsfw');
-                    insultText = randomInsults[Math.floor(Math.random() * randomInsults.length)].text;
-                }
-
-                if (insultText) {
-                    setInsultDialog({
-                        isOpen: true,
-                        title: "Consequence for Inaction",
-                        description: insultText,
-                    });
-                    
-                    const itemIndex = processedItems.findIndex(i => i.id === item.id);
-                    if (itemIndex > -1) {
-                        processedItems[itemIndex] = { ...processedItems[itemIndex], insultApplied: true };
-                        itemsChanged = true;
-                    }
-                }
-            }
-        }
-    });
-
-    if (itemsChanged) {
-        updateUserDataInDb({ todoItems: processedItems });
+    if (overdueUncompletedDare) {
+        showInsultDialog(overdueUncompletedDare);
     }
-  }, [isUserDataLoaded, userData?.todoItems, updateUserDataInDb, insultDialog.isOpen]);
+  }, [isUserDataLoaded, userData?.todoItems, insultDialog.isOpen, showInsultDialog]);
   
   const handleCloseInsultDialog = () => {
     setInsultDialog({ isOpen: false, title: '', description: ''});
