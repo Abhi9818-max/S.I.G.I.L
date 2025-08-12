@@ -2,11 +2,11 @@
 "use client";
 
 import type { TodoItem } from '@/types';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
-import { isPast, startOfDay, format, parseISO, isToday, isSameDay, isYesterday } from 'date-fns';
+import { isPast, startOfDay, format, parseISO, isToday, isSameDay, isYesterday, differenceInHours } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDare } from '@/lib/server/dare';
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { INSULTS } from '@/lib/insults';
 
 
 interface DareDialogInfo {
@@ -33,6 +34,7 @@ interface TodoContextType {
   deleteTodoItem: (id: string) => void;
   getTodoItemById: (id: string) => TodoItem | undefined;
   toggleDareCompleted: (id: string, completed: boolean) => void;
+  checkMissedDares: () => void;
 }
 
 const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
@@ -91,7 +93,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (incompleteYesterday.some(p => p.id === item.id)) {
                         if (dare && !dareAssigned) {
                             dareAssigned = true;
-                            return { ...item, penaltyApplied: true, dare: dare };
+                            return { ...item, penaltyApplied: true, dare: dare, dareAssignedAt: new Date().toISOString() };
                         }
                         return { ...item, penaltyApplied: true };
                     }
@@ -197,6 +199,50 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getTodoItemById = React.useCallback((id: string): TodoItem | undefined => {
     return userData?.todoItems?.find(item => item.id === id);
   }, [userData?.todoItems]);
+  
+  const checkMissedDares = useCallback(() => {
+    if (!isUserDataLoaded || !userData?.todoItems) return;
+    let itemsChanged = false;
+    let processedItems = [...userData.todoItems];
+
+    const missedDareCount = processedItems.filter(item => item.insultApplied).length;
+    let currentMissedCount = missedDareCount;
+
+    processedItems.forEach(item => {
+        if (item.dare && item.dareAssignedAt && !item.dareCompleted && !item.insultApplied) {
+            const hoursSinceDare = differenceInHours(new Date(), parseISO(item.dareAssignedAt));
+            if (hoursSinceDare > 24) {
+                currentMissedCount++;
+                const insultKey = String(Math.min(currentMissedCount, 10));
+                let insultText = INSULTS.sequential[insultKey as keyof typeof INSULTS.sequential];
+                
+                if (currentMissedCount > 10) {
+                    const randomInsults = INSULTS.random.filter(i => i.type === 'savage' || i.type === '18_plus' || i.type === 'nsfw');
+                    insultText = randomInsults[Math.floor(Math.random() * randomInsults.length)].text;
+                }
+
+                if (insultText) {
+                    toast({
+                        title: "Consequence for Inaction",
+                        description: insultText,
+                        variant: 'destructive',
+                        duration: 10000,
+                    });
+                    
+                    const itemIndex = processedItems.findIndex(i => i.id === item.id);
+                    if (itemIndex > -1) {
+                        processedItems[itemIndex] = { ...processedItems[itemIndex], insultApplied: true };
+                        itemsChanged = true;
+                    }
+                }
+            }
+        }
+    });
+
+    if (itemsChanged) {
+        updateUserDataInDb({ todoItems: processedItems });
+    }
+  }, [isUserDataLoaded, userData?.todoItems, toast, updateUserDataInDb]);
 
   const value = useMemo(() => ({
       todoItems,
@@ -205,7 +251,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteTodoItem,
       getTodoItemById,
       toggleDareCompleted,
-  }), [todoItems, getTodoItemById, addTodoItem, toggleTodoItem, deleteTodoItem, toggleDareCompleted]);
+      checkMissedDares,
+  }), [todoItems, getTodoItemById, addTodoItem, toggleTodoItem, deleteTodoItem, toggleDareCompleted, checkMissedDares]);
 
   return (
     <TodoContext.Provider value={value}>

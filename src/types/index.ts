@@ -105,6 +105,8 @@ export interface TodoItem {
   penaltyApplied?: boolean; // Optional: whether the penalty has been applied
   dare?: string; // Optional: A dare for failing the pact
   dareCompleted?: boolean; // Optional: whether the dare was completed
+  dareAssignedAt?: string; // Optional: ISO date string for when dare was assigned
+  insultApplied?: boolean; // Optional: whether the insult for a missed dare has been shown
 }
 
 // For Constellations

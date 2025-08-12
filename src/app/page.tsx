@@ -27,6 +27,7 @@ import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownCh
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
+import { useTodos } from '@/components/providers/TodoProvider';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -47,12 +48,17 @@ export default function HomePage() {
   } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
+  const { checkMissedDares } = useTodos();
 
   const currentLevelInfo = getUserLevelInfo();
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+  
+  useEffect(() => {
+    checkMissedDares();
+  }, [checkMissedDares]);
 
   useEffect(() => {
     const todayStr = new Date().toISOString().split('T')[0];
