@@ -24,6 +24,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import AllianceCard from '@/components/alliances/AllianceCard';
 import { generateAllianceDare } from '@/lib/server/alliance-dare';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 
 // Simple hash function to get a number from a string
@@ -185,6 +196,18 @@ export default function AllianceDetailPage() {
 
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
+
+        const isComplete = alliance.progress >= alliance.target;
+        const isEnded = isPast(parseISO(alliance.endDate));
+        if (!isComplete && !isEnded) {
+            toast({
+                title: "Alliance Active",
+                description: "You cannot leave until the objective is met or the alliance's time expires.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         try {
             await leaveAlliance(alliance.id, user.uid);
             toast({ title: "You have left the alliance." });
@@ -196,6 +219,18 @@ export default function AllianceDetailPage() {
     
     const handleDisbandAlliance = async () => {
         if (!user || !alliance || alliance.creatorId !== user.uid) return;
+
+        const isComplete = alliance.progress >= alliance.target;
+        const isEnded = isPast(parseISO(alliance.endDate));
+        if (!isComplete && !isEnded) {
+            toast({
+                title: "Alliance Active",
+                description: "You cannot disband until the objective is met or the alliance's time expires.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         try {
             await disbandAlliance(alliance.id);
             toast({ title: "Alliance Disbanded", description: "The alliance has been removed." });
@@ -299,14 +334,50 @@ export default function AllianceDetailPage() {
                                     <Download className="h-4 w-4" />
                                 </Button>
                                 {isCreator ? (
-                                    <Button variant="destructive" onClick={handleDisbandAlliance}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Disband
-                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Disband
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently disband the alliance. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDisbandAlliance}>
+                                                    Disband
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 ) : isMember && (
-                                    <Button variant="destructive" size="icon" onClick={handleLeaveAlliance}>
-                                        <LogOut className="h-4 w-4" />
-                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="icon">
+                                                <LogOut className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure you want to leave?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    You will leave this alliance and your contributions will remain.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleLeaveAlliance}>
+                                                    Leave
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 )}
                             </div>
                         </div>
