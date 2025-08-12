@@ -26,6 +26,7 @@ import ProgressOverTimeChart from '@/components/progress/ProgressOverTimeChart';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -134,7 +135,7 @@ export default function HomePage() {
   if (!isUserDataLoaded || !currentLevelInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="loader"></div>
+        <Image src="/loading.gif" alt="Loading..." width={80} height={80} unoptimized />
       </div>
     );
   }

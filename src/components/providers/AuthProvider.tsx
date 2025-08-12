@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { UserData } from '@/types';
 import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
+import Image from 'next/image';
 
 const FAKE_DOMAIN = 'sigil.local';
 const GUEST_KEY = 'sigil-guest-mode';
@@ -296,7 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   if (showLoading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-          <div className="loader"></div>
+          <Image src="/loading.gif" alt="Loading..." width={80} height={80} unoptimized />
       </div>
     );
   }

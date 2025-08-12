@@ -14,6 +14,7 @@ import { TrendingUp, KeyRound, User, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -63,7 +64,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-          <div className="loader"></div>
+          <Image src="/loading.gif" alt="Loading..." width={80} height={80} unoptimized />
       </div>
     );
   }
