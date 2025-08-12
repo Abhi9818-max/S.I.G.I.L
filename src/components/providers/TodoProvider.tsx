@@ -225,11 +225,19 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const toggleDareCompleted = (id: string, completed?: boolean) => {
     const allItems = userData?.todoItems || [];
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+
+    // Check if the "Not yet" button was clicked for an overdue dare
+    if (completed === false && item.dare && item.dareAssignedAt && differenceInHours(new Date(), parseISO(item.dareAssignedAt)) > 24) {
+        showInsultDialog(item);
+    }
+    
     const newItems = allItems.map(i => {
-      if (i.id === id) {
-        return { ...i, dareCompleted: completed };
-      }
-      return i;
+        if (i.id === id) {
+            return { ...i, dareCompleted: completed };
+        }
+        return i;
     });
     updateUserDataInDb({ todoItems: newItems });
   };
