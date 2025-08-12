@@ -328,7 +328,7 @@ export default function AllianceDetailPage() {
                                 ) : isMember && (
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" size="icon">
+                                             <Button variant="destructive" size="icon">
                                                 <LogOut className="h-4 w-4" />
                                             </Button>
                                         </AlertDialogTrigger>
