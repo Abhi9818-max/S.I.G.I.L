@@ -12,7 +12,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateDare } from '@/lib/server/dare';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogHeader,
@@ -281,9 +280,11 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
               {dareDialog.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogAction onClick={() => setDareDialog(prev => ({...prev, isOpen: false}))}>
-            Understood
-          </AlertDialogAction>
+          <AlertDialogFooter>
+             <Button onClick={() => setDareDialog(prev => ({...prev, isOpen: false}))}>
+                Understood
+             </Button>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={insultDialog.isOpen}>

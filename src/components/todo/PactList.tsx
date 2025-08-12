@@ -8,7 +8,6 @@ import { ListChecks, Trash2, CalendarDays, ShieldAlert, CheckCircle, XCircle } f
 import { cn } from '@/lib/utils';
 import { format, isPast, startOfDay, isToday, parseISO } from 'date-fns';
 import type { TodoItem } from '@/types';
-import { useTodos } from '@/components/providers/TodoProvider';
 
 interface PactItemProps {
     item: TodoItem;
@@ -21,6 +20,7 @@ interface PactItemProps {
 
 const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDare, completedPact }: PactItemProps) => {
     const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate))) && !isToday(parseISO(item.dueDate));
+    
     return (
         <li className="flex items-start gap-3 p-3 border rounded-md bg-card hover:bg-muted/50 transition-colors">
             <Checkbox
@@ -61,8 +61,8 @@ const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDar
                            </div>
                            <div className="mt-2 flex items-center justify-end gap-2">
                                 <span className="text-xs font-medium">Completed?</span>
-                                 <Button size="sm" variant={item.dareCompleted ? "default" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
-                                <Button size="sm" variant={item.dareCompleted === false || item.dareCompleted === undefined ? "default" : "outline"} onClick={() => onToggleDare(item.id, undefined)} className="h-7 px-2 text-xs">Not yet</Button>
+                                 <Button size="sm" variant={item.dareCompleted === true ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
+                                <Button size="sm" variant={item.dareCompleted === false ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, false)} className="h-7 px-2 text-xs">Not yet</Button>
                            </div>
                         </div>
                     )}
