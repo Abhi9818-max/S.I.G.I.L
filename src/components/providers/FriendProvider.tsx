@@ -5,10 +5,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -44,6 +45,8 @@ interface FriendContextType {
     incomingRelationshipProposalFromFriend: (friendId: string) => RelationshipProposal | undefined;
     getPublicUserData: (userId: string) => Promise<UserData | null>;
     unfriend: (friendId: string) => Promise<void>;
+    sendKudo: (recipientId: string, type: 'kudos' | 'nudge', message: string) => Promise<Kudo>;
+    getKudos: (recipientId: string) => Promise<Kudo[]>;
     // Alliances
     createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress'>) => Promise<string>;
     userAlliances: Alliance[];
@@ -400,6 +403,35 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return incomingRelationshipProposals.find(p => p.senderId === friendId);
     }, [incomingRelationshipProposals]);
 
+    const sendKudo = useCallback(async (recipientId: string, type: 'kudos' | 'nudge', message: string): Promise<Kudo> => {
+        if (!user) throw new Error("Authentication required.");
+
+        const newKudo: Kudo = {
+            id: uuidv4(),
+            senderId: user.uid,
+            type,
+            message,
+            createdAt: new Date().toISOString(),
+        };
+
+        const userDocRef = doc(db, 'users', recipientId);
+        await updateDoc(userDocRef, {
+            kudos: arrayUnion(newKudo)
+        });
+
+        return newKudo;
+    }, [user]);
+
+    const getKudos = useCallback(async (recipientId: string): Promise<Kudo[]> => {
+        const userDocRef = doc(db, 'users', recipientId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            const data = userDocSnap.data() as UserData;
+            return data.kudos || [];
+        }
+        return [];
+    }, []);
+
     // Alliance Functions
     const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds'>): Promise<string> => {
         if (!user || !userData) throw new Error("Authentication required.");
@@ -587,6 +619,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             incomingRelationshipProposalFromFriend,
             getPublicUserData,
             unfriend,
+            sendKudo,
+            getKudos,
             createAlliance,
             userAlliances,
             getAllianceWithMembers,
