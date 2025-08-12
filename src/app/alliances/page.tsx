@@ -142,7 +142,7 @@ export default function AlliancesPage() {
     try {
       await sendAllianceChallenge(myAlliance, challengedAlliance);
       toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
-    } catch (e) {
+    } catch (e) => {
       toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
@@ -174,12 +174,17 @@ export default function AlliancesPage() {
           <div className="lg:col-span-2 space-y-8">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="form-alliance">
-                <AccordionTrigger>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-primary" />
-                    <h1 className="text-2xl font-semibold">Form an Alliance</h1>
-                  </div>
-                </AccordionTrigger>
+                <div className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/50">
+                    <div className="flex items-center gap-2">
+                        <Shield className="h-6 w-6 text-primary" />
+                        <h1 className="text-2xl font-semibold">Form an Alliance</h1>
+                    </div>
+                    <AccordionTrigger>
+                      <Button variant="ghost" size="icon">
+                        <PlusCircle className="h-6 w-6" />
+                      </Button>
+                    </AccordionTrigger>
+                </div>
                 <AccordionContent>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
                       <div>
