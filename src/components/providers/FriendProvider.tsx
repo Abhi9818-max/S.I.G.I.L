@@ -125,6 +125,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     since: friendDocData.since,
                     nickname: friendDocData.nickname,
                     relationship: friendDocData.relationship,
+                    taskDefinitions: friendUserData.taskDefinitions, // Include tasks
                 };
             }
             return null;

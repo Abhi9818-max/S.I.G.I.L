@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 // Simple hash function to get a number from a string
@@ -91,39 +92,53 @@ const InviteFriendsDialog = ({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Invite Friends to {alliance.name}</DialogTitle>
-                    <DialogDescription>Select friends to invite to join your alliance.</DialogDescription>
+                    <DialogDescription>Select friends to invite to join your alliance. Only friends who have the '{alliance.taskName}' task can be invited.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="h-64">
-                    <div className="space-y-2 pr-4">
-                        {availableFriends.length > 0 ? (
-                            availableFriends.map(friend => {
-                                const isPending = pendingInvites.includes(friend.uid);
-                                return (
-                                <div key={friend.uid} className={cn("flex items-center space-x-3 rounded-md p-2", isPending && "opacity-50")}>
-                                    <Checkbox
-                                        id={`friend-${friend.uid}`}
-                                        onCheckedChange={() => handleToggleFriend(friend.uid)}
-                                        checked={selectedFriends.includes(friend.uid)}
-                                        disabled={isPending}
-                                    />
-                                    <Label
-                                        htmlFor={`friend-${friend.uid}`}
-                                        className="flex-grow flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getAvatarForId(friend.uid, friend.photoURL)} />
-                                            <AvatarFallback>{(friend.nickname || friend.username).charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        {friend.nickname || friend.username}
-                                        {isPending && <span className="text-xs text-muted-foreground">(Invited)</span>}
-                                    </Label>
-                                </div>
-                            )})
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">All your friends are already in this alliance.</p>
-                        )}
-                    </div>
-                </ScrollArea>
+                 <TooltipProvider>
+                    <ScrollArea className="h-64">
+                        <div className="space-y-2 pr-4">
+                            {availableFriends.length > 0 ? (
+                                availableFriends.map(friend => {
+                                    const isPending = pendingInvites.includes(friend.uid);
+                                    const hasRequiredTask = friend.taskDefinitions?.some(t => t.id === alliance.taskId) ?? false;
+                                    const canBeInvited = !isPending && hasRequiredTask;
+
+                                    return (
+                                        <Tooltip key={friend.uid}>
+                                            <TooltipTrigger asChild>
+                                                <div className={cn("flex items-center space-x-3 rounded-md p-2", !canBeInvited && "opacity-50")}>
+                                                    <Checkbox
+                                                        id={`friend-${friend.uid}`}
+                                                        onCheckedChange={() => handleToggleFriend(friend.uid)}
+                                                        checked={selectedFriends.includes(friend.uid)}
+                                                        disabled={!canBeInvited}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`friend-${friend.uid}`}
+                                                        className="flex-grow flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={getAvatarForId(friend.uid, friend.photoURL)} />
+                                                            <AvatarFallback>{(friend.nickname || friend.username).charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        {friend.nickname || friend.username}
+                                                        {isPending && <span className="text-xs text-muted-foreground">(Invited)</span>}
+                                                    </Label>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {!hasRequiredTask && (
+                                                <TooltipContent>
+                                                    <p>This friend does not have the '{alliance.taskName}' task.</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                )})
+                            ) : (
+                                <p className="text-center text-muted-foreground py-8">All your friends are already in this alliance.</p>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </TooltipProvider>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button onClick={handleSendInvites} disabled={selectedFriends.length === 0}>

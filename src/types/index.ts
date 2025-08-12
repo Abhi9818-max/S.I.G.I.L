@@ -1,5 +1,6 @@
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -257,6 +258,7 @@ export interface Friend {
     relationship?: string;
     photoURL?: string | null;
     since: string;
+    taskDefinitions?: TaskDefinition[];
 }
 
 export interface RelationshipProposal {
