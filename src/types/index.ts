@@ -315,3 +315,15 @@ export interface AllianceInvitation {
   status: 'pending' | 'accepted' | 'declined';
   createdAt: string; // ISO
 }
+
+export interface AllianceChallenge {
+  id: string;
+  challengerAllianceId: string;
+  challengerAllianceName: string;
+  challengerCreatorId: string;
+  challengedAllianceId: string;
+  challengedAllianceName: string;
+  challengedCreatorId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string; // ISO
+}

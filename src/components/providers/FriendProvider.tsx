@@ -2,10 +2,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo, AllianceChallenge } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -59,6 +59,8 @@ interface FriendContextType {
     getPendingAllianceInvitesFor: (allianceId: string) => Promise<AllianceInvitation[]>;
     incomingAllianceInvitations: AllianceInvitation[];
     setAllianceDare: (allianceId: string, dare: string) => Promise<void>;
+    searchAlliances: (name: string) => Promise<Alliance[]>;
+    sendAllianceChallenge: (challengerAlliance: Alliance, challengedAlliance: Alliance) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -597,6 +599,49 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(allianceRef, { dare });
     }, []);
 
+    const searchAlliances = useCallback(async (name: string): Promise<Alliance[]> => {
+        const alliancesRef = collection(db, 'alliances');
+        // Firestore doesn't support case-insensitive or partial text search natively.
+        // A common workaround is to search for >= and <= a range.
+        const q = query(alliancesRef, 
+            where('name', '>=', name),
+            where('name', '<=', name + '\uf8ff'),
+            limit(10)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alliance));
+    }, []);
+
+    const sendAllianceChallenge = useCallback(async (challengerAlliance: Alliance, challengedAlliance: Alliance) => {
+        if (!user) throw new Error("Authentication required.");
+
+        const challengeId = `${challengerAlliance.id}_${challengedAlliance.id}`;
+        const reverseChallengeId = `${challengedAlliance.id}_${challengerAlliance.id}`;
+        const challengeRef = doc(db, 'alliance_challenges', challengeId);
+        const reverseChallengeRef = doc(db, 'alliance_challenges', reverseChallengeId);
+        
+        const challengeSnap = await getDoc(challengeRef);
+        const reverseChallengeSnap = await getDoc(reverseChallengeRef);
+
+        if (challengeSnap.exists() || reverseChallengeSnap.exists()) {
+            throw new Error("A challenge already exists between these two alliances.");
+        }
+        
+        const newChallenge: Omit<AllianceChallenge, 'id'> = {
+            challengerAllianceId: challengerAlliance.id,
+            challengerAllianceName: challengerAlliance.name,
+            challengerCreatorId: challengerAlliance.creatorId,
+            challengedAllianceId: challengedAlliance.id,
+            challengedAllianceName: challengedAlliance.name,
+            challengedCreatorId: challengedAlliance.creatorId,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+        };
+
+        await setDoc(challengeRef, newChallenge);
+        // We can add listening logic for challenges later if needed
+    }, [user]);
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -632,6 +677,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             getPendingAllianceInvitesFor,
             incomingAllianceInvitations,
             setAllianceDare,
+            searchAlliances,
+            sendAllianceChallenge,
         }}>
             {children}
         </FriendContext.Provider>

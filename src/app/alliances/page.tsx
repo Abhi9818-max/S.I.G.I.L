@@ -25,7 +25,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, PlusCircle, CalendarIcon, Users, ArrowRight } from 'lucide-react';
+import { Shield, PlusCircle, CalendarIcon, Users, ArrowRight, Swords, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TaskDefinition, Alliance } from '@/types';
 import Link from 'next/link';
@@ -37,6 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Separator } from '@/components/ui/separator';
 
 
 const allianceFormSchema = z.object({
@@ -67,9 +68,12 @@ type AllianceFormData = z.infer<typeof allianceFormSchema>;
 export default function AlliancesPage() {
   const { user } = useAuth();
   const { taskDefinitions, getTaskDefinitionById } = useUserRecords();
-  const { createAlliance, userAlliances } = useFriends();
+  const { createAlliance, userAlliances, searchAlliances, sendAllianceChallenge } = useFriends();
   const { toast } = useToast();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Alliance[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const form = useForm<AllianceFormData>({
     resolver: zodResolver(allianceFormSchema),
@@ -110,6 +114,36 @@ export default function AlliancesPage() {
         router.push(`/alliances/${newAllianceId}`);
     } catch(e) {
         toast({ title: "Creation Failed", description: (e as Error).message, variant: 'destructive'});
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setSearchResults([]);
+    try {
+      const results = await searchAlliances(searchQuery);
+      setSearchResults(results.filter(a => !userAlliances.some(ua => ua.id === a.id) && a.creatorId !== user?.uid));
+    } catch (e) {
+      toast({ title: "Search Failed", description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleChallenge = async (challengedAlliance: Alliance) => {
+    // Find an alliance created by the current user to send the challenge from
+    const myAlliance = userAlliances.find(a => a.creatorId === user?.uid);
+    if (!myAlliance) {
+      toast({ title: "No Alliance Found", description: "You must be the creator of an alliance to send challenges.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await sendAllianceChallenge(myAlliance, challengedAlliance);
+      toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
+    } catch (e) {
+      toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
 
@@ -207,6 +241,47 @@ export default function AlliancesPage() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                  <Swords className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Search for an alliance by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <Button onClick={handleSearch} disabled={isSearching}>
+                  <Search className="h-4 w-4 mr-2" />
+                  {isSearching ? 'Searching...' : 'Search'}
+                </Button>
+              </div>
+              {searchResults.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
+                  {searchResults.map(result => (
+                    <Card key={result.id} className="p-3">
+                       <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold">{result.name}</p>
+                            <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
+                          </div>
+                          <Button size="sm" onClick={() => handleChallenge(result)}>
+                            <Swords className="h-4 w-4 mr-2"/>
+                            Challenge
+                          </Button>
+                       </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
 
            <div className="space-y-4">
