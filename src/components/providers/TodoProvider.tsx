@@ -2,7 +2,7 @@
 "use client";
 
 import type { TodoItem } from '@/types';
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useUserRecords } from './UserRecordsProvider';
 import { useSettings } from './SettingsProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -17,11 +17,20 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
 import { INSULTS } from '@/lib/insults';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 
 interface DareDialogInfo {
+    isOpen: boolean;
+    title: string;
+    description: string;
+}
+
+interface InsultDialogInfo {
     isOpen: boolean;
     title: string;
     description: string;
@@ -40,12 +49,16 @@ interface TodoContextType {
 const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY = 'sigil-shown-pact-notifications';
+const INSULT_CONFIRMATION_PHRASE = "I am worthless bastard";
+
 
 export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { updateUserDataInDb, userData, isUserDataLoaded } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   const [dareDialog, setDareDialog] = useState<DareDialogInfo>({ isOpen: false, title: '', description: '' });
+  const [insultDialog, setInsultDialog] = useState<InsultDialogInfo>({ isOpen: false, title: '', description: '' });
+  const [confirmationInput, setConfirmationInput] = useState('');
   
   const todoItems = React.useMemo(() => {
     if (!isUserDataLoaded || !userData?.todoItems) return [];
@@ -201,7 +214,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [userData?.todoItems]);
   
   const checkMissedDares = useCallback(() => {
-    if (!isUserDataLoaded || !userData?.todoItems) return;
+    if (!isUserDataLoaded || !userData?.todoItems || insultDialog.isOpen) return;
     let itemsChanged = false;
     let processedItems = [...userData.todoItems];
 
@@ -222,11 +235,10 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 if (insultText) {
-                    toast({
+                    setInsultDialog({
+                        isOpen: true,
                         title: "Consequence for Inaction",
                         description: insultText,
-                        variant: 'destructive',
-                        duration: 10000,
                     });
                     
                     const itemIndex = processedItems.findIndex(i => i.id === item.id);
@@ -242,7 +254,12 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (itemsChanged) {
         updateUserDataInDb({ todoItems: processedItems });
     }
-  }, [isUserDataLoaded, userData?.todoItems, toast, updateUserDataInDb]);
+  }, [isUserDataLoaded, userData?.todoItems, updateUserDataInDb, insultDialog.isOpen]);
+  
+  const handleCloseInsultDialog = () => {
+    setInsultDialog({ isOpen: false, title: '', description: ''});
+    setConfirmationInput('');
+  }
 
   const value = useMemo(() => ({
       todoItems,
@@ -268,6 +285,35 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
           <AlertDialogAction onClick={() => setDareDialog(prev => ({...prev, isOpen: false}))}>
             Understood
           </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={insultDialog.isOpen}>
+        <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{insultDialog.title}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {insultDialog.description}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">To continue, type the following phrase:</p>
+                <p className="text-center font-mono text-primary bg-muted rounded-md p-2 text-sm">
+                    {INSULT_CONFIRMATION_PHRASE}
+                </p>
+                <Input
+                    value={confirmationInput}
+                    onChange={(e) => setConfirmationInput(e.target.value)}
+                    placeholder="Type the phrase here..."
+                />
+            </div>
+            <AlertDialogFooter>
+                <Button
+                    onClick={handleCloseInsultDialog}
+                    disabled={confirmationInput !== INSULT_CONFIRMATION_PHRASE}
+                >
+                    Dismiss
+                </Button>
+            </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </TodoContext.Provider>
