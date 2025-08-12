@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { ListChecks, Trash2, CalendarDays, ShieldAlert } from 'lucide-react';
+import { ListChecks, Trash2, CalendarDays, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, startOfDay, isToday, parseISO } from 'date-fns';
 import type { TodoItem } from '@/types';
@@ -15,10 +15,11 @@ interface PactItemProps {
     isEditable: boolean;
     onToggle: (id: string) => void;
     onDelete: (id: string) => void;
+    onToggleDare: (id: string, completed: boolean) => void;
     completedPact: string | null;
 }
 
-const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, completedPact }: PactItemProps) => {
+const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDare, completedPact }: PactItemProps) => {
     const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate))) && !isToday(parseISO(item.dueDate));
     return (
         <li className="flex items-start gap-3 p-3 border rounded-md bg-card hover:bg-muted/50 transition-colors">
@@ -53,9 +54,16 @@ const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, completedPa
                         </div>
                     )}
                     {item.dare && (
-                        <div className="text-xs flex items-center text-destructive">
-                            <ShieldAlert className="h-3.5 w-3.5 mr-1" />
-                            <span className="font-semibold">Dare:</span>&nbsp;{item.dare}
+                        <div className="p-2 mt-2 bg-destructive/10 border border-destructive/20 rounded-md text-destructive w-full">
+                           <div className="flex items-center gap-2">
+                             <ShieldAlert className="h-4 w-4" />
+                             <p className="text-xs font-semibold">{item.dare}</p>
+                           </div>
+                           <div className="mt-2 flex items-center justify-end gap-2">
+                                <span className="text-xs font-medium">Completed?</span>
+                                 <Button size="sm" variant={item.dareCompleted === true ? "default" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
+                                <Button size="sm" variant={item.dareCompleted === false || item.dareCompleted === undefined ? "default" : "outline"} onClick={() => onToggleDare(item.id, false)} className="h-7 px-2 text-xs">Not yet</Button>
+                           </div>
                         </div>
                     )}
                 </div>
@@ -83,7 +91,7 @@ interface PactListProps {
 }
 
 const PactList: React.FC<PactListProps> = ({ items, isEditable, title }) => {
-  const { toggleTodoItem, deleteTodoItem } = useTodos();
+  const { toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
   const [completedPact, setCompletedPact] = useState<string | null>(null);
 
   const handleToggle = (id: string) => {
@@ -110,6 +118,7 @@ const PactList: React.FC<PactListProps> = ({ items, isEditable, title }) => {
             isEditable={isEditable}
             onToggle={handleToggle}
             onDelete={deleteTodoItem}
+            onToggleDare={toggleDareCompleted}
             completedPact={completedPact}
         />
       ))}

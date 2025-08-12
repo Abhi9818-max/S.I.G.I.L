@@ -104,6 +104,7 @@ export interface TodoItem {
   penalty?: number; // Optional: XP penalty if overdue
   penaltyApplied?: boolean; // Optional: whether the penalty has been applied
   dare?: string; // Optional: A dare for failing the pact
+  dareCompleted?: boolean; // Optional: whether the dare was completed
 }
 
 // For Constellations

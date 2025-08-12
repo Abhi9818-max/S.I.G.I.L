@@ -32,6 +32,7 @@ interface TodoContextType {
   toggleTodoItem: (id: string) => void;
   deleteTodoItem: (id: string) => void;
   getTodoItemById: (id: string) => TodoItem | undefined;
+  toggleDareCompleted: (id: string, completed: boolean) => void;
 }
 
 const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
@@ -182,6 +183,17 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateUserDataInDb({ todoItems: newItems });
   };
 
+  const toggleDareCompleted = (id: string, completed: boolean) => {
+    const allItems = userData?.todoItems || [];
+    const newItems = allItems.map(item => {
+      if (item.id === id) {
+        return { ...item, dareCompleted: completed };
+      }
+      return item;
+    });
+    updateUserDataInDb({ todoItems: newItems });
+  };
+
   const getTodoItemById = React.useCallback((id: string): TodoItem | undefined => {
     return userData?.todoItems?.find(item => item.id === id);
   }, [userData?.todoItems]);
@@ -192,7 +204,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleTodoItem,
       deleteTodoItem,
       getTodoItemById,
-  }), [todoItems, getTodoItemById, addTodoItem, toggleTodoItem, deleteTodoItem]);
+      toggleDareCompleted,
+  }), [todoItems, getTodoItemById, addTodoItem, toggleTodoItem, deleteTodoItem, toggleDareCompleted]);
 
   return (
     <TodoContext.Provider value={value}>
