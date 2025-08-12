@@ -194,17 +194,6 @@ export default function AllianceDetailPage() {
         fetchPendingInvites();
     }, [allianceId, getPendingAllianceInvitesFor]);
 
-    const sortedMembers = useMemo(() => {
-        if (!alliance?.members) return [];
-        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
-    }, [alliance?.members]);
-
-    const topContributorId = useMemo(() => {
-        if (!sortedMembers || sortedMembers.length === 0) return null;
-        const topMember = sortedMembers[0];
-        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
-    }, [sortedMembers]);
-
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
         try {
@@ -265,6 +254,16 @@ export default function AllianceDetailPage() {
           });
       }, [allianceCardRef, toast, alliance]);
 
+    const sortedMembers = useMemo(() => {
+        if (!alliance?.members) return [];
+        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
+    }, [alliance?.members]);
+
+    const topContributorId = useMemo(() => {
+        if (!sortedMembers || sortedMembers.length === 0) return null;
+        const topMember = sortedMembers[0];
+        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
+    }, [sortedMembers]);
 
     if (isLoading || !alliance) {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
@@ -287,64 +286,63 @@ export default function AllianceDetailPage() {
                         Back to Alliances
                     </Button>
 
-                    <Card className="shadow-xl">
-                        <CardHeader>
-                            <div className="flex flex-col sm:flex-row justify-between gap-4">
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <Shield className="h-8 w-8 text-primary" />
-                                        <CardTitle className="text-3xl">{name}</CardTitle>
-                                    </div>
-                                    <CardDescription className="mt-2">{description}</CardDescription>
+                    <div className="space-y-8">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <Shield className="h-8 w-8 text-primary" />
+                                    <h1 className="text-3xl font-bold">{name}</h1>
                                 </div>
-                                <div className="flex-shrink-0 flex items-center gap-2">
-                                    {isCreator && (
-                                        <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
-                                            <UserPlus className="mr-2 h-4 w-4" />
-                                            Invite
-                                        </Button>
-                                    )}
-                                     <Button onClick={handleDownloadCard} variant="outline">
-                                        <CreditCard className="mr-2 h-4 w-4" />
-                                        Download Card
-                                    </Button>
-                                    {isCreator ? (
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" />Disband</Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This will permanently delete the alliance for everyone. This action cannot be undone.</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={handleDisbandAlliance}>Disband Alliance</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    ) : isMember && (
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button variant="outline">Leave Alliance</Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Leave this alliance?</AlertDialogTitle>
-                                                    <AlertDialogDescription>You can rejoin later if you change your mind, provided the alliance is still active.</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={handleLeaveAlliance}>Leave</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    )}
-                                </div>
+                                <p className="mt-2 text-muted-foreground">{description}</p>
                             </div>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                            <div className="flex-shrink-0 flex items-center gap-2">
+                                {isCreator && (
+                                    <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        Invite
+                                    </Button>
+                                )}
+                                 <Button onClick={handleDownloadCard} variant="outline">
+                                    <CreditCard className="mr-2 h-4 w-4" />
+                                    Download Card
+                                </Button>
+                                {isCreator ? (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" />Disband</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>This will permanently delete the alliance for everyone. This action cannot be undone.</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDisbandAlliance}>Disband Alliance</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                ) : isMember && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline">Leave Alliance</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Leave this alliance?</AlertDialogTitle>
+                                                <AlertDialogDescription>You can rejoin later if you change your mind, provided the alliance is still active.</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleLeaveAlliance}>Leave</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
                             {dare && (
                                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50 text-center">
                                     <div className="flex items-center justify-center gap-2 mb-2">
@@ -407,8 +405,8 @@ export default function AllianceDetailPage() {
                                     ))}
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </main>
             </div>
              {/* This div is for html-to-image to render offscreen */}
