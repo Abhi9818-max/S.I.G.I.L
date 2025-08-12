@@ -454,23 +454,24 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Bio */}
-                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {userData?.bio || "No bio yet."}
+                <div className="flex justify-between items-start gap-4">
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap flex-grow">
+                        {userData?.bio || "No bio yet."}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => setIsBioDialogOpen(true)}>
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Edit Bio</span>
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={handleShareProfile}>
+                            <Share2 className="h-4 w-4" />
+                            <span className="sr-only">Share Profile</span>
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Buttons */}
-                <div className="flex gap-2">
-                    <Button variant="secondary" size="icon" onClick={() => setIsBioDialogOpen(true)}>
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit Bio</span>
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={handleShareProfile}>
-                        <Share2 className="h-4 w-4" />
-                        <span className="sr-only">Share Profile</span>
-                    </Button>
-                </div>
               
-              <div className="border-b">
+              <div className="border-b mt-4">
                  <div className="flex justify-around">
                       <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
                       <button className={cn("p-3", activeTab === 'layout' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('layout')}><LayoutDashboard/></button>
