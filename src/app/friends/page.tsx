@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -68,7 +69,7 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
         <Link href={`/friends/${friend.uid}`} className="flex-shrink-0">
              <div 
                 ref={cardRef} 
-                className="card-3d w-[180px] h-[240px]"
+                className="card-3d w-[180px] h-[240px] md:w-[261px] md:h-[348px]"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
             >
