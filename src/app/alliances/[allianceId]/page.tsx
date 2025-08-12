@@ -321,9 +321,7 @@ export default function AllianceDetailPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <div onClick={handleDisbandAlliance}>
-                                                    <AlertDialogAction>Disband Alliance</AlertDialogAction>
-                                                </div>
+                                                <AlertDialogAction onClick={handleDisbandAlliance}>Disband Alliance</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
@@ -341,9 +339,7 @@ export default function AllianceDetailPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <div onClick={handleLeaveAlliance}>
-                                                    <AlertDialogAction>Leave</AlertDialogAction>
-                                                </div>
+                                                <AlertDialogAction onClick={handleLeaveAlliance}>Leave</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
