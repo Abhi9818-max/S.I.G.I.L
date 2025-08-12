@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download, CheckCircle, XCircle, Swords } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -311,7 +311,7 @@ export default function AllianceDetailPage() {
         );
     }
 
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare, status } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare, status, opponentDetails } = alliance;
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((progress / target) * 100, 100);
@@ -405,6 +405,18 @@ export default function AllianceDetailPage() {
                         </div>
 
                         <div className="space-y-6">
+                            {opponentDetails && (
+                                <div className="p-4 rounded-lg bg-red-950/50 border border-destructive/50 text-center">
+                                    <div className="flex items-center justify-center gap-4 mb-2">
+                                        <Swords className="h-6 w-6 text-destructive" />
+                                        <h3 className="font-semibold text-xl text-destructive-foreground">VERSUS</h3>
+                                        <Swords className="h-6 w-6 text-destructive" />
+                                    </div>
+                                    <Link href={`/alliances/${opponentDetails.allianceId}`} className="text-lg font-bold text-white hover:text-primary transition-colors">
+                                        {opponentDetails.allianceName}
+                                    </Link>
+                                </div>
+                            )}
                             {dare && (
                                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50 text-center">
                                     <div className="flex items-center justify-center gap-2 mb-2">

@@ -516,12 +516,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             };
         });
 
-        let status: AllianceStatus = 'ongoing';
-        if (totalProgress >= allianceData.target) {
-            status = 'completed';
-        } else if (isPast(endDate)) {
-            status = 'failed';
+        let status: AllianceStatus = allianceData.status || 'ongoing';
+        if (status === 'ongoing') {
+            if (totalProgress >= allianceData.target) {
+                status = 'completed';
+            } else if (isPast(endDate)) {
+                status = 'failed';
+            }
         }
+
 
         return { ...allianceData, members, progress: totalProgress, status };
     }, [user]);
@@ -682,8 +685,30 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
+        const batch = writeBatch(db);
+        
         const challengeRef = doc(db, 'alliance_challenges', challenge.id);
-        await updateDoc(challengeRef, { status: 'active' });
+        batch.update(challengeRef, { status: 'active' });
+
+        const challengerAllianceRef = doc(db, 'alliances', challenge.challengerAllianceId);
+        batch.update(challengerAllianceRef, {
+            activeChallengeId: challenge.id,
+            opponentDetails: {
+                allianceId: challenge.challengedAllianceId,
+                allianceName: challenge.challengedAllianceName,
+            }
+        });
+
+        const challengedAllianceRef = doc(db, 'alliances', challenge.challengedAllianceId);
+        batch.update(challengedAllianceRef, {
+            activeChallengeId: challenge.id,
+            opponentDetails: {
+                allianceId: challenge.challengerAllianceId,
+                allianceName: challenge.challengerAllianceName,
+            }
+        });
+
+        await batch.commit();
         await fetchFriendsAndRequests();
         toast({ title: "Challenge Accepted!", description: `The battle with ${challenge.challengerAllianceName} begins.` });
     }, [toast, fetchFriendsAndRequests]);

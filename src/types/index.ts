@@ -1,6 +1,7 @@
 
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -311,6 +312,11 @@ export interface Alliance {
   memberIds: string[];
   dare?: string; // Optional dare for failed alliances
   status?: AllianceStatus;
+  activeChallengeId?: string;
+  opponentDetails?: {
+    allianceId: string;
+    allianceName: string;
+  };
 }
 
 export interface AllianceInvitation {
