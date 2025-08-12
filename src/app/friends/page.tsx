@@ -101,26 +101,6 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
     );
 };
 
-const ChallengePopoverContent = ({ myAlliances, challengedAlliance, onSendChallenge }: { myAlliances: Alliance[], challengedAlliance: Alliance, onSendChallenge: (challenger: Alliance) => void }) => {
-    if (myAlliances.length === 0) {
-        return (
-            <div className="p-4 text-sm text-muted-foreground">
-                You must be the creator of an alliance to send challenges.
-            </div>
-        )
-    }
-
-    return (
-        <div className="space-y-2">
-            {myAlliances.map(alliance => (
-                <Button key={alliance.id} variant="ghost" className="w-full justify-start" onClick={() => onSendChallenge(alliance)}>
-                    {alliance.name}
-                </Button>
-            ))}
-        </div>
-    )
-}
-
 export default function FriendsPage() {
     const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
@@ -144,10 +124,6 @@ export default function FriendsPage() {
         incomingAllianceChallenges,
         acceptAllianceChallenge,
         declineAllianceChallenge,
-        unfriend,
-        userAlliances,
-        searchAlliances,
-        sendAllianceChallenge
     } = useFriends();
 
     const [usernameQuery, setUsernameQuery] = useState('');
@@ -155,11 +131,6 @@ export default function FriendsPage() {
     const [isLoadingSearch, setIsLoadingSearch] = useState(false);
     const [searchMessage, setSearchMessage] = useState<string | null>(null);
     const { toast } = useToast();
-
-    // For alliance challenges
-    const [allianceSearchQuery, setAllianceSearchQuery] = useState('');
-    const [allianceSearchResults, setAllianceSearchResults] = useState<Alliance[]>([]);
-    const [isSearchingAlliances, setIsSearchingAlliances] = useState(false);
 
     const handleSearch = async () => {
         if (!usernameQuery.trim() || usernameQuery.trim() === userData?.username) {
@@ -195,31 +166,6 @@ export default function FriendsPage() {
         }
     };
 
-    const handleAllianceSearch = async () => {
-      if (!allianceSearchQuery.trim()) return;
-      setIsSearchingAlliances(true);
-      setAllianceSearchResults([]);
-      try {
-        const results = await searchAlliances(allianceSearchQuery);
-        const myAllianceIds = userAlliances.map(a => a.id);
-        // Filter out my own alliances and alliances I'm already a member of
-        setAllianceSearchResults(results.filter(a => !myAllianceIds.includes(a.id)));
-      } catch (e) {
-        toast({ title: "Search Failed", description: (e as Error).message, variant: 'destructive' });
-      } finally {
-        setIsSearchingAlliances(false);
-      }
-    };
-
-    const handleSendChallenge = async (challengerAlliance: Alliance, challengedAlliance: Alliance) => {
-        try {
-            await sendAllianceChallenge(challengerAlliance, challengedAlliance);
-            toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
-        } catch (e) {
-            toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
-        }
-    };
-
     const levelInfo = getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
@@ -227,8 +173,6 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
-    const myCreatedAlliances = userAlliances.filter(a => a.creatorId === user?.uid);
-
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
@@ -310,56 +254,6 @@ export default function FriendsPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <Swords className="h-6 w-6 text-primary" />
-                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Challenge an Alliance</h2>
-                            </div>
-                             <div className="flex gap-2">
-                                <Input 
-                                  placeholder="Search for an alliance by name..."
-                                  value={allianceSearchQuery}
-                                  onChange={(e) => setAllianceSearchQuery(e.target.value)}
-                                  onKeyDown={(e) => e.key === 'Enter' && handleAllianceSearch()}
-                                />
-                                <Button onClick={handleAllianceSearch} disabled={isSearchingAlliances}>
-                                  <UserSearch className="h-4 w-4 mr-2" />
-                                  {isSearchingAlliances ? 'Searching...' : 'Search'}
-                                </Button>
-                              </div>
-                              {allianceSearchResults.length > 0 && (
-                                <div className="space-y-2 pt-2">
-                                  <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
-                                  {allianceSearchResults.map(result => (
-                                    <Card key={result.id} className="p-3">
-                                       <div className="flex justify-between items-center">
-                                          <div>
-                                            <p className="font-semibold">{result.name}</p>
-                                            <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
-                                          </div>
-                                          <Popover>
-                                              <PopoverTrigger asChild>
-                                                  <Button size="sm">
-                                                    <Swords className="h-4 w-4 mr-2"/>
-                                                    Challenge
-                                                  </Button>
-                                              </PopoverTrigger>
-                                              <PopoverContent>
-                                                <ChallengePopoverContent 
-                                                    myAlliances={myCreatedAlliances}
-                                                    challengedAlliance={result}
-                                                    onSendChallenge={(challengerAlliance) => handleSendChallenge(challengerAlliance, result)}
-                                                />
-                                              </PopoverContent>
-                                          </Popover>
-                                       </div>
-                                    </Card>
-                                  ))}
-                                </div>
-                              )}
-                        </div>
-
                     </div>
 
                     <div className="space-y-8">
