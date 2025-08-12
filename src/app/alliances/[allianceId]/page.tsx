@@ -135,8 +135,6 @@ export default function AllianceDetailPage() {
     const [alliance, setAlliance] = useState<Alliance | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
-    const [isDisbandDialogOpen, setIsDisbandDialogOpen] = useState(false);
-    const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
     const [pendingInvites, setPendingInvites] = useState<string[]>([]);
     const { toast } = useToast();
     const allianceCardRef = useRef<HTMLDivElement>(null);
@@ -190,7 +188,6 @@ export default function AllianceDetailPage() {
         try {
             await leaveAlliance(alliance.id, user.uid);
             toast({ title: "You have left the alliance." });
-            setIsLeaveDialogOpen(false);
             router.push('/alliances');
         } catch (error) {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
@@ -202,7 +199,6 @@ export default function AllianceDetailPage() {
         try {
             await disbandAlliance(alliance.id);
             toast({ title: "Alliance Disbanded", description: "The alliance has been removed." });
-            setIsDisbandDialogOpen(false);
             router.push('/alliances');
         } catch (error) {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
@@ -303,39 +299,14 @@ export default function AllianceDetailPage() {
                                     <Download className="h-4 w-4" />
                                 </Button>
                                 {isCreator ? (
-                                    <Dialog open={isDisbandDialogOpen} onOpenChange={setIsDisbandDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" />Disband</Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Are you sure?</DialogTitle>
-                                                <DialogDescription>This will permanently delete the alliance for everyone. This action cannot be undone.</DialogDescription>
-                                            </DialogHeader>
-                                            <DialogFooter>
-                                                <Button variant="outline" onClick={() => setIsDisbandDialogOpen(false)}>Cancel</Button>
-                                                <Button variant="destructive" onClick={handleDisbandAlliance}>Disband Alliance</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                                    <Button variant="destructive" onClick={handleDisbandAlliance}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Disband
+                                    </Button>
                                 ) : isMember && (
-                                    <Dialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
-                                        <DialogTrigger asChild>
-                                             <Button variant="destructive" size="icon">
-                                                <LogOut className="h-4 w-4" />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Leave this alliance?</DialogTitle>
-                                                <DialogDescription>You can rejoin later if you change your mind, provided the alliance is still active.</DialogDescription>
-                                            </DialogHeader>
-                                            <DialogFooter>
-                                                <Button variant="outline" onClick={() => setIsLeaveDialogOpen(false)}>Cancel</Button>
-                                                <Button variant="destructive" onClick={handleLeaveAlliance}>Leave</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                                    <Button variant="destructive" size="icon" onClick={handleLeaveAlliance}>
+                                        <LogOut className="h-4 w-4" />
+                                    </Button>
                                 )}
                             </div>
                         </div>
