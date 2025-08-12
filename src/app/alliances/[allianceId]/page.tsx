@@ -255,6 +255,16 @@ export default function AllianceDetailPage() {
           });
       }, [allianceCardRef, toast, alliance]);
 
+    const sortedMembers = useMemo(() => {
+        if (!alliance?.members) return [];
+        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
+    }, [alliance?.members]);
+
+    const topContributorId = useMemo(() => {
+        if (!sortedMembers || sortedMembers.length === 0) return null;
+        const topMember = sortedMembers[0];
+        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
+    }, [sortedMembers]);
 
     if (isLoading || !alliance) {
         return <div className="flex items-center justify-center min-h-screen">Loading alliance details...</div>;
@@ -265,17 +275,6 @@ export default function AllianceDetailPage() {
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((progress / target) * 100, 100);
     const timeRemaining = differenceInDays(parseISO(endDate), new Date());
-
-    const sortedMembers = useMemo(() => {
-        if (!members) return [];
-        return [...members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
-    }, [members]);
-
-    const topContributorId = useMemo(() => {
-        if (!sortedMembers || sortedMembers.length === 0) return null;
-        const topMember = sortedMembers[0];
-        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
-    }, [sortedMembers]);
 
 
     return (
