@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -76,9 +75,6 @@ const AvatarSelectionDialog: React.FC<AvatarSelectionDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Choose Your Avatar</DialogTitle>
-          <DialogDescription>
-            Select a new profile picture from the gallery.
-          </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="male" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
