@@ -28,7 +28,7 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData, f
 
         const allTaskDefinitions = new Map<string, TaskDefinition>();
         [...currentUserTasks, ...friendTasks].forEach(task => {
-            if (!allTaskDefinitions.has(task.id)) {
+            if (!allTaskDefinitions.has(task.id) && task.status === 'active') { // Only compare active tasks
                 allTaskDefinitions.set(task.id, task);
             }
         });

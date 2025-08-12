@@ -16,6 +16,10 @@ import Image from 'next/image';
 const FAKE_DOMAIN = 'sigil.local';
 const GUEST_KEY = 'sigil-guest-mode';
 
+const MALE_AVATAR_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+const FEMALE_AVATAR_NUMBERS = [12, 15, 16, 17, 33, 34, 35, 36, 37, 38, 39, 40, 41];
+
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -186,12 +190,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const newUser = userCredential.user;
 
-        await updateProfile(newUser, { displayName: username });
+        const avatarSet = gender === 'female' ? FEMALE_AVATAR_NUMBERS : MALE_AVATAR_NUMBERS;
+        const randomAvatarIndex = Math.floor(Math.random() * avatarSet.length);
+        const avatarNumber = avatarSet[randomAvatarIndex];
+        const defaultPhotoURL = `/avatars/avatar${avatarNumber}.jpeg`;
+
+        await updateProfile(newUser, { displayName: username, photoURL: defaultPhotoURL });
 
         const initialUserData: UserData = {
             username: username,
             username_lowercase: username.toLowerCase(),
-            photoURL: null,
+            photoURL: defaultPhotoURL,
             bio: '',
             gender: gender,
             records: [],

@@ -48,7 +48,7 @@ interface FriendContextType {
     sendKudo: (recipientId: string, type: 'kudos' | 'nudge', message: string) => Promise<Kudo>;
     getKudos: (recipientId: string) => Promise<Kudo[]>;
     // Alliances
-    createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress'>) => Promise<string>;
+    createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt'>) => Promise<string>;
     userAlliances: Alliance[];
     getAllianceWithMembers: (allianceId: string) => Promise<Alliance | null>;
     leaveAlliance: (allianceId: string, memberId: string) => Promise<void>;
@@ -61,6 +61,7 @@ interface FriendContextType {
     setAllianceDare: (allianceId: string, dare: string) => Promise<void>;
     searchAlliances: (name: string) => Promise<Alliance[]>;
     sendAllianceChallenge: (challengerAlliance: Alliance, challengedAlliance: Alliance) => Promise<void>;
+    updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -435,7 +436,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     // Alliance Functions
-    const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds'>): Promise<string> => {
+    const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt'>): Promise<string> => {
         if (!user || !userData) throw new Error("Authentication required.");
         
         const newAllianceData = {
@@ -507,9 +508,22 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
         const allianceRef = doc(db, 'alliances', allianceId);
-        await updateDoc(allianceRef, {
+        const allianceSnap = await getDoc(allianceRef);
+        if (!allianceSnap.exists()) throw new Error("Alliance not found.");
+
+        const batch = writeBatch(db);
+        batch.update(allianceRef, {
             memberIds: arrayRemove(memberId)
         });
+
+        // The members array update is tricky with arrayRemove for objects.
+        // It's often better to read, modify, and write the whole array.
+        const currentData = allianceSnap.data() as Alliance;
+        const updatedMembers = currentData.members.filter(m => m.uid !== memberId);
+        batch.update(allianceRef, { members: updatedMembers });
+
+        await batch.commit();
+
     }, []);
 
     const disbandAlliance = useCallback(async (allianceId: string) => {
@@ -647,6 +661,11 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         // We can add listening logic for challenges later if needed
     }, [user]);
 
+    const updateAlliance = useCallback(async (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => {
+        const allianceRef = doc(db, 'alliances', allianceId);
+        await updateDoc(allianceRef, data);
+    }, []);
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -684,6 +703,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             setAllianceDare,
             searchAlliances,
             sendAllianceChallenge,
+            updateAlliance,
         }}>
             {children}
         </FriendContext.Provider>
