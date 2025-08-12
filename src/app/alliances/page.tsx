@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge } from '@/types';
 import Link from 'next/link';
