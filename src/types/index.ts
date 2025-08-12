@@ -333,6 +333,6 @@ export interface AllianceChallenge {
   challengedAllianceId: string;
   challengedAllianceName: string;
   challengedCreatorId: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'accepted' | 'declined' | 'active' | 'completed';
   createdAt: string; // ISO
 }

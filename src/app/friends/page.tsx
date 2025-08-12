@@ -7,11 +7,11 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend } from '@/types';
+import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -119,6 +119,9 @@ export default function FriendsPage() {
         incomingAllianceInvitations,
         acceptAllianceInvitation,
         declineAllianceInvitation,
+        incomingAllianceChallenges,
+        acceptAllianceChallenge,
+        declineAllianceChallenge,
         unfriend
     } = useFriends();
 
@@ -267,8 +270,8 @@ export default function FriendsPage() {
                                           <PopoverTrigger asChild>
                                               <Button variant="outline" className="relative">
                                                   <Mail className="h-5 w-5" />
-                                                  {(incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length) > 0 && (
-                                                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length}</Badge>
+                                                  {(incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length) > 0 && (
+                                                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length}</Badge>
                                                   )}
                                               </Button>
                                           </PopoverTrigger>
@@ -279,7 +282,7 @@ export default function FriendsPage() {
                                                       <p className="text-sm text-muted-foreground">Accept or decline requests.</p>
                                                   </div>
                                                   <ScrollArea className="h-[200px]">
-                                                      {(incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length) === 0 ? (
+                                                      {(incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length) === 0 ? (
                                                           <p className="text-center text-sm text-muted-foreground py-4">No incoming requests.</p>
                                                       ) : (
                                                         <>
@@ -335,6 +338,24 @@ export default function FriendsPage() {
                                                                         <div className="flex gap-1 self-end">
                                                                             <Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceInvitation(req)}><Check className="h-4 w-4" /></Button>
                                                                             <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(req.id)}><X className="h-4 w-4" /></Button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                            <h5 className="text-xs text-muted-foreground font-semibold my-2">Alliance Challenges</h5>
+                                                            {incomingAllianceChallenges.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">None</p>}
+                                                             <div className="space-y-3 pr-3">
+                                                                {incomingAllianceChallenges.map(challenge => (
+                                                                    <div key={challenge.id} className="p-2 border rounded-lg flex flex-col items-start gap-2 bg-card">
+                                                                        <div className="flex items-center gap-2">
+                                                                             <div className="p-2 rounded-lg bg-muted">
+                                                                                <Swords className="h-4 w-4 text-destructive" />
+                                                                             </div>
+                                                                            <p className="text-xs"><span className="font-medium">{challenge.challengerAllianceName}</span> has challenged your alliance!</p>
+                                                                        </div>
+                                                                        <div className="flex gap-1 self-end">
+                                                                            <Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceChallenge(challenge)}><Check className="h-4 w-4" /></Button>
+                                                                            <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(challenge.id)}><X className="h-4 w-4" /></Button>
                                                                         </div>
                                                                     </div>
                                                                 ))}

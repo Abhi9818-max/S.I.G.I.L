@@ -58,9 +58,12 @@ interface FriendContextType {
     declineAllianceInvitation: (invitationId: string) => Promise<void>;
     getPendingAllianceInvitesFor: (allianceId: string) => Promise<AllianceInvitation[]>;
     incomingAllianceInvitations: AllianceInvitation[];
+    incomingAllianceChallenges: AllianceChallenge[];
     setAllianceDare: (allianceId: string, dare: string) => Promise<void>;
     searchAlliances: (name: string) => Promise<Alliance[]>;
     sendAllianceChallenge: (challengerAlliance: Alliance, challengedAlliance: Alliance) => Promise<void>;
+    acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
+    declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
 }
 
@@ -78,6 +81,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [userAlliances, setUserAlliances] = useState<Alliance[]>([]);
     const [incomingAllianceInvitations, setIncomingAllianceInvitations] = useState<AllianceInvitation[]>([]);
+    const [incomingAllianceChallenges, setIncomingAllianceChallenges] = useState<AllianceChallenge[]>([]);
 
     useEffect(() => {
         if (!user) {
@@ -147,6 +151,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const incomingAllianceSnapshot = await getDocs(incomingAllianceQuery);
         setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
 
+        // Fetch incoming alliance challenges
+        const incomingChallengesQuery = query(collection(db, 'alliance_challenges'), where('challengedCreatorId', '==', user.uid), where('status', '==', 'pending'));
+        const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
+        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
+
+
     }, [user]);
 
     useEffect(() => {
@@ -162,6 +172,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
              setIncomingRelationshipProposals([]);
              setPendingRelationshipProposals([]);
              setIncomingAllianceInvitations([]);
+             setIncomingAllianceChallenges([]);
         }
     }, [user, fetchFriendsAndRequests]);
 
@@ -670,6 +681,20 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         // We can add listening logic for challenges later if needed
     }, [user]);
 
+    const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
+        const challengeRef = doc(db, 'alliance_challenges', challenge.id);
+        await updateDoc(challengeRef, { status: 'active' });
+        await fetchFriendsAndRequests();
+        toast({ title: "Challenge Accepted!", description: `The battle with ${challenge.challengerAllianceName} begins.` });
+    }, [toast, fetchFriendsAndRequests]);
+
+    const declineAllianceChallenge = useCallback(async (challengeId: string) => {
+        const challengeRef = doc(db, 'alliance_challenges', challengeId);
+        await updateDoc(challengeRef, { status: 'declined' });
+        await fetchFriendsAndRequests();
+        toast({ title: 'Challenge Declined', variant: 'destructive' });
+    }, [toast, fetchFriendsAndRequests]);
+
     const updateAlliance = useCallback(async (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => {
         const allianceRef = doc(db, 'alliances', allianceId);
         await updateDoc(allianceRef, data);
@@ -709,9 +734,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             declineAllianceInvitation,
             getPendingAllianceInvitesFor,
             incomingAllianceInvitations,
+            incomingAllianceChallenges,
             setAllianceDare,
             searchAlliances,
             sendAllianceChallenge,
+            acceptAllianceChallenge,
+            declineAllianceChallenge,
             updateAlliance,
         }}>
             {children}
