@@ -108,8 +108,12 @@ export default function TodoPage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [view, setView] = useState<'today' | 'yesterday'>('today');
 
-  const { todoItems, addTodoItem } = useTodos();
+  const { todoItems, addTodoItem, checkMissedDares } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
+  
+  useEffect(() => {
+    checkMissedDares();
+  }, [checkMissedDares]);
 
   const todaysPacts = todoItems.filter(item => {
     try {

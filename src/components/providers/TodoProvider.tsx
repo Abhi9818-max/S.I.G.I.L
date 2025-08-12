@@ -226,20 +226,6 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const toggleDareCompleted = (id: string, completed?: boolean) => {
     const allItems = userData?.todoItems || [];
-    const item = allItems.find(item => item.id === id);
-    
-    if (!item) return;
-
-    // If setting to "not completed" (undefined) and the dare is overdue, show insult
-    if (completed === undefined && item.dare && item.dareAssignedAt && !item.insultApplied) {
-        const hoursSinceDare = differenceInHours(new Date(), parseISO(item.dareAssignedAt));
-        if (hoursSinceDare > 24) {
-            showInsultDialog(item);
-            return; // Don't update the dareCompleted status yet, let the insult logic handle it.
-        }
-    }
-    
-    // Otherwise, just update the status
     const newItems = allItems.map(i => {
       if (i.id === id) {
         return { ...i, dareCompleted: completed };
@@ -259,7 +245,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const overdueUncompletedDare = userData.todoItems.find(item => 
         item.dare && 
         item.dareAssignedAt && 
-        !item.dareCompleted && 
+        item.dareCompleted !== true && // Check for not explicitly true
         !item.insultApplied &&
         differenceInHours(new Date(), parseISO(item.dareAssignedAt)) > 24
     );
