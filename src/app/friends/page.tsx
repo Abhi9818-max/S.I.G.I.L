@@ -101,46 +101,25 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
     );
 };
 
-const ChallengeDialog = ({ isOpen, onOpenChange, myAlliances, challengedAlliance, onSendChallenge }: { isOpen: boolean, onOpenChange: (open: boolean) => void, myAlliances: Alliance[], challengedAlliance: Alliance | null, onSendChallenge: (challengerId: string) => void }) => {
-    const [selectedAllianceId, setSelectedAllianceId] = useState<string | undefined>(myAlliances[0]?.id);
-
-    useEffect(() => {
-        if (isOpen && myAlliances.length > 0 && !selectedAllianceId) {
-            setSelectedAllianceId(myAlliances[0].id);
-        }
-    }, [isOpen, myAlliances, selectedAllianceId]);
-
-    if (!challengedAlliance) return null;
+const ChallengePopoverContent = ({ myAlliances, challengedAlliance, onSendChallenge }: { myAlliances: Alliance[], challengedAlliance: Alliance, onSendChallenge: (challenger: Alliance) => void }) => {
+    if (myAlliances.length === 0) {
+        return (
+            <div className="p-4 text-sm text-muted-foreground">
+                You must be the creator of an alliance to send challenges.
+            </div>
+        )
+    }
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Challenge {challengedAlliance.name}</DialogTitle>
-                </DialogHeader>
-                <div>
-                    <Label>Choose your challenging alliance:</Label>
-                    <RadioGroup value={selectedAllianceId} onValueChange={setSelectedAllianceId} className="mt-2 space-y-2">
-                        {myAlliances.map(alliance => (
-                             <Label key={alliance.id} htmlFor={`alliance-${alliance.id}`} className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                                <RadioGroupItem value={alliance.id} id={`alliance-${alliance.id}`} />
-                                <span className="font-medium">{alliance.name}</span>
-                            </Label>
-                        ))}
-                    </RadioGroup>
-                </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={() => selectedAllianceId && onSendChallenge(selectedAllianceId)} disabled={!selectedAllianceId}>
-                        <Swords className="h-4 w-4 mr-2"/>
-                        Send Challenge
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <div className="space-y-2">
+            {myAlliances.map(alliance => (
+                <Button key={alliance.id} variant="ghost" className="w-full justify-start" onClick={() => onSendChallenge(alliance)}>
+                    {alliance.name}
+                </Button>
+            ))}
+        </div>
     )
 }
-
 
 export default function FriendsPage() {
     const { user, userData } = useAuth();
@@ -178,8 +157,6 @@ export default function FriendsPage() {
     const { toast } = useToast();
 
     // For alliance challenges
-    const [isChallengeDialogOpen, setIsChallengeDialogOpen] = useState(false);
-    const [challengedAlliance, setChallengedAlliance] = useState<Alliance | null>(null);
     const [allianceSearchQuery, setAllianceSearchQuery] = useState('');
     const [allianceSearchResults, setAllianceSearchResults] = useState<Alliance[]>([]);
     const [isSearchingAlliances, setIsSearchingAlliances] = useState(false);
@@ -234,28 +211,12 @@ export default function FriendsPage() {
       }
     };
 
-    const handleOpenChallengeDialog = (alliance: Alliance) => {
-        const myCreatedAlliances = userAlliances.filter(a => a.creatorId === user?.uid);
-         if (myCreatedAlliances.length === 0) {
-            toast({ title: "No Alliance Found", description: "You must be the creator of an alliance to send challenges.", variant: "destructive" });
-            return;
-        }
-        setChallengedAlliance(alliance);
-        setIsChallengeDialogOpen(true);
-    };
-
-    const handleSendChallenge = async (challengerAllianceId: string) => {
-        const challengerAlliance = userAlliances.find(a => a.id === challengerAllianceId);
-        if (!challengerAlliance || !challengedAlliance) return;
-        
+    const handleSendChallenge = async (challengerAlliance: Alliance, challengedAlliance: Alliance) => {
         try {
             await sendAllianceChallenge(challengerAlliance, challengedAlliance);
             toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
         } catch (e) {
             toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
-        } finally {
-            setIsChallengeDialogOpen(false);
-            setChallengedAlliance(null);
         }
     };
 
@@ -266,6 +227,8 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
+    const myCreatedAlliances = userAlliances.filter(a => a.creatorId === user?.uid);
+
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
@@ -375,10 +338,21 @@ export default function FriendsPage() {
                                             <p className="font-semibold">{result.name}</p>
                                             <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
                                           </div>
-                                          <Button size="sm" onClick={() => handleOpenChallengeDialog(result)}>
-                                            <Swords className="h-4 w-4 mr-2"/>
-                                            Challenge
-                                          </Button>
+                                          <Popover>
+                                              <PopoverTrigger asChild>
+                                                  <Button size="sm">
+                                                    <Swords className="h-4 w-4 mr-2"/>
+                                                    Challenge
+                                                  </Button>
+                                              </PopoverTrigger>
+                                              <PopoverContent>
+                                                <ChallengePopoverContent 
+                                                    myAlliances={myCreatedAlliances}
+                                                    challengedAlliance={result}
+                                                    onSendChallenge={(challengerAlliance) => handleSendChallenge(challengerAlliance, result)}
+                                                />
+                                              </PopoverContent>
+                                          </Popover>
                                        </div>
                                     </Card>
                                   ))}
@@ -575,13 +549,6 @@ export default function FriendsPage() {
                     </div>
                 </div>
             </main>
-            <ChallengeDialog 
-                isOpen={isChallengeDialogOpen}
-                onOpenChange={setIsChallengeDialogOpen}
-                myAlliances={userAlliances.filter(a => a.creatorId === user?.uid)}
-                challengedAlliance={challengedAlliance}
-                onSendChallenge={handleSendChallenge}
-            />
         </div>
     );
 };
