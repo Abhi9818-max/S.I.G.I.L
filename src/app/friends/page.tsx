@@ -52,8 +52,8 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
         const { left, top, width, height } = cardRef.current.getBoundingClientRect();
         const x = e.clientX - left;
         const y = e.clientY - top;
-        const rotateX = (y / height - 0.5) * -20;
-        const rotateY = (x / width - 0.5) * 20;
+        const rotateX = (y / height - 0.5) * -10;
+        const rotateY = (x / width - 0.5) * 10;
         cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
         cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
     };
