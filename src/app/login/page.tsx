@@ -64,7 +64,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-          <Image src="/loading.gif" alt="Loading..." width={80} height={80} unoptimized />
+          <div className="loader"></div>
       </div>
     );
   }
