@@ -481,23 +481,25 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             }
         });
         
-        const members: AllianceMember[] = membersData.map(m => ({
-            uid: m.uid!,
-            username: m.username,
-            photoURL: m.photoURL,
-            nickname: nicknames.get(m.uid!) || m.username,
-        }));
-        
         const startDate = parseISO(allianceData.startDate);
         const endDate = parseISO(allianceData.endDate);
         let totalProgress = 0;
 
-        membersData.forEach(member => {
-            const memberRecords = member.records || [];
+        const members: AllianceMember[] = membersData.map(m => {
+            const memberRecords = m.records || [];
             const relevantRecords = memberRecords.filter(r => {
                 return r.taskType === allianceData.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate });
             });
-            totalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
+            const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
+            totalProgress += contribution;
+
+            return {
+                uid: m.uid!,
+                username: m.username,
+                photoURL: m.photoURL,
+                nickname: nicknames.get(m.uid!) || m.username,
+                contribution: contribution,
+            };
         });
 
         return { ...allianceData, members, progress: totalProgress };

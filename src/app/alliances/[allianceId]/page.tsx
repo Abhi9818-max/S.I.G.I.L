@@ -6,11 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
-import type { Alliance, UserData, TaskDefinition, Friend } from '@/types';
+import type { Alliance, UserData, TaskDefinition, Friend, AllianceMember } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -266,6 +266,17 @@ export default function AllianceDetailPage() {
     const progressPercentage = Math.min((progress / target) * 100, 100);
     const timeRemaining = differenceInDays(parseISO(endDate), new Date());
 
+    const sortedMembers = useMemo(() => {
+        if (!members) return [];
+        return [...members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
+    }, [members]);
+
+    const topContributorId = useMemo(() => {
+        if (!sortedMembers || sortedMembers.length === 0) return null;
+        const topMember = sortedMembers[0];
+        return topMember.contribution && topMember.contribution > 0 ? topMember.uid : null;
+    }, [sortedMembers]);
+
 
     return (
         <>
@@ -367,16 +378,27 @@ export default function AllianceDetailPage() {
                             <div>
                                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Members ({members.length})</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {members.map(member => (
+                                    {sortedMembers.map(member => (
                                         <Link key={member.uid} href={`/friends/${member.uid}`}>
                                             <div className="p-3 border rounded-lg flex items-center gap-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
                                                 <Avatar>
                                                     <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
                                                     <AvatarFallback>{(member.nickname || member.username).charAt(0).toUpperCase()}</AvatarFallback>
                                                 </Avatar>
-                                                <div>
-                                                    <p className="font-medium">{member.nickname || member.username}</p>
-                                                    {member.uid === creatorId && <p className="text-xs text-muted-foreground">Creator</p>}
+                                                <div className="flex-grow">
+                                                    <p className="font-medium flex items-center gap-2">
+                                                        {member.nickname || member.username}
+                                                        {member.uid === topContributorId && (
+                                                            <span className="text-xs font-bold text-yellow-400 flex items-center gap-1">
+                                                                <Crown className="h-3 w-3" />
+                                                                KING
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Contribution: {(member.contribution || 0).toLocaleString()}
+                                                        {member.uid === creatorId && <span className="ml-2">(Creator)</span>}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </Link>
