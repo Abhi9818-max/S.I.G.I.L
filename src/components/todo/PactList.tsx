@@ -87,15 +87,17 @@ PactItem.displayName = 'PactItem';
 interface PactListProps {
   items: TodoItem[];
   isEditable: boolean;
+  onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleDare: (id: string, completed?: boolean) => void;
   title?: string;
 }
 
-const PactList: React.FC<PactListProps> = ({ items, isEditable, title }) => {
-  const { toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
+const PactList: React.FC<PactListProps> = ({ items, isEditable, title, onToggle, onDelete, onToggleDare }) => {
   const [completedPact, setCompletedPact] = useState<string | null>(null);
 
   const handleToggle = (id: string) => {
-    toggleTodoItem(id);
+    onToggle(id);
     setCompletedPact(id);
     setTimeout(() => setCompletedPact(null), 800); // Duration of the animation
   }
@@ -117,8 +119,8 @@ const PactList: React.FC<PactListProps> = ({ items, isEditable, title }) => {
             item={item}
             isEditable={isEditable}
             onToggle={handleToggle}
-            onDelete={deleteTodoItem}
-            onToggleDare={toggleDareCompleted}
+            onDelete={onDelete}
+            onToggleDare={onToggleDare}
             completedPact={completedPact}
         />
       ))}

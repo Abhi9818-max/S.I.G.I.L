@@ -108,7 +108,7 @@ export default function TodoPage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [view, setView] = useState<'today' | 'yesterday'>('today');
 
-  const { todoItems, addTodoItem, checkMissedDares } = useTodos();
+  const { todoItems, addTodoItem, checkMissedDares, toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
   
   useEffect(() => {
@@ -196,6 +196,9 @@ export default function TodoPage() {
                         <PactList 
                           items={displayedPacts}
                           isEditable={view === 'today'}
+                          onToggle={toggleTodoItem}
+                          onDelete={deleteTodoItem}
+                          onToggleDare={toggleDareCompleted}
                         />
                          {displayedPacts.length === 0 && view === 'today' && (
                             <p className="text-center text-muted-foreground py-4">No pacts for today yet.</p>
