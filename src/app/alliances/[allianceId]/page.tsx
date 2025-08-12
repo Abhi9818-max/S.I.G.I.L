@@ -33,7 +33,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 
@@ -50,7 +49,7 @@ const simpleHash = (s: string) => {
 
 const getAvatarForId = (id: string, url?: string | null) => {
     if (url) return url;
-    const avatarNumber = (simpleHash(id) % 12) + 1;
+    const avatarNumber = (simpleHash(id) % 41) + 1;
     return `/avatars/avatar${avatarNumber}.jpeg`;
 }
 

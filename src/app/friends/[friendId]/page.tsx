@@ -340,7 +340,7 @@ export default function FriendProfilePage() {
     const friendRecords = friendData.records || [];
     const friendTasks = friendData.taskDefinitions || [];
     
-    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 12) + 1}.jpeg`;
+    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 41) + 1}.jpeg`;
     const today = new Date();
     const yesterday = subDays(today, 1);
     const displayName = friendInfo?.nickname || friendData.username;

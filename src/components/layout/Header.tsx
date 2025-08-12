@@ -85,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const getAvatarForId = (id: string | undefined) => {
       if (!id) return '';
-      const avatarNumber = (simpleHash(id) % 12) + 1;
+      const avatarNumber = (simpleHash(id) % 41) + 1;
       return `/avatars/avatar${avatarNumber}.jpeg`;
   }
 

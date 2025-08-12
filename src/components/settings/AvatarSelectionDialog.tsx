@@ -14,9 +14,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
 
-// Generate paths for all avatars from avatar1.jpeg to avatar20.jpeg
+// Generate paths for all avatars from avatar1.jpeg to avatar41.jpeg
 const PREDEFINED_AVATARS = Array.from(
-  { length: 20 },
+  { length: 41 },
   (_, i) => `/avatars/avatar${i + 1}.jpeg`
 );
 
