@@ -11,7 +11,7 @@ import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, AllianceChallenge } from '@/types';
+import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
@@ -26,6 +26,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 
 // Simple hash function to get a number from a string
@@ -98,6 +101,46 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
     );
 };
 
+const ChallengeDialog = ({ isOpen, onOpenChange, myAlliances, challengedAlliance, onSendChallenge }: { isOpen: boolean, onOpenChange: (open: boolean) => void, myAlliances: Alliance[], challengedAlliance: Alliance | null, onSendChallenge: (challengerId: string) => void }) => {
+    const [selectedAllianceId, setSelectedAllianceId] = useState<string | undefined>(myAlliances[0]?.id);
+
+    useEffect(() => {
+        if (isOpen && myAlliances.length > 0 && !selectedAllianceId) {
+            setSelectedAllianceId(myAlliances[0].id);
+        }
+    }, [isOpen, myAlliances, selectedAllianceId]);
+
+    if (!challengedAlliance) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Challenge {challengedAlliance.name}</DialogTitle>
+                </DialogHeader>
+                <div>
+                    <Label>Choose your challenging alliance:</Label>
+                    <RadioGroup value={selectedAllianceId} onValueChange={setSelectedAllianceId} className="mt-2 space-y-2">
+                        {myAlliances.map(alliance => (
+                             <Label key={alliance.id} htmlFor={`alliance-${alliance.id}`} className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                                <RadioGroupItem value={alliance.id} id={`alliance-${alliance.id}`} />
+                                <span className="font-medium">{alliance.name}</span>
+                            </Label>
+                        ))}
+                    </RadioGroup>
+                </div>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={() => selectedAllianceId && onSendChallenge(selectedAllianceId)} disabled={!selectedAllianceId}>
+                        <Swords className="h-4 w-4 mr-2"/>
+                        Send Challenge
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 
 export default function FriendsPage() {
     const { user, userData } = useAuth();
@@ -122,7 +165,10 @@ export default function FriendsPage() {
         incomingAllianceChallenges,
         acceptAllianceChallenge,
         declineAllianceChallenge,
-        unfriend
+        unfriend,
+        userAlliances,
+        searchAlliances,
+        sendAllianceChallenge
     } = useFriends();
 
     const [usernameQuery, setUsernameQuery] = useState('');
@@ -130,6 +176,13 @@ export default function FriendsPage() {
     const [isLoadingSearch, setIsLoadingSearch] = useState(false);
     const [searchMessage, setSearchMessage] = useState<string | null>(null);
     const { toast } = useToast();
+
+    // For alliance challenges
+    const [isChallengeDialogOpen, setIsChallengeDialogOpen] = useState(false);
+    const [challengedAlliance, setChallengedAlliance] = useState<Alliance | null>(null);
+    const [allianceSearchQuery, setAllianceSearchQuery] = useState('');
+    const [allianceSearchResults, setAllianceSearchResults] = useState<Alliance[]>([]);
+    const [isSearchingAlliances, setIsSearchingAlliances] = useState(false);
 
     const handleSearch = async () => {
         if (!usernameQuery.trim() || usernameQuery.trim() === userData?.username) {
@@ -162,6 +215,47 @@ export default function FriendsPage() {
             setSearchedUser(null); // Clear search result after sending request
         } catch (error) {
             toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+        }
+    };
+
+    const handleAllianceSearch = async () => {
+      if (!allianceSearchQuery.trim()) return;
+      setIsSearchingAlliances(true);
+      setAllianceSearchResults([]);
+      try {
+        const results = await searchAlliances(allianceSearchQuery);
+        const myAllianceIds = userAlliances.map(a => a.id);
+        // Filter out my own alliances and alliances I'm already a member of
+        setAllianceSearchResults(results.filter(a => !myAllianceIds.includes(a.id)));
+      } catch (e) {
+        toast({ title: "Search Failed", description: (e as Error).message, variant: 'destructive' });
+      } finally {
+        setIsSearchingAlliances(false);
+      }
+    };
+
+    const handleOpenChallengeDialog = (alliance: Alliance) => {
+        const myCreatedAlliances = userAlliances.filter(a => a.creatorId === user?.uid);
+         if (myCreatedAlliances.length === 0) {
+            toast({ title: "No Alliance Found", description: "You must be the creator of an alliance to send challenges.", variant: "destructive" });
+            return;
+        }
+        setChallengedAlliance(alliance);
+        setIsChallengeDialogOpen(true);
+    };
+
+    const handleSendChallenge = async (challengerAllianceId: string) => {
+        const challengerAlliance = userAlliances.find(a => a.id === challengerAllianceId);
+        if (!challengerAlliance || !challengedAlliance) return;
+        
+        try {
+            await sendAllianceChallenge(challengerAlliance, challengedAlliance);
+            toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
+        } catch (e) {
+            toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
+        } finally {
+            setIsChallengeDialogOpen(false);
+            setChallengedAlliance(null);
         }
     };
 
@@ -229,7 +323,7 @@ export default function FriendsPage() {
                             </div>
                         </div>
                         
-                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                         <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
                             <AccordionItem value="friends-list">
                                 <AccordionTrigger>
                                     <div className="flex items-center gap-2">
@@ -253,6 +347,45 @@ export default function FriendsPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <Swords className="h-6 w-6 text-primary" />
+                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Challenge an Alliance</h2>
+                            </div>
+                             <div className="flex gap-2">
+                                <Input 
+                                  placeholder="Search for an alliance by name..."
+                                  value={allianceSearchQuery}
+                                  onChange={(e) => setAllianceSearchQuery(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleAllianceSearch()}
+                                />
+                                <Button onClick={handleAllianceSearch} disabled={isSearchingAlliances}>
+                                  <UserSearch className="h-4 w-4 mr-2" />
+                                  {isSearchingAlliances ? 'Searching...' : 'Search'}
+                                </Button>
+                              </div>
+                              {allianceSearchResults.length > 0 && (
+                                <div className="space-y-2 pt-2">
+                                  <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
+                                  {allianceSearchResults.map(result => (
+                                    <Card key={result.id} className="p-3">
+                                       <div className="flex justify-between items-center">
+                                          <div>
+                                            <p className="font-semibold">{result.name}</p>
+                                            <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
+                                          </div>
+                                          <Button size="sm" onClick={() => handleOpenChallengeDialog(result)}>
+                                            <Swords className="h-4 w-4 mr-2"/>
+                                            Challenge
+                                          </Button>
+                                       </div>
+                                    </Card>
+                                  ))}
+                                </div>
+                              )}
+                        </div>
+
                     </div>
 
                     <div className="space-y-8">
@@ -429,9 +562,26 @@ export default function FriendsPage() {
                                 </AccordionContent>
                             </AccordionItem>
                          </Accordion>
+                         
+                        <div className="space-y-4">
+                            <Link href="/alliances">
+                                <div className="flex items-center gap-2 hover:text-primary transition-colors">
+                                    <Shield className="h-6 w-6 text-primary" />
+                                    <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Alliances</h2>
+                                    <ArrowRight className="h-5 w-5" />
+                                </div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </main>
+            <ChallengeDialog 
+                isOpen={isChallengeDialogOpen}
+                onOpenChange={setIsChallengeDialogOpen}
+                myAlliances={userAlliances.filter(a => a.creatorId === user?.uid)}
+                challengedAlliance={challengedAlliance}
+                onSendChallenge={handleSendChallenge}
+            />
         </div>
     );
 };
