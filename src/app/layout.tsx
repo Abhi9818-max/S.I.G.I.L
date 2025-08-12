@@ -9,11 +9,6 @@ import BottomNavBar from '@/components/layout/BottomNavBar';
 export const metadata: Metadata = {
   title: 'S.I.G.I.L.',
   description: 'System of Internal Growth in Infinite Loop. Track your personal records with a GitHub-like contribution graph.',
-  manifest: '/manifest.json',
-  icons: {
-    icon: '/icons/icon-192x192.png',
-    apple: '/icons/apple-touch-icon.png',
-  },
 };
 
 export const viewport: Viewport = {
@@ -29,10 +24,8 @@ export default function RootLayout({
     <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         {/* Meta for PWA */}
-        <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={`font-sans antialiased bg-background text-foreground`}>
         <AppProviders>
