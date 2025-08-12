@@ -38,6 +38,12 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
+const getAvatarForId = (id: string, url?: string | null) => {
+    if (url) return url;
+    const avatarNumber = (simpleHash(id) % 41) + 1;
+    return `/avatars/avatar${avatarNumber}.jpeg`;
+}
+
 const FriendCard3D = ({ friend }: { friend: Friend }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -57,12 +63,6 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
         cardRef.current.style.setProperty('--rotate-x', '0deg');
         cardRef.current.style.setProperty('--rotate-y', '0deg');
     };
-
-    const getAvatarForId = (id: string, url?: string | null) => {
-        if (url) return url;
-        const avatarNumber = (simpleHash(id) % 41) + 1;
-        return `/avatars/avatar${avatarNumber}.jpeg`;
-    }
 
     return (
         <Link href={`/friends/${friend.uid}`} className="flex-shrink-0">
@@ -168,12 +168,6 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
-    const getAvatarForId = (id: string, url?: string | null) => {
-        if (url) return url;
-        const avatarNumber = (simpleHash(id) % 41) + 1;
-        return `/avatars/avatar${avatarNumber}.jpeg`;
-    }
-
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />

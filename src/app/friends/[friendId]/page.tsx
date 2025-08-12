@@ -57,6 +57,12 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
+const getAvatarForId = (id: string, url?: string | null) => {
+    if (url) return url;
+    const avatarNumber = (simpleHash(id) % 41) + 1;
+    return `/avatars/avatar${avatarNumber}.jpeg`;
+}
+
 const NicknameDialog = ({ isOpen, onOpenChange, currentNickname, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentNickname: string; onSave: (name: string) => void }) => {
     const [nickname, setNickname] = useState(currentNickname);
 
@@ -340,7 +346,7 @@ export default function FriendProfilePage() {
     const friendRecords = friendData.records || [];
     const friendTasks = friendData.taskDefinitions || [];
     
-    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(friendId) % 41) + 1}.jpeg`;
+    const friendAvatar = friendData.photoURL || getAvatarForId(friendId, friendData.photoURL);
     const today = new Date();
     const yesterday = subDays(today, 1);
     const displayName = friendInfo?.nickname || friendData.username;
