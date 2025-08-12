@@ -463,7 +463,7 @@ export default function SettingsPage() {
                             <Pencil className="h-4 w-4" />
                             <span className="sr-only">Edit Bio</span>
                         </Button>
-                        <Button variant="outline" size="icon" onClick={handleShareProfile}>
+                        <Button variant="ghost" size="icon" onClick={handleShareProfile}>
                             <Share2 className="h-4 w-4" />
                             <span className="sr-only">Share Profile</span>
                         </Button>
@@ -759,3 +759,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
