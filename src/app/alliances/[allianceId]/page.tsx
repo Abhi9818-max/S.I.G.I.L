@@ -17,18 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { format, parseISO, differenceInDays, isPast } from 'date-fns';
 import { toPng } from 'html-to-image';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -146,6 +135,8 @@ export default function AllianceDetailPage() {
     const [alliance, setAlliance] = useState<Alliance | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
+    const [isDisbandDialogOpen, setIsDisbandDialogOpen] = useState(false);
+    const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
     const [pendingInvites, setPendingInvites] = useState<string[]>([]);
     const { toast } = useToast();
     const allianceCardRef = useRef<HTMLDivElement>(null);
@@ -199,6 +190,7 @@ export default function AllianceDetailPage() {
         try {
             await leaveAlliance(alliance.id, user.uid);
             toast({ title: "You have left the alliance." });
+            setIsLeaveDialogOpen(false);
             router.push('/alliances');
         } catch (error) {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
@@ -210,6 +202,7 @@ export default function AllianceDetailPage() {
         try {
             await disbandAlliance(alliance.id);
             toast({ title: "Alliance Disbanded", description: "The alliance has been removed." });
+            setIsDisbandDialogOpen(false);
             router.push('/alliances');
         } catch (error) {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
@@ -310,39 +303,39 @@ export default function AllianceDetailPage() {
                                     <Download className="h-4 w-4" />
                                 </Button>
                                 {isCreator ? (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
+                                    <Dialog open={isDisbandDialogOpen} onOpenChange={setIsDisbandDialogOpen}>
+                                        <DialogTrigger asChild>
                                             <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4" />Disband</Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>This will permanently delete the alliance for everyone. This action cannot be undone.</AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleDisbandAlliance}>Disband Alliance</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Are you sure?</DialogTitle>
+                                                <DialogDescription>This will permanently delete the alliance for everyone. This action cannot be undone.</DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => setIsDisbandDialogOpen(false)}>Cancel</Button>
+                                                <Button variant="destructive" onClick={handleDisbandAlliance}>Disband Alliance</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 ) : isMember && (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
+                                    <Dialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
+                                        <DialogTrigger asChild>
                                              <Button variant="destructive" size="icon">
                                                 <LogOut className="h-4 w-4" />
                                             </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Leave this alliance?</AlertDialogTitle>
-                                                <AlertDialogDescription>You can rejoin later if you change your mind, provided the alliance is still active.</AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleLeaveAlliance}>Leave</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Leave this alliance?</DialogTitle>
+                                                <DialogDescription>You can rejoin later if you change your mind, provided the alliance is still active.</DialogDescription>
+                                            </DialogHeader>
+                                            <DialogFooter>
+                                                <Button variant="outline" onClick={() => setIsLeaveDialogOpen(false)}>Cancel</Button>
+                                                <Button variant="destructive" onClick={handleLeaveAlliance}>Leave</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
                                 )}
                             </div>
                         </div>
