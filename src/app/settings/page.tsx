@@ -405,30 +405,33 @@ export default function SettingsPage() {
                
                {/* Profile Info */}
                 <div className="flex items-center gap-8 py-4">
-                  <button
-                    onClick={() => setIsAvatarDialogOpen(true)}
-                    className="avatar-overlay-container rounded-full flex-shrink-0"
-                    aria-label="Change profile picture"
-                  >
-                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-primary/20">
-                        <AvatarImage src={userAvatar} alt={userData?.username}/>
-                        <AvatarFallback className="text-4xl">
-                            {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="avatar-overlay">
-                        <Camera className="h-6 w-6 text-white/90" />
-                    </div>
-                  </button>
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() => setIsAvatarDialogOpen(true)}
+                      className="avatar-overlay-container rounded-full flex-shrink-0"
+                      aria-label="Change profile picture"
+                    >
+                      <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-primary/20">
+                          <AvatarImage src={userAvatar} alt={userData?.username}/>
+                          <AvatarFallback className="text-4xl">
+                              {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
+                          </AvatarFallback>
+                      </Avatar>
+                      <div className="avatar-overlay">
+                          <Camera className="h-6 w-6 text-white/90" />
+                      </div>
+                    </button>
+                    {latestTitle && (
+                      <div className="flex items-center gap-1.5 mt-2 text-sm text-yellow-400">
+                        <Award className="h-4 w-4" />
+                        <span className="font-semibold">{latestTitle.name}</span>
+                      </div>
+                    )}
+                  </div>
+
 
                   <div className="flex flex-col w-full">
                      <h2 className="text-xl font-bold">{userData?.username}</h2>
-                      {latestTitle && (
-                        <div className="flex items-center gap-1.5 mt-1 text-sm text-yellow-400">
-                          <Award className="h-4 w-4" />
-                          <span className="font-semibold">{latestTitle.name}</span>
-                        </div>
-                      )}
                       <div className="flex-grow grid grid-cols-3 text-left mt-2">
                         <div>
                             <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
@@ -457,13 +460,13 @@ export default function SettingsPage() {
 
                 {/* Buttons */}
                 <div className="flex gap-2">
-                    <Button variant="secondary" className="flex-1" onClick={() => setIsBioDialogOpen(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit Bio
+                    <Button variant="secondary" size="icon" onClick={() => setIsBioDialogOpen(true)}>
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Bio</span>
                     </Button>
-                    <Button variant="outline" className="flex-1" onClick={handleShareProfile}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share Profile
+                    <Button variant="outline" size="icon" onClick={handleShareProfile}>
+                        <Share2 className="h-4 w-4" />
+                        <span className="sr-only">Share Profile</span>
                     </Button>
                 </div>
               
