@@ -11,6 +11,7 @@ import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import { useUserRecords } from './UserRecordsProvider';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -77,6 +78,7 @@ const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user, userData } = useAuth();
+    const { updateUserDataInDb } = useUserRecords();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -838,14 +840,19 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 };
                 transaction.set(listingRef, newListing);
             });
-            await fetchFriendsAndRequests(); // Refresh data after transaction
+            
+            // This is the critical fix: update local state after the successful transaction.
+            const currentAchievements = userData?.unlockedAchievements || [];
+            const updatedAchievements = currentAchievements.filter(id => id !== titleId);
+            updateUserDataInDb({ unlockedAchievements: updatedAchievements });
+
         } catch (error) {
             console.error("Listing failed:", error);
             // Re-throw the specific error message from the transaction
             throw error;
         }
 
-    }, [user, fetchFriendsAndRequests]);
+    }, [user, userData, updateUserDataInDb]);
 
     const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
         if (!user || !userData) throw new Error("Authentication required.");
