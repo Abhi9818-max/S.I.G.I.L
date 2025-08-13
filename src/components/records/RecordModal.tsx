@@ -29,24 +29,46 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Trash2, Pencil, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO, isValid } from 'date-fns';
-import type { RecordEntry } from '@/types';
+import type { RecordEntry, TaskDefinition } from '@/types';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
-const recordSchema = z.object({
-  id: z.string().optional(), // For identifying which record to update
-  date: z.date({ required_error: "Date is required." }),
-  value: z.preprocess(
-    (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
-    z.number({ invalid_type_error: "Record value must be a number." }).min(0, "Record value must be non-negative.")
-  ),
-  taskType: z.string().min(1, "Task type is required."),
-  notes: z.string().optional(),
-});
+const createRecordSchema = (getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined) => 
+  z.object({
+    id: z.string().optional(), // For identifying which record to update
+    date: z.date({ required_error: "Date is required." }),
+    value: z.preprocess(
+      (val) => (val === "" || val === undefined || val === null ? undefined : Number(val)),
+      z.number({ invalid_type_error: "Record value must be a number." }).min(0, "Record value must be non-negative.")
+    ),
+    taskType: z.string().min(1, "Task type is required."),
+    notes: z.string().optional(),
+  }).superRefine((data, ctx) => {
+    if (data.taskType && data.value !== undefined) {
+      const task = getTaskDefinitionById(data.taskType);
+      if (task) {
+        if (task.unit === 'hours' && data.value > 24) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['value'],
+            message: "Hours cannot exceed 24 for a single day."
+          });
+        }
+        if (task.unit === 'minutes' && data.value > 1440) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['value'],
+            message: "Minutes cannot exceed 1440 for a single day."
+          });
+        }
+      }
+    }
+  });
 
-type RecordFormData = z.infer<typeof recordSchema>;
+
+type RecordFormData = z.infer<ReturnType<typeof createRecordSchema>>;
 
 interface RecordModalProps {
   isOpen: boolean;
@@ -79,6 +101,8 @@ const RecordModal: React.FC<RecordModalProps> = ({
   const activeTaskDefinitions = useMemo(() => {
     return taskDefinitions.filter(task => task.status === 'active');
   }, [taskDefinitions]);
+
+  const recordSchema = useMemo(() => createRecordSchema(getTaskDefinitionById), [getTaskDefinitionById]);
 
   const form = useForm<RecordFormData>({
     resolver: zodResolver(recordSchema),

@@ -101,6 +101,8 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
     const [quickLogValue, setQuickLogValue] = useState<string>('');
     
     const handleQuickLog = () => {
+        const value = Number(quickLogValue);
+
         if (!newTaskName.trim() || !quickLogValue) {
              toast({
                 title: 'Missing Information',
@@ -109,6 +111,25 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
             });
             return;
         }
+
+        if (unit === 'hours' && value > 24) {
+             toast({
+                title: 'Invalid Value',
+                description: 'Hours cannot exceed 24 for a single day.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (unit === 'minutes' && value > 1440) {
+             toast({
+                title: 'Invalid Value',
+                description: 'Minutes cannot exceed 1440 for a single day.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
 
         let task = taskDefinitions.find(t => t.name.toLowerCase() === newTaskName.trim().toLowerCase() && (t.unit === 'minutes' || t.unit === 'hours'));
         let taskId = task?.id;
