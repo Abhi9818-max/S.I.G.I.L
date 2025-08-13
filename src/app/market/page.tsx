@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const SellDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     const { unlockedAchievements } = useUserRecords();
@@ -160,38 +161,35 @@ export default function MarketPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="w-full max-w-4xl mx-auto">
           <div className="p-6 md:p-0">
-            <div className="flex items-center gap-2">
-              <Store className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-semibold leading-none tracking-tight">Marketplace</h1>
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <Store className="h-6 w-6 text-primary" />
+                    <h1 className="text-2xl font-semibold leading-none tracking-tight">Marketplace</h1>
+                </div>
+                <div className="flex items-center gap-4">
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <div className="flex items-center gap-2">
+                                    <Zap className="h-5 w-5 text-yellow-400" />
+                                    <span className="font-bold">{totalXP.toLocaleString()}</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Total Experience (XP)</p></TooltipContent>
+                        </Tooltip>
+                         <Tooltip>
+                            <TooltipTrigger>
+                                <div className="flex items-center gap-2">
+                                    <Gem className="h-5 w-5 text-cyan-400" />
+                                    <span className="font-bold">{aetherShards.toLocaleString()}</span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Aether Shards</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
             </div>
             <p className="text-muted-foreground mt-2">Exchange resources and trade titles with other users.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Your Balance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Gem className="h-6 w-6 text-cyan-400" />
-                  <p className="text-3xl font-bold">{aetherShards.toLocaleString()}</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Aether Shards</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Experience</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Zap className="h-6 w-6 text-yellow-400" />
-                  <p className="text-3xl font-bold">{totalXP.toLocaleString()}</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">XP</p>
-              </CardContent>
-            </Card>
           </div>
           
            <Card className="mt-6">
