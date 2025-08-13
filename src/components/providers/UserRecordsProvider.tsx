@@ -215,17 +215,28 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return calculateMasteryLevelInfo(masteryData.xp);
   }, [taskMastery]);
 
-  const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
-    if (!isUserDataLoaded) return null;
+  const calculateTotalXp = useCallback((): number => {
+    if (!isUserDataLoaded) return 0;
+    
+    // Calculate total XP from records
     const sumOfRecordXp = records.reduce((sum, record) => {
         const task = getTaskDefinitionById(record.taskType || '');
         const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
-        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); // Use level 1 for base XP sum
+        // NOTE: We pass a placeholder level of 1 here to get the base XP value,
+        // which prevents a recursive loop with getUserLevelInfo.
+        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); 
         return sum + recordXp;
     }, 0);
-    const totalExperience = sumOfRecordXp + totalBonusPoints;
-    return calculateUserLevelInfo(totalExperience);
+
+    // Now, add the total bonus points
+    return sumOfRecordXp + totalBonusPoints;
   }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, getTaskMasteryInfo]);
+
+  const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
+    if (!isUserDataLoaded) return null;
+    const totalExperience = calculateTotalXp();
+    return calculateUserLevelInfo(totalExperience);
+  }, [isUserDataLoaded, calculateTotalXp]);
 
   const getCurrentStreak = useCallback((taskId: string | null = null): number => {
     if (!isUserDataLoaded) return 0;
@@ -547,18 +558,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         };
     });
 }, [records, getAggregateSum]);
-
-  const calculateTotalXp = useCallback((): number => {
-    const levelInfo = getUserLevelInfo(); // Get the current level info
-    if (!levelInfo) return 0;
-
-    return records.reduce((sum, record) => {
-        const task = getTaskDefinitionById(record.taskType || '');
-        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
-        const recordXp = calculateXpForRecord(record.value, task, levelInfo.currentLevel, masteryInfo?.xpBonus);
-        return sum + recordXp;
-    }, 0);
-  }, [records, getTaskDefinitionById, getTaskMasteryInfo, getUserLevelInfo]);
 
   const awardTierEntryBonus = useCallback((bonusAmount: number) => {
     if (bonusAmount > 0) {
