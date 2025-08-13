@@ -229,7 +229,6 @@ export default function MarketPage() {
                     </TooltipProvider>
                 </div>
             </div>
-            <p className="text-muted-foreground mt-2">Exchange resources and trade titles with other users.</p>
           </div>
           
            <div className="mt-8 space-y-4">
