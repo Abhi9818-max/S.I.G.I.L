@@ -1,31 +1,114 @@
 
 export type LevelXPConfig = {
   level: number;
-  priority: {
-    normal: number; // multiplier
-    high: number;   // multiplier
-  };
-  unit: {
-    count: number;
-    minutes: number;
-    hours: number;
-    pages: number;
-    generic: number;
-    [customUnit: string]: number; // For custom units
-  };
-  // You can add other factors here in the future
+  xp_required: number;
+  base_low_xp: number;
+  base_high_xp: number;
 };
 
 /**
- * This array will hold the specific XP modifiers for each level.
- * The user can provide the data for this array in JSON format.
- * Example for one level:
- * {
- *   "level": 1,
- *   "priority": { "normal": 1.0, "high": 1.2 },
- *   "unit": { "count": 10, "minutes": 1, "hours": 60, "pages": 5, "generic": 1 }
- * }
+ * This array holds the specific XP modifiers for each level.
+ * The data is provided by the user.
  */
 export const XP_CONFIG: LevelXPConfig[] = [
-    // Data will be added here by the user in a future step.
+  { level: 1, xp_required: 180, base_low_xp: 8, base_high_xp: 12 },
+  { level: 2, xp_required: 220, base_low_xp: 9, base_high_xp: 14 },
+  { level: 3, xp_required: 270, base_low_xp: 11, base_high_xp: 17 },
+  { level: 4, xp_required: 330, base_low_xp: 13, base_high_xp: 20 },
+  { level: 5, xp_required: 410, base_low_xp: 16, base_high_xp: 24 },
+  { level: 6, xp_required: 510, base_low_xp: 20, base_high_xp: 30 },
+  { level: 7, xp_required: 640, base_low_xp: 25, base_high_xp: 38 },
+  { level: 8, xp_required: 800, base_low_xp: 31, base_high_xp: 47 },
+  { level: 9, xp_required: 1000, base_low_xp: 39, base_high_xp: 59 },
+  { level: 10, xp_required: 1250, base_low_xp: 49, base_high_xp: 74 },
+  { level: 11, xp_required: 1560, base_low_xp: 62, base_high_xp: 93 },
+  { level: 12, xp_required: 1950, base_low_xp: 78, base_high_xp: 117 },
+  { level: 13, xp_required: 2440, base_low_xp: 98, base_high_xp: 147 },
+  { level: 14, xp_required: 3050, base_low_xp: 123, base_high_xp: 185 },
+  { level: 15, xp_required: 3810, base_low_xp: 154, base_high_xp: 231 },
+  { level: 16, xp_required: 4760, base_low_xp: 193, base_high_xp: 290 },
+  { level: 17, xp_required: 5950, base_low_xp: 242, base_high_xp: 363 },
+  { level: 18, xp_required: 7440, base_low_xp: 303, base_high_xp: 455 },
+  { level: 19, xp_required: 9300, base_low_xp: 379, base_high_xp: 569 },
+  { level: 20, xp_required: 11625, base_low_xp: 474, base_high_xp: 711 },
+  { level: 21, xp_required: 14530, base_low_xp: 593, base_high_xp: 890 },
+  { level: 22, xp_required: 18160, base_low_xp: 742, base_high_xp: 1113 },
+  { level: 23, xp_required: 22700, base_low_xp: 928, base_high_xp: 1392 },
+  { level: 24, xp_required: 28380, base_low_xp: 1160, base_high_xp: 1740 },
+  { level: 25, xp_required: 35470, base_low_xp: 1450, base_high_xp: 2175 },
+  { level: 26, xp_required: 44340, base_low_xp: 1813, base_high_xp: 2720 },
+  { level: 27, xp_required: 55420, base_low_xp: 2266, base_high_xp: 3399 },
+  { level: 28, xp_required: 69280, base_low_xp: 2833, base_high_xp: 4250 },
+  { level: 29, xp_required: 86600, base_low_xp: 3541, base_high_xp: 5312 },
+  { level: 30, xp_required: 108250, base_low_xp: 4426, base_high_xp: 6639 },
+  { level: 31, xp_required: 135310, base_low_xp: 5533, base_high_xp: 8300 },
+  { level: 32, xp_required: 169140, base_low_xp: 6916, base_high_xp: 10374 },
+  { level: 33, xp_required: 211420, base_low_xp: 8645, base_high_xp: 12968 },
+  { level: 34, xp_required: 264280, base_low_xp: 10806, base_high_xp: 16209 },
+  { level: 35, xp_required: 330350, base_low_xp: 13508, base_high_xp: 20262 },
+  { level: 36, xp_required: 412940, base_low_xp: 16885, base_high_xp: 25328 },
+  { level: 37, xp_required: 516170, base_low_xp: 21106, base_high_xp: 31659 },
+  { level: 38, xp_required: 645210, base_low_xp: 26383, base_high_xp: 39575 },
+  { level: 39, xp_required: 806510, base_low_xp: 32978, base_high_xp: 49467 },
+  { level: 40, xp_required: 1008140, base_low_xp: 41223, base_high_xp: 61835 },
+  { level: 41, xp_required: 1260170, base_low_xp: 51529, base_high_xp: 77294 },
+  { level: 42, xp_required: 1575210, base_low_xp: 64411, base_high_xp: 96617 },
+  { level: 43, xp_required: 1969010, base_low_xp: 80514, base_high_xp: 120771 },
+  { level: 44, xp_required: 2461260, base_low_xp: 100643, base_high_xp: 150965 },
+  { level: 45, xp_required: 3076580, base_low_xp: 125803, base_high_xp: 188705 },
+  { level: 46, xp_required: 3845720, base_low_xp: 157254, base_high_xp: 235881 },
+  { level: 47, xp_required: 4807150, base_low_xp: 196567, base_high_xp: 294851 },
+  { level: 48, xp_required: 6008940, base_low_xp: 245709, base_high_xp: 368564 },
+  { level: 49, xp_required: 7511170, base_low_xp: 307136, base_high_xp: 460704 },
+  { level: 50, xp_required: 9388960, base_low_xp: 383920, base_high_xp: 575880 },
+  { level: 51, xp_required: 11736200, base_low_xp: 479900, base_high_xp: 719850 },
+  { level: 52, xp_required: 14670250, base_low_xp: 599875, base_high_xp: 899813 },
+  { level: 53, xp_required: 18337810, base_low_xp: 749844, base_high_xp: 1124766 },
+  { level: 54, xp_required: 22922260, base_low_xp: 937305, base_high_xp: 1405958 },
+  { level: 55, xp_required: 28652830, base_low_xp: 1171631, base_high_xp: 1757447 },
+  { level: 56, xp_required: 35816040, base_low_xp: 1464539, base_high_xp: 2196809 },
+  { level: 57, xp_required: 44770050, base_low_xp: 1830674, base_high_xp: 2746011 },
+  { level: 58, xp_required: 55962560, base_low_xp: 2288342, base_high_xp: 3432513 },
+  { level: 59, xp_required: 69953200, base_low_xp: 2860428, base_high_xp: 4290642 },
+  { level: 60, xp_required: 87441500, base_low_xp: 3575535, base_high_xp: 5363303 },
+  { level: 61, xp_required: 109301880, base_low_xp: 4469419, base_high_xp: 6704129 },
+  { level: 62, xp_required: 136627350, base_low_xp: 5586774, base_high_xp: 8380161 },
+  { level: 63, xp_required: 170784190, base_low_xp: 6983467, base_high_xp: 10475201 },
+  { level: 64, xp_required: 213480240, base_low_xp: 8729334, base_high_xp: 13094001 },
+  { level: 65, xp_required: 266850300, base_low_xp: 10911668, base_high_xp: 16367502 },
+  { level: 66, xp_required: 333562880, base_low_xp: 13639585, base_high_xp: 20459378 },
+  { level: 67, xp_required: 416953600, base_low_xp: 17049481, base_high_xp: 25574222 },
+  { level: 68, xp_required: 521192000, base_low_xp: 21311851, base_high_xp: 31967777 },
+  { level: 69, xp_required: 651490000, base_low_xp: 26639814, base_high_xp: 39959721 },
+  { level: 70, xp_required: 814362500, base_low_xp: 33299768, base_high_xp: 49949652 },
+  { level: 71, xp_required: 1017953125, base_low_xp: 41624710, base_high_xp: 62437065 },
+  { level: 72, xp_required: 1272441406, base_low_xp: 52030887, base_high_xp: 78046331 },
+  { level: 73, xp_required: 1590551758, base_low_xp: 65038609, base_high_xp: 97557914 },
+  { level: 74, xp_required: 1988189698, base_low_xp: 81298261, base_high_xp: 121947392 },
+  { level: 75, xp_required: 2485237122, base_low_xp: 101622826, base_high_xp: 152434239 },
+  { level: 76, xp_required: 3106546403, base_low_xp: 127028533, base_high_xp: 190542800 },
+  { level: 77, xp_required: 3883183003, base_low_xp: 158785666, base_high_xp: 238178499 },
+  { level: 78, xp_required: 4853978754, base_low_xp: 198482083, base_high_xp: 297723125 },
+  { level: 79, xp_required: 6067473443, base_low_xp: 248102604, base_high_xp: 372153906 },
+  { level: 80, xp_required: 7584341804, base_low_xp: 310128255, base_high_xp: 465192383 },
+  { level: 81, xp_required: 9480427255, base_low_xp: 387660318, base_high_xp: 581490477 },
+  { level: 82, xp_required: 11850534069, base_low_xp: 484575398, base_high_xp: 726863097 },
+  { level: 83, xp_required: 14813167586, base_low_xp: 605719247, base_high_xp: 908578871 },
+  { level: 84, xp_required: 18516459483, base_low_xp: 757149059, base_high_xp: 1135723589 },
+  { level: 85, xp_required: 23145574353, base_low_xp: 946436324, base_high_xp: 1419654486 },
+  { level: 86, xp_required: 28931967941, base_low_xp: 1183045405, base_high_xp: 1774568108 },
+  { level: 87, xp_required: 36164959926, base_low_xp: 1478806756, base_high_xp: 2218210134 },
+  { level: 88, xp_required: 45206199908, base_low_xp: 1848508445, base_high_xp: 2772762668 },
+  { level: 89, xp_required: 56507749885, base_low_xp: 2310635556, base_high_xp: 3465953334 },
+  { level: 90, xp_required: 70634687356, base_low_xp: 2888294445, base_high_xp: 4332441668 },
+  { level: 91, xp_required: 88293359195, base_low_xp: 3610368056, base_high_xp: 5415552084 },
+  { level: 92, xp_required: 110366698994, base_low_xp: 4512960070, base_high_xp: 6769440105 },
+  { level: 93, xp_required: 137958373743, base_low_xp: 5641200088, base_high_xp: 8461800132 },
+  { level: 94, xp_required: 172447967179, base_low_xp: 7051500110, base_high_xp: 10577250165 },
+  { level: 95, xp_required: 215559958974, base_low_xp: 8814375138, base_high_xp: 13221562707 },
+  { level: 96, xp_required: 269449948718, base_low_xp: 11017968922, base_high_xp: 16526953383 },
+  { level: 97, xp_required: 336812435898, base_low_xp: 13772461153, base_high_xp: 20658691730 },
+  { level: 98, xp_required: 421015544872, base_low_xp: 17215576441, base_high_xp: 25823364662 },
+  { level: 99, xp_required: 526269431090, base_low_xp: 21519470551, base_high_xp: 32279205827 },
+  { level: 100, xp_required: 0, base_low_xp: 0, base_high_xp: 0 }
 ];
