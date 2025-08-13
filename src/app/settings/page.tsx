@@ -498,13 +498,13 @@ export default function SettingsPage() {
                           <Camera className="h-6 w-6 text-white/90" />
                       </div>
                     </button>
-                    <div className="h-7 mt-2">
-                        {equippedTitle ? (
+                    <div className="h-7 mt-2 flex items-center justify-center">
+                        {equippedTitle && (
                            <div className="flex items-center gap-1.5 text-sm text-yellow-400 whitespace-nowrap">
                                 <Award className="h-4 w-4" />
                                 <span className="font-semibold">{equippedTitle.name}</span>
                            </div>
-                        ) : null}
+                        )}
                     </div>
                   </div>
 
@@ -512,9 +512,6 @@ export default function SettingsPage() {
                   <div className="flex flex-col w-full">
                      <div className="flex justify-between items-start">
                          <h2 className="text-xl font-bold">{userData?.username}</h2>
-                         <Button variant="outline" size="sm" onClick={() => setIsTitleDialogOpen(true)}>
-                            Change Title
-                         </Button>
                      </div>
                       <div className="flex-grow grid grid-cols-3 text-left mt-2">
                         <div>
@@ -543,10 +540,24 @@ export default function SettingsPage() {
                         {userData?.bio || "No bio yet."}
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => setIsBioDialogOpen(true)}>
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit Bio</span>
-                        </Button>
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                  <Pencil className="h-4 w-4" />
+                                  <span className="sr-only">Edit Profile</span>
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                              <DropdownMenuItem onSelect={() => setIsBioDialogOpen(true)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit Bio
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setIsTitleDialogOpen(true)}>
+                                  <Award className="mr-2 h-4 w-4" />
+                                  Change Title
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
                         <Button variant="ghost" size="icon" onClick={handleShareProfile}>
                             <Share2 className="h-4 w-4" />
                             <span className="sr-only">Share Profile</span>
