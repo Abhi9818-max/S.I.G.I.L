@@ -654,7 +654,7 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-primary">Data Backup &amp; Restore</h3>
                         <div className="p-4 border rounded-lg space-y-4">
-                            <p className="text-sm text-muted-foreground">Export all your data to a JSON file for backup, or import a previous backup.</p>
+                            <p className="text-sm text-muted-foreground"> just export your JSON file and upload it to chatgpt , now chatgpt has also ur progress. & u can import ur any data like progress into this app also</p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button onClick={handleExportData} className="w-full">
                                     <Download className="mr-2 h-4 w-4"/>
