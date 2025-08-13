@@ -39,7 +39,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Link from 'next/link';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -69,7 +69,7 @@ const simpleHash = (s: string) => {
 };
 
 const SECRET_CODE = "9818";
-const DELETE_XP_CODE = "Delete xp";
+const DELETE_XP_CODE = "delete xp";
 
 
 const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, currentBio: string, onSave: (newBio: string) => void }) => {
@@ -334,13 +334,14 @@ export default function SettingsPage() {
   }, [unlockedAchievements]);
 
   const handleUnlockMasterControl = () => {
-    if (secretCodeInput === SECRET_CODE) {
+    const code = secretCodeInput.trim().toLowerCase();
+    if (code === SECRET_CODE) {
       setMasterControlUnlocked(true);
       toast({
         title: "Master Control Unlocked",
         description: "Secrets are now available.",
       });
-    } else if (secretCodeInput === DELETE_XP_CODE) {
+    } else if (code === DELETE_XP_CODE) {
         resetUserProgress();
         toast({
             title: "Progress Reset",
