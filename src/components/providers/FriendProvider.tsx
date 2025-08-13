@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, Kudo, AllianceChallenge, AllianceStatus } from '@/types';
@@ -153,20 +153,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         // Fetch incoming alliance challenges
         const challengesRef = collection(db, 'alliance_challenges');
-        const incomingChallengesQuery = query(challengesRef, where('status', '==', 'pending'), or(
-            where('challengerCreatorId', '==', user.uid),
+        const incomingChallengesQuery = query(challengesRef, and(
+            where('status', '==', 'pending'),
             where('challengedCreatorId', '==', user.uid)
         ));
 
         const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
-        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => {
-            const data = doc.data() as AllianceChallenge;
-            // Only show challenges where the current user is the one being challenged
-            if (data.challengedCreatorId === user.uid) {
-                return { id: doc.id, ...data };
-            }
-            return null;
-        }).filter(Boolean) as AllianceChallenge[]);
+        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
 
 
     }, [user]);
@@ -567,13 +560,22 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (status === 'ongoing') {
             if (allianceData.progress >= allianceData.target) {
                 status = 'completed';
+                if (allianceData.opponentDetails?.allianceId) {
+                    const opponentRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
+                    updateDoc(opponentRef, { status: 'failed' });
+                }
             } else if (opponentTotalProgress >= allianceData.target) {
                 status = 'failed'; // They lost because opponent won
             } else if (isPast(parseISO(allianceData.endDate))) {
                 status = 'failed';
             }
         }
-        allianceData.status = status;
+
+        if (allianceData.status !== status) {
+            const allianceRef = doc(db, 'alliances', allianceId);
+            await updateDoc(allianceRef, { status: status });
+            allianceData.status = status;
+        }
         
         return allianceData;
     }, [user]);
