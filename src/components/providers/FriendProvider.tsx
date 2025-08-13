@@ -2,14 +2,15 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
+import { ACHIEVEMENTS } from '@/lib/achievements';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -64,6 +65,12 @@ interface FriendContextType {
     acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
+    // Marketplace
+    globalListings: MarketplaceListing[];
+    userListings: MarketplaceListing[];
+    listTitleForSale: (titleId: string, price: number) => Promise<void>;
+    purchaseTitle: (listing: MarketplaceListing) => Promise<void>;
+    cancelListing: (listingId: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -81,6 +88,29 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [userAlliances, setUserAlliances] = useState<Alliance[]>([]);
     const [incomingAllianceInvitations, setIncomingAllianceInvitations] = useState<AllianceInvitation[]>([]);
     const [incomingAllianceChallenges, setIncomingAllianceChallenges] = useState<AllianceChallenge[]>([]);
+    const [globalListings, setGlobalListings] = useState<MarketplaceListing[]>([]);
+    const [userListings, setUserListings] = useState<MarketplaceListing[]>([]);
+
+    // Marketplace listeners
+    useEffect(() => {
+        const q = query(collection(db, 'marketplace_listings'), where('sellerId', '!=', user?.uid || ''));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setGlobalListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MarketplaceListing)));
+        });
+        return () => unsubscribe();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) {
+            setUserListings([]);
+            return;
+        }
+        const q = query(collection(db, 'marketplace_listings'), where('sellerId', '==', user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setUserListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MarketplaceListing)));
+        });
+        return () => unsubscribe();
+    }, [user]);
 
     useEffect(() => {
         if (!user) {
@@ -767,6 +797,98 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(allianceRef, data);
     }, []);
 
+    // Marketplace Logic
+    const listTitleForSale = useCallback(async (titleId: string, price: number) => {
+        if (!user || !userData) throw new Error("Authentication required.");
+        
+        const title = ACHIEVEMENTS.find(a => a.id === titleId && a.isTitle);
+        if (!title) throw new Error("Invalid title selected.");
+
+        if (!(userData.unlockedAchievements || []).includes(titleId)) {
+            throw new Error("You do not own this title.");
+        }
+
+        const batch = writeBatch(db);
+
+        // Remove title from user's achievements
+        const userRef = doc(db, 'users', user.uid);
+        batch.update(userRef, {
+            unlockedAchievements: arrayRemove(titleId)
+        });
+
+        // Create new listing
+        const listingRef = doc(collection(db, 'marketplace_listings'));
+        const newListing: MarketplaceListing = {
+            id: listingRef.id,
+            itemId: titleId,
+            itemName: title.name,
+            itemDescription: title.description,
+            itemType: 'title',
+            sellerId: user.uid,
+            sellerUsername: userData.username,
+            price,
+            createdAt: new Date().toISOString(),
+        };
+        batch.set(listingRef, newListing);
+        
+        await batch.commit();
+    }, [user, userData]);
+
+    const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
+        if (!user || !userData) throw new Error("Authentication required.");
+        if (user.uid === listing.sellerId) throw new Error("You cannot buy your own item.");
+        if ((userData.aetherShards || 0) < listing.price) throw new Error("Not enough Aether Shards.");
+
+        await runTransaction(db, async (transaction) => {
+            const buyerRef = doc(db, 'users', user.uid);
+            const sellerRef = doc(db, 'users', listing.sellerId);
+            const listingRef = doc(db, 'marketplace_listings', listing.id);
+
+            const sellerDoc = await transaction.get(sellerRef);
+            if (!sellerDoc.exists()) throw new Error("Seller not found.");
+            
+            // 1. Deduct shards from buyer
+            transaction.update(buyerRef, { 
+                aetherShards: (userData.aetherShards || 0) - listing.price,
+                unlockedAchievements: arrayUnion(listing.itemId)
+            });
+
+            // 2. Add shards to seller
+            transaction.update(sellerRef, {
+                aetherShards: (sellerDoc.data().aetherShards || 0) + listing.price
+            });
+
+            // 3. Delete the listing
+            transaction.delete(listingRef);
+        });
+
+    }, [user, userData]);
+
+    const cancelListing = useCallback(async (listingId: string) => {
+        if (!user) throw new Error("Authentication required.");
+        
+        const listingRef = doc(db, 'marketplace_listings', listingId);
+        const listingSnap = await getDoc(listingRef);
+
+        if (!listingSnap.exists() || listingSnap.data().sellerId !== user.uid) {
+            throw new Error("Listing not found or you are not the seller.");
+        }
+
+        const itemId = listingSnap.data().itemId;
+
+        const batch = writeBatch(db);
+        
+        // Return item to user
+        const userRef = doc(db, 'users', user.uid);
+        batch.update(userRef, { unlockedAchievements: arrayUnion(itemId) });
+        
+        // Delete listing
+        batch.delete(listingRef);
+
+        await batch.commit();
+    }, [user]);
+
+
     return (
         <FriendContext.Provider value={{ 
             searchUser, 
@@ -807,6 +929,11 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             acceptAllianceChallenge,
             declineAllianceChallenge,
             updateAlliance,
+            globalListings,
+            userListings,
+            listTitleForSale,
+            purchaseTitle,
+            cancelListing,
         }}>
             {children}
         </FriendContext.Provider>

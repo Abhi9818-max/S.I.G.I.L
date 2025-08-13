@@ -1,15 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -246,6 +235,19 @@ export interface ReputationLevel {
   }
 }
 
+// For Marketplace
+export interface MarketplaceListing {
+  id: string;
+  itemId: string; // The achievement ID
+  itemName: string;
+  itemDescription?: string;
+  itemType: 'title';
+  sellerId: string;
+  sellerUsername: string;
+  price: number;
+  createdAt: string; // ISO date string
+}
+
 // For Auth/User Data
 export interface UserData {
     uid?: string;
@@ -270,6 +272,7 @@ export interface UserData {
     // New Economy/Reputation fields
     aetherShards?: number;
     reputation?: Record<string, number>; // e.g. { 'scholars-guild': 1250, 'iron-legion': 500 }
+    marketplaceListings?: MarketplaceListing[]; // User's own active listings
 }
 
 // For Friends feature
