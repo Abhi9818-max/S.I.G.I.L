@@ -152,9 +152,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
 
         // Fetch incoming alliance challenges
-        const incomingChallengesQuery = query(collection(db, 'alliance_challenges'), where('challengedCreatorId', '==', user.uid), where('status', '==', 'pending'));
+        const challengesRef = collection(db, 'alliance_challenges');
+        const incomingChallengesQuery = query(challengesRef, where('status', '==', 'pending'), or(
+            where('challengerCreatorId', '==', user.uid),
+            where('challengedCreatorId', '==', user.uid)
+        ));
+
         const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
-        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
+        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => {
+            const data = doc.data() as AllianceChallenge;
+            // Only show challenges where the current user is the one being challenged
+            if (data.challengedCreatorId === user.uid) {
+                return { id: doc.id, ...data };
+            }
+            return null;
+        }).filter(Boolean) as AllianceChallenge[]);
 
 
     }, [user]);
@@ -521,17 +533,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             allianceData.progress = 0;
         }
         
-        // --- Handle Status ---
-        let status: AllianceStatus = allianceData.status || 'ongoing';
-        if (status === 'ongoing') {
-            if (allianceData.progress >= allianceData.target) {
-                status = 'completed';
-            } else if (isPast(parseISO(allianceData.endDate))) {
-                status = 'failed';
-            }
-        }
-        allianceData.status = status;
-        
+        let opponentTotalProgress = 0;
         // --- Handle Opponent Data ---
         if (allianceData.opponentDetails?.allianceId) {
             const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
@@ -539,8 +541,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             if (opponentSnap.exists()) {
                 const opponentData = opponentSnap.data() as Alliance;
                 const opponentMemberIds = opponentData.memberIds || [];
-                let opponentTotalProgress = 0;
-
+                
                 if (opponentMemberIds.length > 0) {
                     const opponentUsersQuery = query(collection(db, 'users'), where(documentId(), 'in', opponentMemberIds));
                     const opponentUsersSnapshot = await getDocs(opponentUsersQuery);
@@ -560,6 +561,19 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 allianceData.opponentDetails.opponentProgress = opponentTotalProgress;
             }
         }
+
+        // --- Handle Status ---
+        let status: AllianceStatus = allianceData.status || 'ongoing';
+        if (status === 'ongoing') {
+            if (allianceData.progress >= allianceData.target) {
+                status = 'completed';
+            } else if (opponentTotalProgress >= allianceData.target) {
+                status = 'failed'; // They lost because opponent won
+            } else if (isPast(parseISO(allianceData.endDate))) {
+                status = 'failed';
+            }
+        }
+        allianceData.status = status;
         
         return allianceData;
     }, [user]);
