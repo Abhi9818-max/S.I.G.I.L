@@ -436,7 +436,7 @@ export default function SettingsPage() {
                
                {/* Profile Info */}
                 <div className="flex items-center gap-8 py-4">
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={() => setIsAvatarDialogOpen(true)}
                       className="avatar-overlay-container rounded-full flex-shrink-0"
@@ -453,7 +453,7 @@ export default function SettingsPage() {
                       </div>
                     </button>
                     {latestTitle && (
-                      <div className="flex items-center gap-1.5 mt-2 text-sm text-yellow-400">
+                      <div className="flex items-center gap-1.5 mt-2 text-sm text-yellow-400 whitespace-nowrap">
                         <Award className="h-4 w-4" />
                         <span className="font-semibold">{latestTitle.name}</span>
                       </div>
