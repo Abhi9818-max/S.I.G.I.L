@@ -5,6 +5,7 @@
 
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -233,7 +234,6 @@ export interface UserData {
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
     taskMastery?: Record<string, TaskMastery>;
-    kudos?: Kudo[];
 }
 
 // For Friends feature
@@ -277,14 +277,6 @@ export interface RelationshipProposal {
     createdAt: string;
     relationship: string;
     correspondingRelationship: string;
-}
-
-export interface Kudo {
-    id: string;
-    senderId: string;
-    type: 'kudos' | 'nudge';
-    message: string;
-    createdAt: string; // ISO string
 }
 
 // For Alliances (Group Goals)

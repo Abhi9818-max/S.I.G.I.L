@@ -6,11 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, HandHeart } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { UserData, Friend, RecordEntry, TaskDefinition, UserLevelInfo, Kudo } from '@/types';
+import type { UserData, Friend, RecordEntry, TaskDefinition, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
@@ -150,7 +150,7 @@ export default function FriendProfilePage() {
     const friendId = params.friendId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData, unfriend, sendKudo, getKudos } = useFriends();
+    const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData, unfriend } = useFriends();
     const currentUserRecords = useUserRecords();
     const profileCardRef = useRef<HTMLDivElement>(null);
 
@@ -159,8 +159,6 @@ export default function FriendProfilePage() {
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
     const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
-    const [lastKudo, setLastKudo] = useState<Kudo | null>(null);
-    const [isSendingKudo, setIsSendingKudo] = useState(false);
     const { toast } = useToast();
     
     const levelInfo = currentUserRecords.getUserLevelInfo();
@@ -185,11 +183,6 @@ export default function FriendProfilePage() {
                     const data = isFriend ? await getFriendData(friendId) : await getPublicUserData(friendId);
                     if (data) {
                         setFriendData(data);
-                        const kudoData = await getKudos(friendId);
-                        const myLastKudo = kudoData.find(k => k.senderId === user?.uid);
-                        if (myLastKudo) {
-                            setLastKudo(myLastKudo);
-                        }
                     } else {
                         toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
                         router.push('/friends');
@@ -205,7 +198,7 @@ export default function FriendProfilePage() {
         };
 
         fetchFriendData();
-    }, [friendId, getFriendData, getPublicUserData, isFriend, router, toast, getKudos, user?.uid]);
+    }, [friendId, getFriendData, getPublicUserData, isFriend, router, toast, user?.uid]);
 
     const friendPacts = useMemo(() => {
         if (!friendData?.todoItems) return [];
@@ -306,28 +299,6 @@ export default function FriendProfilePage() {
     }, []);
 
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
-
-    const handleSendKudo = async () => {
-        if (!friendId || !friendData) return;
-        setIsSendingKudo(true);
-        try {
-            const newKudo = await sendKudo(friendId, 'kudos', 'Keep up the great work!');
-            setLastKudo(newKudo);
-            toast({ title: 'Kudos Sent!', description: `You sent some encouragement to ${displayName}.` });
-        } catch (e) {
-            toast({ title: 'Error', description: (e as Error).message, variant: 'destructive'});
-        } finally {
-            setIsSendingKudo(false);
-        }
-    };
-    
-    // Disable kudo button if one was sent in the last 24 hours
-    const canSendKudo = useMemo(() => {
-        if (!lastKudo) return true;
-        const lastKudoTime = parseISO(lastKudo.createdAt);
-        const hoursSince = (new Date().getTime() - lastKudoTime.getTime()) / (1000 * 60 * 60);
-        return hoursSince > 24;
-    }, [lastKudo]);
 
 
     if (isLoading) {
@@ -433,13 +404,6 @@ export default function FriendProfilePage() {
                                         <CreditCard className="mr-2 h-4 w-4" />
                                         Download Card
                                     </Button>
-                                    
-                                    {isFriend && (
-                                        <Button onClick={handleSendKudo} variant="outline" size="sm" disabled={isSendingKudo || !canSendKudo}>
-                                            <HandHeart className="mr-2 h-4 w-4" />
-                                            {isSendingKudo ? "Sending..." : "Send Kudos"}
-                                        </Button>
-                                    )}
 
                                     {isFriend && (
                                         <AlertDialog>
@@ -466,11 +430,6 @@ export default function FriendProfilePage() {
                                         </AlertDialog>
                                     )}
                                 </div>
-                                {!canSendKudo && lastKudo && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        You sent kudos {formatDistanceToNowStrict(parseISO(lastKudo.createdAt), { addSuffix: true })}. You can send again later.
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>
