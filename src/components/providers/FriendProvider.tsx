@@ -799,40 +799,52 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
-        if (!user || !userData) throw new Error("Authentication required.");
-        
+        if (!user) throw new Error("Authentication required.");
+
         const title = ACHIEVEMENTS.find(a => a.id === titleId && a.isTitle);
         if (!title) throw new Error("Invalid title selected.");
+        
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userRef = doc(db, 'users', user.uid);
+                const userDoc = await transaction.get(userRef);
 
-        if (!(userData.unlockedAchievements || []).includes(titleId)) {
-            throw new Error("You do not own this title.");
+                if (!userDoc.exists()) {
+                    throw new Error("User document not found.");
+                }
+
+                const currentData = userDoc.data() as UserData;
+                if (!(currentData.unlockedAchievements || []).includes(titleId)) {
+                    throw new Error("You do not own this title.");
+                }
+
+                // Remove title from user's achievements
+                transaction.update(userRef, {
+                    unlockedAchievements: arrayRemove(titleId)
+                });
+
+                // Create new listing
+                const listingRef = doc(collection(db, 'marketplace_listings'));
+                const newListing: MarketplaceListing = {
+                    id: listingRef.id,
+                    itemId: titleId,
+                    itemName: title.name,
+                    itemDescription: title.description,
+                    itemType: 'title',
+                    sellerId: user.uid,
+                    sellerUsername: currentData.username,
+                    price,
+                    createdAt: new Date().toISOString(),
+                };
+                transaction.set(listingRef, newListing);
+            });
+        } catch (error) {
+            console.error("Listing failed:", error);
+            // Re-throw the specific error message from the transaction
+            throw error;
         }
 
-        const batch = writeBatch(db);
-
-        // Remove title from user's achievements
-        const userRef = doc(db, 'users', user.uid);
-        batch.update(userRef, {
-            unlockedAchievements: arrayRemove(titleId)
-        });
-
-        // Create new listing
-        const listingRef = doc(collection(db, 'marketplace_listings'));
-        const newListing: MarketplaceListing = {
-            id: listingRef.id,
-            itemId: titleId,
-            itemName: title.name,
-            itemDescription: title.description,
-            itemType: 'title',
-            sellerId: user.uid,
-            sellerUsername: userData.username,
-            price,
-            createdAt: new Date().toISOString(),
-        };
-        batch.set(listingRef, newListing);
-        
-        await batch.commit();
-    }, [user, userData]);
+    }, [user]);
 
     const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
         if (!user || !userData) throw new Error("Authentication required.");
