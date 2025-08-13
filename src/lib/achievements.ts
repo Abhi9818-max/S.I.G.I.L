@@ -1,3 +1,4 @@
+
 import type { Achievement } from '@/types';
 import {
   Gem,
@@ -11,6 +12,10 @@ import {
   BookUser,
   BrainCircuit,
   Dumbbell,
+  Briefcase,
+  Flame,
+  Search,
+  CheckSquare,
 } from 'lucide-react';
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -130,5 +135,166 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: Dumbbell,
     isTitle: true,
     check: ({ getAggregateSumForTask }) => getAggregateSumForTask('exercise') >= 100,
+  },
+  {
+    id: 'title-artisan',
+    name: 'The Artisan',
+    description: 'Log 250 hours of Work.',
+    category: 'title',
+    icon: Briefcase,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('work') >= 250,
+  },
+  {
+    id: 'title-professional',
+    name: 'The Professional',
+    description: 'Log 500 hours of Work.',
+    category: 'title',
+    icon: Briefcase,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('work') >= 500,
+  },
+  {
+    id: 'title-strategist',
+    name: 'The Strategist',
+    description: 'Log 250 hours on Personal tasks.',
+    category: 'title',
+    icon: Star,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('personal') >= 250,
+  },
+  {
+    id: 'title-specialist',
+    name: 'The Specialist',
+    description: 'Log 500 hours in a single task category.',
+    category: 'title',
+    icon: Star,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => ['work', 'exercise', 'learning', 'personal', 'reading', 'other'].some(task => getAggregateSumForTask(task) >= 500),
+  },
+  {
+    id: 'title-titan',
+    name: 'The Titan',
+    description: 'Log 1000 hours of Exercise.',
+    category: 'title',
+    icon: Dumbbell,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('exercise') >= 1000,
+  },
+  {
+    id: 'title-savant',
+    name: 'The Savant',
+    description: 'Log 500 hours of Learning.',
+    category: 'title',
+    icon: BrainCircuit,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('learning') >= 500,
+  },
+  {
+    id: 'title-luminary',
+    name: 'The Luminary',
+    description: 'Log 1000 hours of Learning.',
+    category: 'title',
+    icon: BrainCircuit,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('learning') >= 1000,
+  },
+  {
+    id: 'title-philosopher',
+    name: 'The Philosopher',
+    description: 'Read over 5,000 pages.',
+    category: 'title',
+    icon: BookUser,
+    isTitle: true,
+    check: ({ getAggregateSumForTask }) => getAggregateSumForTask('reading') >= 5000,
+  },
+  {
+    id: 'title-unbroken',
+    name: 'The Unbroken',
+    description: 'Maintain any streak for 100 consecutive days.',
+    category: 'title',
+    icon: Flame,
+    isTitle: true,
+    check: ({ streaks }) => Object.values(streaks).some((s) => s >= 100),
+  },
+  {
+    id: 'title-eternal-flame',
+    name: 'Eternal Flame',
+    description: 'Maintain any streak for 365 consecutive days.',
+    category: 'title',
+    icon: Flame,
+    isTitle: true,
+    isSecret: true,
+    check: ({ streaks }) => Object.values(streaks).some((s) => s >= 365),
+  },
+  {
+    id: 'title-ascendant',
+    name: 'The Ascendant',
+    description: 'Reach Level 75.',
+    category: 'title',
+    icon: AwardIcon,
+    isTitle: true,
+    check: ({ levelInfo }) => levelInfo.currentLevel >= 75,
+  },
+  {
+    id: 'title-adept',
+    name: 'Adept Skillmaster',
+    description: 'Unlock 10 skill nodes.',
+    category: 'title',
+    icon: Sparkles,
+    isTitle: true,
+    check: ({ unlockedSkillCount }) => unlockedSkillCount >= 10,
+  },
+  {
+    id: 'title-archon',
+    name: 'Archon of Will',
+    description: 'Unlock 15 skill nodes.',
+    category: 'title',
+    icon: Sparkles,
+    isTitle: true,
+    check: ({ unlockedSkillCount }) => unlockedSkillCount >= 15,
+  },
+  {
+    id: 'title-journeyman',
+    name: 'Journeyman',
+    description: 'Reach Level 20 and maintain a 30-day streak.',
+    category: 'title',
+    icon: AwardIcon,
+    isTitle: true,
+    check: ({ levelInfo, streaks }) => levelInfo.currentLevel >= 20 && Object.values(streaks).some((s) => s >= 30),
+  },
+  {
+    id: 'title-veteran',
+    name: 'Veteran',
+    description: 'Reach Level 40 and maintain a 60-day streak.',
+    category: 'title',
+    icon: AwardIcon,
+    isTitle: true,
+    check: ({ levelInfo, streaks }) => levelInfo.currentLevel >= 40 && Object.values(streaks).some((s) => s >= 60),
+  },
+  {
+    id: 'title-seeker',
+    name: 'Seeker',
+    description: 'Unlock 10 non-secret achievements.',
+    category: 'title',
+    icon: Search,
+    isTitle: true,
+    check: (context) => {
+        const nonSecretAchievements = ACHIEVEMENTS.filter(a => !a.isSecret && !a.isTitle);
+        const unlockedCount = nonSecretAchievements.filter(a => a.check(context)).length;
+        return unlockedCount >= 10;
+    }
+  },
+  {
+    id: 'title-completionist',
+    name: 'Completionist',
+    description: 'Unlock all non-secret, non-title achievements.',
+    category: 'title',
+    icon: CheckSquare,
+    isTitle: true,
+    check: (context) => {
+        const nonSecretNonTitleAchievements = ACHIEVEMENTS.filter(a => !a.isSecret && !a.isTitle);
+        return nonSecretNonTitleAchievements.every(a => a.check(context));
+    }
   },
 ];
