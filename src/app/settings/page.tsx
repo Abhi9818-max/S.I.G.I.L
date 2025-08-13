@@ -700,10 +700,14 @@ export default function SettingsPage() {
                           <Label className="font-normal">Profile Card Info</Label>
                            <p className="text-xs text-muted-foreground mt-1">Choose what to display below your name on the downloadable profile card.</p>
                           <RadioGroup 
-                              value={dashboardSettings.profileCardStat || 'currentStreak'}
+                              value={dashboardSettings.profileCardStat || 'equippedTitle'}
                               onValueChange={(value: ProfileCardStat) => updateDashboardSetting('profileCardStat', value)}
                               className="mt-2"
                           >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="equippedTitle" id="r-equipped-title" />
+                                <Label htmlFor="r-equipped-title" className="font-normal flex items-center gap-1.5"><Award className="h-4 w-4"/>Equipped Title</Label>
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="tierName" id="r-tier" />
                                 <Label htmlFor="r-tier" className="font-normal flex items-center gap-1.5"><Star className="h-4 w-4"/>Tier Name</Label>
@@ -872,6 +876,7 @@ export default function SettingsPage() {
                     userAvatar={userAvatar}
                     displayStat={dashboardSettings.profileCardStat}
                     currentStreak={getCurrentStreak(null)}
+                    equippedTitle={equippedTitle}
                 />
             )}
         </div>
@@ -902,5 +907,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    

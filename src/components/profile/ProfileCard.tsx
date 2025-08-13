@@ -2,12 +2,13 @@
 "use client";
 
 import React from 'react';
-import { UserLevelInfo, UserData, ProfileCardStat } from '@/types';
+import { UserLevelInfo, UserData, ProfileCardStat, Achievement } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Flame, TrendingUp, Star, Heart } from 'lucide-react';
+import { Flame, TrendingUp, Star, Heart, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 import Image from 'next/image';
+import { ACHIEVEMENTS } from '@/lib/achievements';
 
 interface ProfileCardProps {
   levelInfo: UserLevelInfo;
@@ -16,9 +17,11 @@ interface ProfileCardProps {
   displayStat?: ProfileCardStat;
   currentStreak?: number;
   relationship?: string | null;
+  equippedTitle?: Achievement | null;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvatar, displayStat, currentStreak, relationship }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvatar, displayStat, currentStreak, relationship, equippedTitle }) => {
+  
   const StatDisplay = () => {
     if (relationship) {
       return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Heart className="h-4 w-4 text-pink-400" /> {relationship}</p>;
@@ -26,11 +29,18 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
     
     // Fallback logic when no relationship is defined.
     switch (displayStat) {
+      case 'equippedTitle':
+        if (equippedTitle) {
+          const Icon = equippedTitle.icon;
+          return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Icon className="h-4 w-4 text-yellow-400" /> {equippedTitle.name}</p>;
+        }
+        // Fallthrough to tier name if no title is equipped
+      case 'tierName':
+        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400"/> {levelInfo.tierName}</p>;
       case 'currentStreak':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Flame className="h-4 w-4 text-orange-400" /> {currentStreak} Day Streak</p>;
       case 'totalXp':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><TrendingUp className="h-4 w-4"/> {levelInfo.totalAccumulatedValue.toLocaleString()} Total XP</p>;
-      case 'tierName':
       default:
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400"/> {levelInfo.tierName}</p>;
     }

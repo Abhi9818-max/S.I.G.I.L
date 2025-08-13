@@ -22,7 +22,7 @@ const defaultSettings: DashboardSettings = {
   progressChartTimeRange: 'weekly',
   showTimeBreakdownChart: true,
   pieChartLabelFormat: 'percentage',
-  profileCardStat: 'currentStreak',
+  profileCardStat: 'equippedTitle',
   dareCategory: 'standard',
 };
 

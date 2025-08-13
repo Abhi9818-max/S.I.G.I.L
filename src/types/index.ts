@@ -184,7 +184,7 @@ export interface HighGoal {
 
 // For Settings
 export type DareCategory = 'standard' | '18+' | 'serious';
-export type ProfileCardStat = 'tierName' | 'currentStreak' | 'totalXp';
+export type ProfileCardStat = 'tierName' | 'currentStreak' | 'totalXp' | 'equippedTitle';
 export interface DashboardSettings {
   showTotalLast30Days: boolean;
   totalDays: number;
