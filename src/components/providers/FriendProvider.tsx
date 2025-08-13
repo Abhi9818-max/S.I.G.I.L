@@ -838,13 +838,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 };
                 transaction.set(listingRef, newListing);
             });
+            await fetchFriendsAndRequests(); // Refresh data after transaction
         } catch (error) {
             console.error("Listing failed:", error);
             // Re-throw the specific error message from the transaction
             throw error;
         }
 
-    }, [user]);
+    }, [user, fetchFriendsAndRequests]);
 
     const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
         if (!user || !userData) throw new Error("Authentication required.");
