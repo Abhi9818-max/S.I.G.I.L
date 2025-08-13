@@ -563,7 +563,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 status = 'completed';
                 if (allianceData.opponentDetails?.allianceId) {
                     const opponentRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
-                    updateDoc(opponentRef, { status: 'failed' });
+                    await updateDoc(opponentRef, { status: 'failed' });
                 }
             } else if (opponentTotalProgress >= allianceData.target) {
                 status = 'failed'; // They lost because opponent won
