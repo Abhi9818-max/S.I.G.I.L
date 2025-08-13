@@ -847,7 +847,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const sellerDoc = await transaction.get(sellerRef);
             if (!sellerDoc.exists()) throw new Error("Seller not found.");
             
-            // 1. Deduct shards from buyer
+            // 1. Deduct shards from buyer and add achievement
             transaction.update(buyerRef, { 
                 aetherShards: (userData.aetherShards || 0) - listing.price,
                 unlockedAchievements: arrayUnion(listing.itemId)
