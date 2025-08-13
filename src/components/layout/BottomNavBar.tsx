@@ -13,7 +13,6 @@ const navItems = [
   { href: '/friends', label: 'Friends', icon: Users },
   { href: '/alliances', label: 'Alliances', icon: ShieldCheck },
   { href: '/reputation', label: 'Reputation', icon: Users },
-  { href: '/market', label: 'Market', icon: Gem },
   { href: '/todo', label: 'Pacts', icon: ListChecks },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

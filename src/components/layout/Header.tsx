@@ -71,7 +71,6 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/alliances", label: "Alliances", icon: ShieldCheck },
     { href: "/todo", label: "Pacts", icon: ListChecks },
     { href: "/reputation", label: "Reputation", icon: Users },
-    { href: "/market", label: "Market", icon: Gem },
     { href: "/insights", label: "Insights", icon: BarChart2 },
     { href: "/achievements", label: "Achievements", icon: Trophy },
     { href: "/constellations", label: "Constellations", icon: Sparkles },
