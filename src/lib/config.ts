@@ -1,5 +1,6 @@
 
 import type { TaskDefinition, UserLevelInfo, TierConfig, Faction, ReputationLevel } from '@/types';
+import { XP_CONFIG } from './xp-config';
 import { BookUser, BrainCircuit, Dumbbell, Briefcase, BookOpen, Star } from 'lucide-react';
 
 export const LOCAL_STORAGE_KEY = 'recordTrackerData';
@@ -112,7 +113,7 @@ export const LEVEL_NAMES: readonly string[] = [
   "Fangroot", "Banewake", "Vessel of Nine", "The Cutmark", "Dusttaker",
   // Tier 10 – Final Forms (Lv. 91–100)
   "The Ash Wolf", "Wyrmblood", "Redrift", "The Lost Fang", "Nullmark",
-  "Broken Throne", "Crownless Lord", "Steelwither", "Mouth of Stone", "Endborne",
+  "Broken Throne", "Crownless Lord", "Steelwither", "Endborne",
 ];
 
 export const TIER_INFO: readonly TierConfig[] = [
@@ -128,37 +129,13 @@ export const TIER_INFO: readonly TierConfig[] = [
     { name: "Final Forms", slug: "final-forms", icon: "🌑", minLevel: 91, maxLevel: 100, tierGroup: 5, welcomeMessage: "No more trials. No more thresholds. This is not potential — this is you, fully formed and feared.", tierEntryBonus: 5000 },
 ];
 
-export const LEVEL_THRESHOLDS: readonly number[] = (() => {
-  const levels = 100;
-  const totalTargetXP = 51000; // Target total XP for level 100
-  let thresholds: number[] = [0];
-  let accumulatedXP = 0;
-  let baseXP = 30; // Starting XP for level 2
+const LEVEL_THRESHOLDS = XP_CONFIG.reduce((acc, level) => {
+    const prevXp = acc.length > 0 ? acc[acc.length - 1] : 0;
+    acc.push(prevXp + level.xp_required);
+    return acc;
+}, [] as number[]);
 
-  for (let level = 1; level < levels; level++) {
-    // A more gradual curve
-    let xpForNextLevel = baseXP * Math.pow(1.05, level - 1) + (level * 2);
-    accumulatedXP += Math.round(xpForNextLevel);
-    thresholds.push(accumulatedXP);
-  }
-
-  // Normalize the curve to the target total XP
-  const actualTotalXP = thresholds[thresholds.length - 1];
-  const scalingFactor = totalTargetXP / actualTotalXP;
-
-  const finalThresholds = thresholds.map(t => Math.round(t * scalingFactor));
-  finalThresholds[0] = 0; // Ensure level 1 starts at 0 XP
-
-  return finalThresholds;
-})();
-
-
-export const MAX_USER_LEVEL = LEVEL_THRESHOLDS.length;
-
-// XP CALCULATION LOGIC
-const PHASE_XP = [10, 25, 50, 100];
-const PRIORITY_MULTIPLIER = 1.5;
-const LEVEL_SCALING_FACTOR = 0.05;
+export const MAX_USER_LEVEL = LEVEL_NAMES.length;
 
 // TASK MASTERY CONFIG
 const MASTERY_BASE_XP = 100;
@@ -209,39 +186,6 @@ export const calculateMasteryLevelInfo = (masteryXp: number) => {
     };
 };
 
-
-export const calculateXpForRecord = (
-    recordValue: number,
-    task: TaskDefinition | undefined,
-    userLevel: number,
-    taskMasteryBonus: number = 0
-): number => {
-    if (!task) return 0;
-
-    let value = recordValue;
-    if (task.unit === 'hours') {
-        value = recordValue * 60; // Convert hours to minutes for consistent threshold checks
-    }
-
-    const level = getContributionLevel(value, task.intensityThresholds);
-    if (level === 0) return 0;
-
-    const phaseIndex = level - 1;
-    let baseXP = PHASE_XP[phaseIndex] || 0;
-
-    if (task.priority === 'high') {
-        baseXP *= PRIORITY_MULTIPLIER;
-    }
-
-    const levelBonus = baseXP * (userLevel - 1) * LEVEL_SCALING_FACTOR;
-    const masteryBonus = baseXP * taskMasteryBonus;
-
-    const finalXP = Math.round(baseXP + levelBonus + masteryBonus);
-
-    return finalXP;
-};
-
-
 // totalExperiencePoints is the sum of all record values PLUS any awarded bonuses
 export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevelInfo => {
   let currentLevel = 0;
@@ -251,11 +195,16 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
       break;
     }
   }
+  
   if (currentLevel === 0 && LEVEL_THRESHOLDS.length > 0) currentLevel = 1;
-  if (currentLevel > MAX_USER_LEVEL) currentLevel = MAX_USER_LEVEL;
+
+  // Since level is 1-based, and arrays are 0-based, we use `currentLevel - 1`
+  // but ensure it doesn't go below 0.
+  const levelIndex = Math.max(0, currentLevel - 1);
+  if (levelIndex >= MAX_USER_LEVEL) currentLevel = MAX_USER_LEVEL;
 
 
-  const levelName = LEVEL_NAMES[currentLevel - 1] || "Champion";
+  const levelName = LEVEL_NAMES[levelIndex] || "Champion";
 
   const currentTierInfo = TIER_INFO.find(tier => currentLevel >= tier.minLevel && currentLevel <= tier.maxLevel) || TIER_INFO[0];
   const tierName = currentTierInfo.name;
@@ -265,8 +214,9 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
   const welcomeMessage = currentTierInfo.welcomeMessage;
 
   const isMaxLevel = currentLevel >= MAX_USER_LEVEL;
-  const currentLevelValueStart = LEVEL_THRESHOLDS[currentLevel - 1] ?? 0;
-  const nextLevelValueTarget = isMaxLevel ? totalExperiencePoints : (LEVEL_THRESHOLDS[currentLevel] ?? totalExperiencePoints);
+  
+  const currentLevelValueStart = levelIndex > 0 ? LEVEL_THRESHOLDS[levelIndex - 1] : 0;
+  const nextLevelValueTarget = isMaxLevel ? totalExperiencePoints : (LEVEL_THRESHOLDS[levelIndex] ?? totalExperiencePoints);
 
 
   let progressPercentage = 0;

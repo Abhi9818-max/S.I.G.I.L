@@ -8,6 +8,7 @@
 
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -88,6 +89,14 @@ export interface UserLevelInfo {
   isMaxLevel: boolean;
   valueTowardsNextLevel: number; // Experience points earned within the current level
   pointsForNextLevel: number | null; // Total experience points needed to reach the next level from start of current level
+}
+
+// New type for the user-defined level config
+export interface LevelXPConfig {
+    level: number;
+    xp_required: number;
+    base_low_xp: number;
+    base_high_xp: number;
 }
     
 // Specific for TIER_INFO in config.ts

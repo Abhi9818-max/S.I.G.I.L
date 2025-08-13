@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -10,12 +10,13 @@ import { useAuth } from './AuthProvider';
 import {
   TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS,
   calculateUserLevelInfo,
-  calculateXpForRecord, // Import the new XP calculation function
   STREAK_MILESTONES_FOR_CRYSTALS,
   calculateMasteryLevelInfo,
   REP_PER_XP,
   FACTIONS,
+  getContributionLevel
 } from '@/lib/config';
+import { XP_CONFIG } from '@/lib/xp-config';
 import { CONSTELLATIONS } from '@/lib/constellations';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import {
@@ -215,25 +216,69 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return calculateMasteryLevelInfo(masteryData.xp);
   }, [taskMastery]);
 
+  const calculateXpForRecord = useCallback((
+    recordValue: number,
+    task: TaskDefinition | undefined,
+    userLevel: number
+  ): number => {
+      if (!task || !XP_CONFIG || XP_CONFIG.length === 0) return 0;
+      
+      const levelConfig = XP_CONFIG.find(c => c.level === userLevel);
+      if (!levelConfig) return 0; // No config for this level
+
+      let value = recordValue;
+      if (task.unit === 'hours') {
+          value = recordValue * 60; // Convert hours to minutes for consistent threshold checks
+      }
+
+      const phase = getContributionLevel(value, task.intensityThresholds);
+      if (phase === 0) return 0;
+
+      const baseXP = task.priority === 'high' ? levelConfig.base_high_xp : levelConfig.base_low_xp;
+      
+      const phasePercentages = [0, 0.25, 0.50, 0.75, 1.00];
+      const percentage = phasePercentages[phase] || 0;
+
+      return Math.round(baseXP * percentage);
+  }, []);
+
   const calculateTotalXp = useCallback((): number => {
     if (!isUserDataLoaded) return 0;
     
-    // Calculate total XP from records
-    const sumOfRecordXp = records.reduce((sum, record) => {
-        const task = getTaskDefinitionById(record.taskType || '');
-        const masteryInfo = record.taskType ? getTaskMasteryInfo(record.taskType) : null;
-        // NOTE: We pass a placeholder level of 1 here to get the base XP value,
-        // which prevents a recursive loop with getUserLevelInfo.
-        const recordXp = calculateXpForRecord(record.value, task, 1, masteryInfo?.xpBonus); 
-        return sum + recordXp;
-    }, 0);
+    const levelMap = new Map<number, number>();
+    let cumulativeXp = 0;
+    
+    for (const record of records) {
+        let currentLevel = 1;
+        // Determine level at the time of the record
+        for (const config of XP_CONFIG) {
+            if (cumulativeXp >= (levelMap.get(config.level - 1) || 0)) {
+                currentLevel = config.level;
+            } else {
+                break;
+            }
+        }
+        if (!levelMap.has(currentLevel -1)) {
+            const prevXp = currentLevel > 1 ? levelMap.get(currentLevel - 2) || 0 : 0;
+            const req = XP_CONFIG.find(c => c.level === currentLevel - 1)?.xp_required || 0;
+            levelMap.set(currentLevel - 1, prevXp + req);
+        }
 
-    // Now, add the total bonus points
-    return sumOfRecordXp + totalBonusPoints;
-  }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, getTaskMasteryInfo]);
+        const task = getTaskDefinitionById(record.taskType || '');
+        const recordXp = calculateXpForRecord(record.value, task, currentLevel);
+        cumulativeXp += recordXp;
+    }
+
+    return cumulativeXp + totalBonusPoints;
+  }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, calculateXpForRecord]);
+
 
   const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
     if (!isUserDataLoaded) return null;
+    if (XP_CONFIG.length === 0) {
+        console.warn("XP_CONFIG is empty. Leveling system will not function correctly.");
+        return calculateUserLevelInfo(0);
+    };
     const totalExperience = calculateTotalXp();
     return calculateUserLevelInfo(totalExperience);
   }, [isUserDataLoaded, calculateTotalXp]);
@@ -246,7 +291,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const recordDates = new Set(taskRelevantRecords.map(r => r.date));
   
     const taskDef = taskId ? getTaskDefinitionById(taskId) : null;
-    const isDaily = !taskDef || !taskDef.frequencyType || taskDef.frequencyType === 'daily';
+    const isDaily = !taskDef || !taskDef.frequencyType || !taskDef.frequencyType === 'daily';
   
     let currentDate = startOfDay(new Date());
     let streak = 0;
@@ -299,8 +344,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     
     if (newRecord.taskType) {
         const task = getTaskDefinitionById(newRecord.taskType);
-        const masteryInfo = getTaskMasteryInfo(newRecord.taskType);
-        const recordXp = calculateXpForRecord(newRecord.value, task, 1, masteryInfo?.xpBonus);
+        const currentUserLevel = getUserLevelInfo()?.currentLevel || 1;
+        const recordXp = calculateXpForRecord(newRecord.value, task, currentUserLevel);
         
         // Update task mastery
         const currentMastery = taskMastery[newRecord.taskType] || { level: 1, xp: 0 };
@@ -323,7 +368,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     
     updateUserDataInDb(dataToUpdate);
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getTaskMasteryInfo, reputation]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.
@@ -600,14 +645,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       .filter(r => r.taskType === taskId)
       .reduce((sum, r) => {
           const task = getTaskDefinitionById(r.taskType || '');
-          const masteryInfo = getTaskMasteryInfo(taskId);
-          const recordXp = calculateXpForRecord(r.value, task, levelInfo.currentLevel, masteryInfo?.xpBonus);
+          const recordXp = calculateXpForRecord(r.value, task, levelInfo.currentLevel);
           return sum + recordXp;
       }, 0);
 
     const spentPoints = spentSkillPoints[taskId] || 0;
     return totalPoints - spentPoints;
-  }, [records, spentSkillPoints, getTaskDefinitionById, getUserLevelInfo, getTaskMasteryInfo]);
+  }, [records, spentSkillPoints, getTaskDefinitionById, getUserLevelInfo, calculateXpForRecord]);
 
   const isSkillUnlocked = useCallback((skillId: string): boolean => {
     return unlockedSkills.includes(skillId);
@@ -638,7 +682,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const taskDef = record.taskType ? getTaskDefinitionById(record.taskType) : undefined;
       const effectiveTaskId = taskDef?.id || 'unassigned';
       const taskName = taskDef?.name || 'Unassigned';
-      const taskColor = taskDef?.color || DEFAULT_TASK_COLOR;
+      const taskColor = taskDef?.color || 'hsl(0 0% 50%)';
 
       const current = distribution.get(effectiveTaskId) || { value: 0, color: taskColor, name: taskName };
       current.value += record.value;
