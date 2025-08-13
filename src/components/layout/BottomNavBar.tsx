@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, ShieldCheck, ListChecks, Settings, BarChart2, Gem } from 'lucide-react';
+import { Home, Users, ShieldCheck, ListChecks, Settings, BarChart2, Gem, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
