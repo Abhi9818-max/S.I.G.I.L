@@ -31,9 +31,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const SellDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+const SellDialog = ({ isOpen, onOpenChange, userListings }: { isOpen: boolean, onOpenChange: (open: boolean) => void, userListings: MarketplaceListing[] }) => {
     const { unlockedAchievements } = useUserRecords();
-    const { userListings, listTitleForSale } = useFriends();
+    const { listTitleForSale } = useFriends();
     const [selectedTitleId, setSelectedTitleId] = useState('');
     const [price, setPrice] = useState('');
     const { toast } = useToast();
@@ -316,7 +316,7 @@ export default function MarketPage() {
            </div>
 
         </div>
-        <SellDialog isOpen={isSellDialogOpen} onOpenChange={setIsSellDialogOpen} />
+        <SellDialog isOpen={isSellDialogOpen} onOpenChange={setIsSellDialogOpen} userListings={userListings} />
       </main>
     </div>
   );
