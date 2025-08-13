@@ -53,6 +53,7 @@ interface FriendContextType {
     getAllianceWithMembers: (allianceId: string) => Promise<Alliance | null>;
     leaveAlliance: (allianceId: string, memberId: string) => Promise<void>;
     disbandAlliance: (allianceId: string) => Promise<void>;
+    deleteAllCreatedAlliances: () => Promise<void>;
     sendAllianceInvitation: (allianceId: string, allianceName: string, recipientId: string) => Promise<void>;
     acceptAllianceInvitation: (invitation: AllianceInvitation) => Promise<void>;
     declineAllianceInvitation: (invitationId: string) => Promise<void>;
@@ -615,6 +616,27 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await batch.commit();
     }, []);
 
+    const deleteAllCreatedAlliances = useCallback(async () => {
+        if (!user) throw new Error("Authentication required.");
+
+        const alliancesRef = collection(db, 'alliances');
+        const q = query(alliancesRef, where('creatorId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            toast({ title: "No Alliances Found", description: "You have not created any alliances to delete." });
+            return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        // The onSnapshot listener will update the local state automatically.
+    }, [user, toast]);
+
     const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
         if (!user || !userData) throw new Error("Authentication required.");
 
@@ -805,6 +827,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             getAllianceWithMembers,
             leaveAlliance,
             disbandAlliance,
+            deleteAllCreatedAlliances,
             sendAllianceInvitation,
             acceptAllianceInvitation,
             declineAllianceInvitation,

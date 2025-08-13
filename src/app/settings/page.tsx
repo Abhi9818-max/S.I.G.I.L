@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -108,11 +108,12 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements } = useUserRecords();
-  const { friends, pendingRequests, incomingRequests, acceptFriendRequest, declineFriendRequest, cancelFriendRequest } = useFriends();
+  const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
+  const [isDeletingAlliances, setIsDeletingAlliances] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
@@ -237,6 +238,25 @@ export default function SettingsPage() {
         variant: "destructive",
       });
       setIsClearing(false);
+    }
+  };
+
+  const handleDeleteAlliances = async () => {
+    setIsDeletingAlliances(true);
+    try {
+        await deleteAllCreatedAlliances();
+        toast({
+            title: "Alliances Deleted",
+            description: "All alliances created by you have been removed.",
+        });
+    } catch (error) {
+        toast({
+            title: "Deletion Failed",
+            description: (error as Error).message,
+            variant: "destructive",
+        });
+    } finally {
+        setIsDeletingAlliances(false);
     }
   };
   
@@ -696,6 +716,29 @@ export default function SettingsPage() {
                         <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
                         <div className="p-4 border border-destructive/50 rounded-lg space-y-4 bg-destructive/10">
                             <p className="text-sm text-destructive/90">These actions are irreversible. Please be certain before proceeding.</p>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" className="w-full">
+                                  <ShieldAlert className="mr-2 h-4 w-4"/>
+                                   Delete All My Alliances
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle/>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action will permanently delete all alliances created by you. This cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleDeleteAlliances} disabled={isDeletingAlliances} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                                        {isDeletingAlliances ? "Deleting..." : "Yes, delete my alliances"}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" className="w-full">
