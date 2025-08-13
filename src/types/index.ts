@@ -1,4 +1,5 @@
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -269,10 +270,10 @@ export interface UserData {
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
     taskMastery?: Record<string, TaskMastery>;
-    // New Economy/Reputation fields
     aetherShards?: number;
-    reputation?: Record<string, number>; // e.g. { 'scholars-guild': 1250, 'iron-legion': 500 }
+    reputation?: Record<string, number>; // e.g., { 'scholars-guild': 1250, 'iron-legion': 500 }
     marketplaceListings?: MarketplaceListing[]; // User's own active listings
+    equippedTitleId?: string;
 }
 
 // For Friends feature

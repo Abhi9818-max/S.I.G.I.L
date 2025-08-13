@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -33,7 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat, DareCategory } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat, DareCategory, Achievement } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -105,6 +106,48 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
             </DialogContent>
         </Dialog>
     )
+};
+
+const TitleSelectionDialog = ({ isOpen, onOpenChange, unlockedTitles, equippedTitleId, onSelect }: { isOpen: boolean, onOpenChange: (open: boolean) => void, unlockedTitles: Achievement[], equippedTitleId: string | null | undefined, onSelect: (id: string | null) => void }) => {
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Select Your Title</DialogTitle>
+                    <DialogDescription>Choose a title to display on your profile.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] pr-4">
+                    <div className="space-y-2">
+                        <Button
+                            variant={!equippedTitleId ? 'secondary' : 'outline'}
+                            onClick={() => onSelect(null)}
+                            className="w-full justify-start"
+                        >
+                            <Award className="mr-2 h-4 w-4" />
+                            No Title
+                        </Button>
+                        {unlockedTitles.map(title => {
+                            const Icon = title.icon;
+                            return (
+                                <Button
+                                    key={title.id}
+                                    variant={equippedTitleId === title.id ? 'secondary' : 'outline'}
+                                    onClick={() => onSelect(title.id)}
+                                    className="w-full justify-start"
+                                >
+                                    <Icon className="mr-2 h-4 w-4" />
+                                    {title.name}
+                                </Button>
+                            );
+                        })}
+                    </div>
+                </ScrollArea>
+                 <DialogFooter>
+                    <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 
@@ -112,13 +155,14 @@ export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture, updateBio, logout, connectGoogleFit, disconnectGoogleFit } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio, logout, connectGoogleFit, disconnectGoogleFit, equipTitle } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAlliances, setIsDeletingAlliances] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
   const [isBioDialogOpen, setIsBioDialogOpen] = useState(false);
+  const [isTitleDialogOpen, setIsTitleDialogOpen] = useState(false);
   const [isManageTasksModalOpen, setIsManageTasksModalOpen] = useState(false);
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [masterControlUnlocked, setMasterControlUnlocked] = useState(false);
@@ -325,13 +369,15 @@ export default function SettingsPage() {
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);
   
-  const latestTitle = useMemo(() => {
-    const titles = ACHIEVEMENTS.filter(a => a.isTitle && unlockedAchievements.includes(a.id));
-    if (titles.length === 0) return null;
-    // This assumes the latest unlocked is the last one in the main array. A more robust
-    // solution might need timestamps, but this is fine for now.
-    return titles[titles.length - 1];
+  const unlockedTitles = useMemo(() => {
+    return ACHIEVEMENTS.filter(a => a.isTitle && unlockedAchievements.includes(a.id));
   }, [unlockedAchievements]);
+
+  const equippedTitle = useMemo(() => {
+    if (!userData?.equippedTitleId) return null;
+    return unlockedTitles.find(t => t.id === userData.equippedTitleId);
+  }, [userData?.equippedTitleId, unlockedTitles]);
+
 
   const handleUnlockMasterControl = () => {
     const code = secretCodeInput.trim().toLowerCase();
@@ -452,17 +498,24 @@ export default function SettingsPage() {
                           <Camera className="h-6 w-6 text-white/90" />
                       </div>
                     </button>
-                    {latestTitle && (
-                      <div className="flex items-center gap-1.5 mt-2 text-sm text-yellow-400 whitespace-nowrap">
-                        <Award className="h-4 w-4" />
-                        <span className="font-semibold">{latestTitle.name}</span>
-                      </div>
-                    )}
+                    <div className="h-7 mt-2">
+                        {equippedTitle ? (
+                           <div className="flex items-center gap-1.5 text-sm text-yellow-400 whitespace-nowrap">
+                                <Award className="h-4 w-4" />
+                                <span className="font-semibold">{equippedTitle.name}</span>
+                           </div>
+                        ) : null}
+                    </div>
                   </div>
 
 
                   <div className="flex flex-col w-full">
-                     <h2 className="text-xl font-bold">{userData?.username}</h2>
+                     <div className="flex justify-between items-start">
+                         <h2 className="text-xl font-bold">{userData?.username}</h2>
+                         <Button variant="outline" size="sm" onClick={() => setIsTitleDialogOpen(true)}>
+                            Change Title
+                         </Button>
+                     </div>
                       <div className="flex-grow grid grid-cols-3 text-left mt-2">
                         <div>
                             <p className="font-bold text-lg">{levelInfo?.currentLevel}</p>
@@ -823,6 +876,13 @@ export default function SettingsPage() {
         onOpenChange={setIsBioDialogOpen}
         currentBio={userData?.bio || ''}
         onSave={updateBio}
+    />
+    <TitleSelectionDialog 
+        isOpen={isTitleDialogOpen}
+        onOpenChange={setIsTitleDialogOpen}
+        unlockedTitles={unlockedTitles}
+        equippedTitleId={userData?.equippedTitleId}
+        onSelect={equipTitle}
     />
      <ManageTasksModal
         isOpen={isManageTasksModalOpen}

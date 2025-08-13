@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -30,6 +31,7 @@ interface AuthContextType {
   continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
+  equipTitle: (titleId: string | null) => Promise<void>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -308,6 +310,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, db, toast, isGuest]);
 
+  const equipTitle = useCallback(async (titleId: string | null) => {
+    const dataToUpdate = { equippedTitleId: titleId || null };
+     if (isGuest) {
+        setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
+        const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+        guestData.equippedTitleId = dataToUpdate.equippedTitleId;
+        localStorage.setItem('guest-userData', JSON.stringify(guestData));
+        toast({ title: 'Title Equipped!' });
+        return;
+    }
+
+    if (!user || !db) return;
+
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, dataToUpdate);
+        setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
+        toast({ title: 'Title Equipped!' });
+    } catch (error) {
+        console.error('Error equipping title:', error);
+        toast({ title: 'Error', description: 'Could not equip the title.', variant: 'destructive' });
+    }
+  }, [user, db, toast, isGuest]);
+
   const connectGoogleFit = useCallback(async () => {
     // This is a placeholder. The actual implementation would involve
     // a library like 'react-google-login' or a custom OAuth flow.
@@ -336,7 +362,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, userData, loading, isUserDataLoaded, connectGoogleFit, disconnectGoogleFit }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, userData, loading, isUserDataLoaded, connectGoogleFit, disconnectGoogleFit }}>
       {children}
     </AuthContext.Provider>
   );
