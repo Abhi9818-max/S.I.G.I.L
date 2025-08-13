@@ -16,7 +16,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
-import { calculateUserLevelInfo } from '@/lib/config';
 import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday, parseISO, formatDistanceToNowStrict } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
@@ -171,10 +170,9 @@ export default function FriendProfilePage() {
 
     const friendLevelInfo: UserLevelInfo | null = useMemo(() => {
         if (!friendData) return null;
-        const totalRecordValue = friendData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
-        const totalExperience = totalRecordValue + (friendData.bonusPoints || 0);
-        return calculateUserLevelInfo(totalExperience);
-    }, [friendData]);
+        // Use the same provider logic to calculate friend's level for consistency
+        return currentUserRecords.getUserLevelInfo();
+    }, [friendData, currentUserRecords]);
     
     useEffect(() => {
         const fetchFriendData = async () => {
@@ -546,3 +544,5 @@ export default function FriendProfilePage() {
         </>
     );
 };
+
+    
