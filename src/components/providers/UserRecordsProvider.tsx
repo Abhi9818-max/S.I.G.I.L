@@ -121,6 +121,8 @@ interface UserRecordsContextType {
   getHighGoalProgress: (goal: HighGoal) => number;
   masterBonusAwarded: boolean;
   getTaskMasteryInfo: (taskId: string) => TaskMasteryInfo | null;
+  // Economy
+  convertXpToShards: (xpAmount: number) => void;
 }
 
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
@@ -838,6 +840,27 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [records, taskDefinitions, awardedStreakMilestones, freezeCrystals, isUserDataLoaded, user, getCurrentStreak, updateUserDataInDb, toast, userData]);
 
+  const convertXpToShards = useCallback((xpAmount: number) => {
+    if (xpAmount <= 0) {
+      throw new Error("Amount must be positive.");
+    }
+    if (totalBonusPoints < xpAmount) {
+      throw new Error("Not enough convertible bonus XP.");
+    }
+    const shardsGained = Math.floor(xpAmount / 5);
+    if (shardsGained <= 0) {
+        throw new Error("XP amount is too low to convert into at least one shard.");
+    }
+    
+    const newBonusPoints = totalBonusPoints - xpAmount;
+    const newAetherShards = aetherShards + shardsGained;
+
+    updateUserDataInDb({
+      bonusPoints: newBonusPoints,
+      aetherShards: newAetherShards,
+    });
+  }, [totalBonusPoints, aetherShards, updateUserDataInDb]);
+
 
   const contextValue = useMemo(() => ({
     records,
@@ -886,6 +909,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     getHighGoalProgress,
     masterBonusAwarded,
     getTaskMasteryInfo,
+    convertXpToShards,
   }), [
       records,
       addRecord,
@@ -933,6 +957,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       getHighGoalProgress,
       masterBonusAwarded,
       getTaskMasteryInfo,
+      convertXpToShards,
   ]);
 
 
