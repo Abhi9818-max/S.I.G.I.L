@@ -7,12 +7,12 @@ import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Gem, Store, Zap, ArrowRight, PlusCircle, ShoppingCart, Tag, Coins, X } from 'lucide-react';
+import { Gem, Store, Zap, ArrowRight, PlusCircle, ShoppingCart, Tag, Coins, X, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -101,6 +101,67 @@ const SellDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (
     );
 };
 
+const XPConverterDialog = ({ convertibleXp }: { convertibleXp: number }) => {
+    const { convertXpToShards } = useUserRecords();
+    const [xpToConvert, setXpToConvert] = useState('');
+    const { toast } = useToast();
+
+    const handleConversion = () => {
+        const amount = Number(xpToConvert);
+        if (isNaN(amount) || amount <= 0) {
+          toast({ title: 'Invalid Amount', description: 'Please enter a positive number.', variant: 'destructive' });
+          return;
+        }
+        if (amount > convertibleXp) {
+          toast({ title: 'Not Enough XP', description: `You only have ${convertibleXp.toLocaleString()} convertible XP.`, variant: 'destructive' });
+          return;
+        }
+
+        try {
+          convertXpToShards(amount);
+          toast({ title: 'Conversion Successful', description: `You converted ${amount.toLocaleString()} XP into ${(Math.floor(amount / 5)).toLocaleString()} Aether Shards.` });
+          setXpToConvert('');
+        } catch (error) {
+          toast({ title: 'Conversion Failed', description: (error as Error).message, variant: 'destructive' });
+        }
+    };
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>XP Converter</DialogTitle>
+                <DialogDescription>Convert your bonus XP into Aether Shards at a rate of 5 XP to 1 Shard.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                    You have <span className="font-bold text-primary">{convertibleXp.toLocaleString()}</span> convertible bonus XP.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Input 
+                        type="number"
+                        placeholder="XP to convert"
+                        value={xpToConvert}
+                        onChange={(e) => setXpToConvert(e.target.value)}
+                        min="1"
+                        max={convertibleXp}
+                    />
+                    <DialogTrigger asChild>
+                        <Button onClick={handleConversion} disabled={!xpToConvert || Number(xpToConvert) <= 0}>
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            Convert
+                        </Button>
+                    </DialogTrigger>
+                </div>
+                {Number(xpToConvert) > 0 && (
+                    <p className="text-sm text-center text-muted-foreground">
+                        You will receive: <span className="font-bold text-cyan-400">{(Math.floor(Number(xpToConvert) / 5)).toLocaleString()}</span> Aether Shards
+                    </p>
+                )}
+            </div>
+        </DialogContent>
+    );
+};
+
 
 export default function MarketPage() {
   const { getUserLevelInfo, convertXpToShards } = useUserRecords();
@@ -108,7 +169,6 @@ export default function MarketPage() {
   const { globalListings, userListings, purchaseTitle, cancelListing } = useFriends();
   const { toast } = useToast();
   
-  const [xpToConvert, setXpToConvert] = useState('');
   const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
 
   const levelInfo = getUserLevelInfo();
@@ -117,26 +177,6 @@ export default function MarketPage() {
   const totalXP = levelInfo?.totalAccumulatedValue ?? 0;
   const convertibleXp = userData?.bonusPoints ?? 0;
 
-  const handleConversion = () => {
-    const amount = Number(xpToConvert);
-    if (isNaN(amount) || amount <= 0) {
-      toast({ title: 'Invalid Amount', description: 'Please enter a positive number.', variant: 'destructive' });
-      return;
-    }
-    if (amount > convertibleXp) {
-      toast({ title: 'Not Enough XP', description: `You only have ${convertibleXp.toLocaleString()} convertible XP.`, variant: 'destructive' });
-      return;
-    }
-
-    try {
-      convertXpToShards(amount);
-      toast({ title: 'Conversion Successful', description: `You converted ${amount.toLocaleString()} XP into ${(amount / 5).toLocaleString()} Aether Shards.` });
-      setXpToConvert('');
-    } catch (error) {
-      toast({ title: 'Conversion Failed', description: (error as Error).message, variant: 'destructive' });
-    }
-  };
-  
   const handlePurchase = async (listing: MarketplaceListing) => {
     try {
         await purchaseTitle(listing);
@@ -192,48 +232,26 @@ export default function MarketPage() {
             <p className="text-muted-foreground mt-2">Exchange resources and trade titles with other users.</p>
           </div>
           
-           <Card className="mt-6">
-            <CardHeader>
-                <CardTitle>XP Converter</CardTitle>
-                <CardDescription>Convert your bonus XP into Aether Shards at a rate of 5 XP to 1 Shard.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You have <span className="font-bold text-primary">{convertibleXp.toLocaleString()}</span> convertible bonus XP.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Input 
-                            type="number"
-                            placeholder="XP to convert"
-                            value={xpToConvert}
-                            onChange={(e) => setXpToConvert(e.target.value)}
-                            min="1"
-                            max={convertibleXp}
-                        />
-                        <Button onClick={handleConversion} disabled={!xpToConvert || Number(xpToConvert) <= 0}>
-                            <ArrowRight className="mr-2 h-4 w-4" />
-                            Convert
-                        </Button>
-                    </div>
-                    {Number(xpToConvert) > 0 && (
-                        <p className="text-sm text-center text-muted-foreground">
-                            You will receive: <span className="font-bold text-cyan-400">{(Math.floor(Number(xpToConvert) / 5)).toLocaleString()}</span> Aether Shards
-                        </p>
-                    )}
-                </div>
-            </CardContent>
-           </Card>
-
            <div className="mt-8 space-y-4">
                <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <Tag className="h-5 w-5 text-primary" />
                         <h2 className="text-xl font-semibold">Your Listings</h2>
                     </div>
-                    <Button onClick={() => setIsSellDialogOpen(true)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Sell a Title
-                    </Button>
+                    <div className="flex items-center gap-2">
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Repeat className="mr-2 h-4 w-4"/>
+                                    Convert XP
+                                </Button>
+                            </DialogTrigger>
+                            <XPConverterDialog convertibleXp={convertibleXp} />
+                        </Dialog>
+                        <Button onClick={() => setIsSellDialogOpen(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Sell a Title
+                        </Button>
+                    </div>
                 </div>
                 {userListings.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">You have no items listed for sale.</p>
