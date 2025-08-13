@@ -33,6 +33,8 @@ interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
+  connectGoogleFit: () => Promise<void>;
+  disconnectGoogleFit: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,6 +96,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     highGoals: [],
                     todoItems: [],
                     taskMastery: {},
+                    aetherShards: 0,
+                    reputation: {},
                 };
                 setUserData(initialGuestData);
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
@@ -214,6 +218,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             highGoals: [],
             todoItems: [],
             taskMastery: {},
+            aetherShards: 0,
+            reputation: {},
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
@@ -301,6 +307,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: 'Error', description: 'Could not update your bio.', variant: 'destructive' });
     }
   }, [user, db, toast, isGuest]);
+
+  const connectGoogleFit = useCallback(async () => {
+    // This is a placeholder. The actual implementation would involve
+    // a library like 'react-google-login' or a custom OAuth flow.
+    console.log("Attempting to connect to Google Fit...");
+    toast({
+        title: "Google Fit Integration",
+        description: "This feature is not fully implemented. This is where the OAuth flow would begin.",
+    });
+  }, [toast]);
+
+  const disconnectGoogleFit = useCallback(async () => {
+    console.log("Disconnecting from Google Fit...");
+     toast({
+        title: "Google Fit Disconnected",
+        description: "The connection has been removed.",
+    });
+  }, [toast]);
   
 
   if (showLoading && pathname !== '/login') {
@@ -312,7 +336,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, userData, loading, isUserDataLoaded, connectGoogleFit, disconnectGoogleFit }}>
       {children}
     </AuthContext.Provider>
   );

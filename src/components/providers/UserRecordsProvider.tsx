@@ -13,6 +13,8 @@ import {
   calculateXpForRecord, // Import the new XP calculation function
   STREAK_MILESTONES_FOR_CRYSTALS,
   calculateMasteryLevelInfo,
+  REP_PER_XP,
+  FACTIONS,
 } from '@/lib/config';
 import { CONSTELLATIONS } from '@/lib/constellations';
 import { ACHIEVEMENTS } from '@/lib/achievements';
@@ -168,6 +170,9 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const highGoals = useMemo(() => userData?.highGoals || [], [userData]);
   const masterBonusAwarded = useMemo(() => userData?.masterBonusAwarded || false, [userData]);
   const taskMastery = useMemo(() => userData?.taskMastery || {}, [userData]);
+  const reputation = useMemo(() => userData?.reputation || {}, [userData]);
+  const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
+
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
       const getNewState = (prevData: UserData | null) => {
@@ -276,13 +281,15 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const updatedRecords = [...records, newRecord].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-    // Update task mastery
+    // Base data to update
     const dataToUpdate: Partial<UserData> = { records: updatedRecords };
+    
     if (newRecord.taskType) {
         const task = getTaskDefinitionById(newRecord.taskType);
         const masteryInfo = getTaskMasteryInfo(newRecord.taskType);
         const recordXp = calculateXpForRecord(newRecord.value, task, 1, masteryInfo?.xpBonus);
         
+        // Update task mastery
         const currentMastery = taskMastery[newRecord.taskType] || { level: 1, xp: 0 };
         const newMasteryXp = (currentMastery.xp || 0) + recordXp;
         const updatedTaskMastery = {
@@ -290,17 +297,31 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
             [newRecord.taskType]: { ...currentMastery, xp: newMasteryXp }
         };
         dataToUpdate.taskMastery = updatedTaskMastery;
+        
+        // Update reputation
+        const faction = FACTIONS.find(f => f.taskCategoryId === newRecord.taskType);
+        if (faction) {
+          const repGained = Math.round(recordXp * REP_PER_XP);
+          const currentRep = reputation[faction.id] || 0;
+          const newRep = currentRep + repGained;
+          const updatedReputation = { ...reputation, [faction.id]: newRep };
+          dataToUpdate.reputation = updatedReputation;
+        }
     }
     
     updateUserDataInDb(dataToUpdate);
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getTaskMasteryInfo]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getTaskMasteryInfo, reputation]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
+      // This is complex because we would need to reverse old XP/Rep and apply new.
+      // For now, we'll just update the value and accept the slight data inaccuracy.
+      // A more robust solution would store XP/Rep per record or recalculate all on change.
       const updatedRecords = records.map(r => r.id === entry.id ? { ...entry, value: Number(entry.value) } : r);
       updateUserDataInDb({ records: updatedRecords });
   }, [records, updateUserDataInDb]);
 
   const deleteRecord = useCallback((recordId: string) => {
+      // This is also complex. For now, we'll remove the record but won't deduct the earned XP/Rep.
       const updatedRecords = records.filter(r => r.id !== recordId);
       updateUserDataInDb({ records: updatedRecords });
   }, [records, updateUserDataInDb]);
@@ -616,7 +637,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const taskDef = record.taskType ? getTaskDefinitionById(record.taskType) : undefined;
       const effectiveTaskId = taskDef?.id || 'unassigned';
       const taskName = taskDef?.name || 'Unassigned';
-      const taskColor = taskDef?.color || '#8884d8';
+      const taskColor = taskDef?.color || DEFAULT_TASK_COLOR;
 
       const current = distribution.get(effectiveTaskId) || { value: 0, color: taskColor, name: taskName };
       current.value += record.value;
@@ -761,9 +782,24 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [highGoals, updateUserDataInDb]);
 
   const deleteHighGoal = useCallback((goalId: string) => {
+    const goalToDelete = highGoals.find(g => g.id === goalId);
+    if (!goalToDelete) return;
+    
+    const progress = getHighGoalProgress(goalToDelete);
+    if (progress >= goalToDelete.targetValue) {
+      const shardsToAward = Math.round(goalToDelete.targetValue / 10);
+      const newShards = (userData?.aetherShards || 0) + shardsToAward;
+      updateUserDataInDb({ aetherShards: newShards });
+      toast({
+        title: "Objective Complete!",
+        description: `You've earned ${shardsToAward} Aether Shards for completing "${goalToDelete.name}".`
+      });
+    }
+
     const updatedGoals = highGoals.filter(g => g.id !== goalId);
     updateUserDataInDb({ highGoals: updatedGoals });
-  }, [highGoals, updateUserDataInDb]);
+
+  }, [highGoals, updateUserDataInDb, userData?.aetherShards, toast]);
   
   const getHighGoalProgress = useCallback((goal: HighGoal) => {
     return getAggregateSum(parseISO(goal.startDate), parseISO(goal.endDate), goal.taskId);

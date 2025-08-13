@@ -6,6 +6,7 @@
 
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -213,6 +214,27 @@ export interface TaskMasteryInfo extends TaskMastery {
     xpBonus: number; // The % bonus this level gives
 }
 
+// NEW: For Economy & Reputation
+export interface Faction {
+  id: string;
+  name: string;
+  description: string;
+  taskCategoryId: string; // Links faction to a task definition ID
+  icon: React.ElementType;
+  color: string;
+}
+
+export interface ReputationLevel {
+  level: number;
+  name: string;
+  minRep: number;
+  reward: {
+    type: 'title' | 'xp_boost' | 'currency';
+    value: string | number;
+    description: string;
+  }
+}
+
 // For Auth/User Data
 export interface UserData {
     uid?: string;
@@ -234,6 +256,9 @@ export interface UserData {
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
     taskMastery?: Record<string, TaskMastery>;
+    // New Economy/Reputation fields
+    aetherShards?: number;
+    reputation?: Record<string, number>; // e.g. { 'scholars-guild': 1250, 'iron-legion': 500 }
 }
 
 // For Friends feature

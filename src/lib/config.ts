@@ -1,4 +1,5 @@
-import type { TaskDefinition, UserLevelInfo, TierConfig } from '@/types';
+import type { TaskDefinition, UserLevelInfo, TierConfig, Faction, ReputationLevel } from '@/types';
+import { BookUser, BrainCircuit, Dumbbell, Briefcase, BookOpen, Star } from 'lucide-react';
 
 export const LOCAL_STORAGE_KEY = 'recordTrackerData';
 export const LOCAL_STORAGE_TASKS_KEY = 'recordTrackerTaskDefinitions';
@@ -180,6 +181,27 @@ const LEVEL_SCALING_FACTOR = 0.05;
 const MASTERY_BASE_XP = 100;
 const MASTERY_XP_GROWTH_FACTOR = 1.2;
 const MASTERY_XP_BONUS_PER_LEVEL = 0.01; // +1% XP per mastery level for that task
+
+// FACTION REPUTATION
+export const REP_PER_XP = 0.5; // Earn 0.5 Reputation for every 1 XP earned for a related task
+
+export const FACTIONS: readonly Faction[] = [
+  { id: 'iron-legion', name: 'The Iron Legion', description: 'For those who build strength through physical discipline.', taskCategoryId: 'exercise', icon: Dumbbell, color: 'hsl(140 70% 55%)' },
+  { id: 'scholars-guild', name: "The Scholars' Guild", description: 'Dedicated to the pursuit of knowledge and wisdom.', taskCategoryId: 'learning', icon: BrainCircuit, color: 'hsl(45 90% 55%)' },
+  { id: 'scribes-covenant', name: "The Scribes' Covenant", description: 'Chroniclers of worlds, both real and imagined.', taskCategoryId: 'reading', icon: BookOpen, color: 'hsl(25 95% 60%)' },
+  { id: 'forgemasters', name: "The Forgemasters", description: 'Masters of craft, turning raw effort into tangible results.', taskCategoryId: 'work', icon: Briefcase, color: 'hsl(210 80% 60%)' },
+  { id: 'soul-wardens', name: 'The Soul Wardens', description: 'Guardians of the inner self and personal growth.', taskCategoryId: 'personal', icon: BookUser, color: 'hsl(290 80% 65%)' },
+  { id: 'unseen-hand', name: 'The Unseen Hand', description: 'For the miscellaneous deeds that shape destiny.', taskCategoryId: 'other', icon: Star, color: 'hsl(0 0% 80%)' },
+];
+
+export const REPUTATION_LEVELS: readonly ReputationLevel[] = [
+  { level: 1, name: 'Outsider', minRep: 0, reward: { type: 'xp_boost', value: 0, description: "No bonus." } },
+  { level: 2, name: 'Acquaintance', minRep: 1000, reward: { type: 'xp_boost', value: 0.01, description: "+1% XP for this faction's tasks." } },
+  { level: 3, name: 'Recognized', minRep: 2500, reward: { type: 'currency', value: 50, description: "Awarded 50 Aether Shards." } },
+  { level: 4, name: 'Respected', minRep: 5000, reward: { type: 'xp_boost', value: 0.02, description: "+2% XP for this faction's tasks." } },
+  { level: 5, name: 'Honored', minRep: 10000, reward: { type: 'title', value: 'Honored', description: "Unlock a Faction Title." } },
+];
+
 
 export const calculateMasteryLevelInfo = (masteryXp: number) => {
     let level = 1;
