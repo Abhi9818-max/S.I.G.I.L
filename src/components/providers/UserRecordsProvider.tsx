@@ -281,7 +281,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const recordDates = new Set(taskRelevantRecords.map(r => r.date));
   
     const taskDef = taskId ? getTaskDefinitionById(taskId) : null;
-    const isDaily = !taskDef || !taskDef.frequencyType || !taskDef.frequencyType === 'daily';
+    const isDaily = !taskDef || !taskDef.frequencyType || taskDef.frequencyType !== 'weekly';
   
     let currentDate = startOfDay(new Date());
     let streak = 0;
@@ -899,7 +899,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (xpAmount <= 0) {
       throw new Error("Amount must be positive.");
     }
-    if (totalBonusPoints < xpAmount) {
+    const convertibleXp = userData?.bonusPoints || 0;
+    if (convertibleXp < xpAmount) {
       throw new Error("Not enough convertible bonus XP.");
     }
     const shardsGained = Math.floor(xpAmount / 5);
@@ -907,14 +908,14 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         throw new Error("XP amount is too low to convert into at least one shard.");
     }
     
-    const newBonusPoints = totalBonusPoints - xpAmount;
-    const newAetherShards = aetherShards + shardsGained;
+    const newBonusPoints = convertibleXp - xpAmount;
+    const newAetherShards = (userData?.aetherShards || 0) + shardsGained;
 
     updateUserDataInDb({
       bonusPoints: newBonusPoints,
       aetherShards: newAetherShards,
     });
-  }, [totalBonusPoints, aetherShards, updateUserDataInDb]);
+  }, [userData, updateUserDataInDb]);
 
 
   const contextValue = useMemo(() => ({
