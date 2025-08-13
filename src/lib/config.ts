@@ -1,4 +1,5 @@
 
+
 import type { TaskDefinition, UserLevelInfo, TierConfig, Faction, ReputationLevel } from '@/types';
 import { XP_CONFIG } from './xp-config';
 import { BookUser, BrainCircuit, Dumbbell, Briefcase, BookOpen, Star } from 'lucide-react';
@@ -184,24 +185,22 @@ export const calculateMasteryLevelInfo = (masteryXp: number) => {
 
 // totalExperiencePoints is the sum of all record values PLUS any awarded bonuses
 export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevelInfo => {
-  let currentLevel = 0;
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+  let currentLevel = 1; // Default to level 1
+  for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
     if (totalExperiencePoints >= LEVEL_THRESHOLDS[i]) {
-      currentLevel = i + 2; // +2 because level 1 is 0 xp, and arrays are 0-indexed
-      break;
+      currentLevel = i + 2; // +2 because level 1 is 0 xp, and arrays are 0-indexed for level 2's threshold
+    } else {
+      break; // Found the level, no need to check further
     }
   }
-  
-  if (currentLevel === 0 && LEVEL_THRESHOLDS.length > 0) currentLevel = 1;
+
+  // Cap the level at the max level defined
+  if (currentLevel > MAX_USER_LEVEL) currentLevel = MAX_USER_LEVEL;
 
   // Since level is 1-based, and arrays are 0-based, we use `currentLevel - 1`
   // but ensure it doesn't go below 0.
   const levelIndex = Math.max(0, currentLevel - 1);
-  if (levelIndex >= MAX_USER_LEVEL) currentLevel = MAX_USER_LEVEL;
-
-
   const levelName = LEVEL_NAMES[levelIndex] || "Champion";
-
   const currentTierInfo = TIER_INFO.find(tier => currentLevel >= tier.minLevel && currentLevel <= tier.maxLevel) || TIER_INFO[0];
   const tierName = currentTierInfo.name;
   const tierIcon = currentTierInfo.icon;
@@ -245,3 +244,4 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
 };
 
     
+
