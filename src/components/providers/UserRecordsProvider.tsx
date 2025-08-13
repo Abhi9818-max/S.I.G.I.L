@@ -249,12 +249,15 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     let cumulativeXp = 0;
     const sortedRecords = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
+    // We must recalculate XP based on the level AT THE TIME of the record
+    let tempXpForLevelCalc = 0;
     for (const record of sortedRecords) {
-        const { currentLevel } = calculateUserLevelInfo(cumulativeXp);
+        const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
         const task = getTaskDefinitionById(record.taskType || '');
         const recordXp = calculateXpForRecord(record.value, task, currentLevel);
-        cumulativeXp += recordXp;
+        tempXpForLevelCalc += recordXp;
     }
+    cumulativeXp = tempXpForLevelCalc;
 
     return cumulativeXp + totalBonusPoints;
   }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, calculateXpForRecord]);
@@ -615,7 +618,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [totalBonusPoints, updateUserDataInDb]);
 
   const resetUserProgress = useCallback(() => {
-    updateUserDataInDb({
+    const resetData: Partial<UserData> = {
         records: [],
         bonusPoints: 0,
         unlockedAchievements: [],
@@ -627,7 +630,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         taskMastery: {},
         aetherShards: 0,
         reputation: {},
-    });
+    };
+    updateUserDataInDb(resetData);
+    // Force a re-evaluation of the user data to ensure UI updates
+    setUserData(prev => ({
+        ...(prev ?? ({} as UserData)),
+        ...resetData
+    }));
   }, [updateUserDataInDb]);
 
   const useFreezeCrystal = useCallback(() => {
