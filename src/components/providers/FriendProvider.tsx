@@ -476,65 +476,92 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         if (!allianceSnap.exists()) return null;
 
-        const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
+        let allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
+        
+        // --- Calculate Local Alliance Progress ---
         const memberIds = allianceData.memberIds || [];
-        
-        if (memberIds.length === 0) {
-            return { ...allianceData, members: [], progress: 0 };
-        }
+        if (memberIds.length > 0) {
+            const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
+            const usersSnapshot = await getDocs(usersQuery);
+            const membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
 
-        const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
-        const usersSnapshot = await getDocs(usersQuery);
-        const membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
-
-        const friendsSnapshot = user ? await getDocs(collection(db, `users/${user.uid}/friends`)) : null;
-        const nicknames = new Map<string, string>();
-        friendsSnapshot?.docs.forEach(doc => {
-            if (doc.data().nickname) {
-                nicknames.set(doc.id, doc.data().nickname);
-            }
-        });
-        
-        const startDate = parseISO(allianceData.startDate);
-        const endDate = parseISO(allianceData.endDate);
-        let totalProgress = 0;
-
-        const members: AllianceMember[] = membersData.map(m => {
-            const memberRecords = m.records || [];
-            const relevantRecords = memberRecords.filter(r => {
-                return r.taskType === allianceData.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate });
+            const friendsSnapshot = user ? await getDocs(collection(db, `users/${user.uid}/friends`)) : null;
+            const nicknames = new Map<string, string>();
+            friendsSnapshot?.docs.forEach(doc => {
+                if (doc.data().nickname) {
+                    nicknames.set(doc.id, doc.data().nickname);
+                }
             });
-            const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
-            totalProgress += contribution;
+            
+            const startDate = parseISO(allianceData.startDate);
+            const endDate = parseISO(allianceData.endDate);
+            let totalProgress = 0;
 
-            return {
-                uid: m.uid!,
-                username: m.username,
-                photoURL: m.photoURL,
-                nickname: nicknames.get(m.uid!) || m.username,
-                contribution: contribution,
-            };
-        });
+            const members: AllianceMember[] = membersData.map(m => {
+                const memberRecords = m.records || [];
+                const relevantRecords = memberRecords.filter(r => {
+                    return r.taskType === allianceData.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate });
+                });
+                const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
+                totalProgress += contribution;
 
+                return {
+                    uid: m.uid!,
+                    username: m.username,
+                    photoURL: m.photoURL,
+                    nickname: nicknames.get(m.uid!) || m.username,
+                    contribution: contribution,
+                };
+            });
+            
+            allianceData.members = members;
+            allianceData.progress = totalProgress;
+        } else {
+            allianceData.members = [];
+            allianceData.progress = 0;
+        }
+        
+        // --- Handle Status ---
         let status: AllianceStatus = allianceData.status || 'ongoing';
         if (status === 'ongoing') {
-            if (totalProgress >= allianceData.target) {
+            if (allianceData.progress >= allianceData.target) {
                 status = 'completed';
-            } else if (isPast(endDate)) {
+            } else if (isPast(parseISO(allianceData.endDate))) {
                 status = 'failed';
             }
         }
+        allianceData.status = status;
         
-        // This was the missing part: ensure all properties from Firestore are carried over.
-        const completeAllianceData: Alliance = {
-            ...allianceData,
-            members,
-            progress: totalProgress,
-            status
-        };
+        // --- Handle Opponent Data ---
+        if (allianceData.opponentDetails?.allianceId) {
+            const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
+            const opponentSnap = await getDoc(opponentAllianceRef);
+            if (opponentSnap.exists()) {
+                const opponentData = opponentSnap.data() as Alliance;
+                const opponentMemberIds = opponentData.memberIds || [];
+                let opponentTotalProgress = 0;
 
+                if (opponentMemberIds.length > 0) {
+                    const opponentUsersQuery = query(collection(db, 'users'), where(documentId(), 'in', opponentMemberIds));
+                    const opponentUsersSnapshot = await getDocs(opponentUsersQuery);
+                    const opponentMembersData = opponentUsersSnapshot.docs.map(doc => doc.data() as UserData);
 
-        return completeAllianceData;
+                    const opponentStartDate = parseISO(opponentData.startDate);
+                    const opponentEndDate = parseISO(opponentData.endDate);
+
+                    opponentMembersData.forEach(m => {
+                        const memberRecords = m.records || [];
+                        const relevantRecords = memberRecords.filter(r => 
+                            r.taskType === opponentData.taskId && isWithinInterval(parseISO(r.date), { start: opponentStartDate, end: opponentEndDate })
+                        );
+                        opponentTotalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
+                    });
+                }
+                allianceData.opponentDetails.opponentProgress = opponentTotalProgress;
+            }
+        }
+        
+        return allianceData;
     }, [user]);
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {

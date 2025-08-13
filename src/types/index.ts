@@ -3,6 +3,7 @@
 
 
 
+
 export type TaskUnit = 'count' | 'minutes' | 'hours' | 'pages' | 'generic' | 'custom';
 export type TaskFrequency = 'daily' | 'weekly';
 export type TaskStatus = 'active' | 'paused' | 'completed';
@@ -317,6 +318,7 @@ export interface Alliance {
   opponentDetails?: {
     allianceId: string;
     allianceName: string;
+    opponentProgress?: number;
   };
 }
 

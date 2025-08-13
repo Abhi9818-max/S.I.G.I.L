@@ -315,6 +315,7 @@ export default function AllianceDetailPage() {
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((progress / target) * 100, 100);
+    const opponentProgressPercentage = opponentDetails?.opponentProgress !== undefined ? Math.min((opponentDetails.opponentProgress / target) * 100, 100) : 0;
     const timeRemaining = differenceInDays(parseISO(endDate), new Date());
 
 
@@ -433,16 +434,28 @@ export default function AllianceDetailPage() {
                                     <h3 className="font-semibold text-lg" style={{ color: taskColor }}>Objective: {taskName}</h3>
                                 </div>
                                 <div className="space-y-2 mt-4">
+                                    <p className="text-sm font-medium">{name} (Your Alliance)</p>
                                     <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: taskColor}} />
                                     <div className="flex justify-between text-sm text-muted-foreground">
                                         <span>{progress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-4 w-4" />
-                                            <span>
-                                                {timeRemaining >= 0 ? `${timeRemaining} days left` : 'Ended'}
-                                            </span>
-                                        </div>
                                     </div>
+                                </div>
+                                {opponentDetails && (
+                                <div className="space-y-2 mt-4">
+                                    <p className="text-sm font-medium text-destructive">{opponentDetails.allianceName} (Opponent)</p>
+                                    <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
+                                    <div className="flex justify-between text-sm text-muted-foreground">
+                                        <span>{(opponentDetails.opponentProgress || 0).toLocaleString()} / {target.toLocaleString()} ({opponentProgressPercentage.toFixed(1)}%)</span>
+                                    </div>
+                                </div>
+                                )}
+                                <div className="flex justify-end text-sm text-muted-foreground mt-4">
+                                  <div className="flex items-center gap-1">
+                                      <Calendar className="h-4 w-4" />
+                                      <span>
+                                          {timeRemaining >= 0 ? `${timeRemaining} days left` : 'Ended'}
+                                      </span>
+                                  </div>
                                 </div>
                             </div>
 
