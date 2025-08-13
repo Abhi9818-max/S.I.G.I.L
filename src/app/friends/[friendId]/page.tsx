@@ -43,6 +43,8 @@ import LevelIndicator from '@/components/layout/LevelIndicator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { toPng } from 'html-to-image';
 import ProfileCard from '@/components/profile/ProfileCard';
+import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
+import { XP_CONFIG } from '@/lib/xp-config';
 
 
 // Simple hash function to get a number from a string
@@ -168,11 +170,55 @@ export default function FriendProfilePage() {
     const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
     const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
 
+    const calculateXpForRecord = useCallback((
+      recordValue: number,
+      task: TaskDefinition | undefined,
+      userLevel: number
+    ): number => {
+        if (!task || !XP_CONFIG || XP_CONFIG.length === 0) return 0;
+        
+        const levelConfig = XP_CONFIG.find(c => c.level === userLevel);
+        if (!levelConfig) return 0; // No config for this level
+
+        let value = recordValue;
+        if (task.unit === 'hours') {
+            value = recordValue * 60; // Convert hours to minutes for consistent threshold checks
+        }
+
+        const phase = getContributionLevel(value, task.intensityThresholds);
+        if (phase === 0) return 0;
+
+        const baseXP = task.priority === 'high' ? levelConfig.base_high_xp : levelConfig.base_low_xp;
+        
+        const phasePercentages = [0, 0.25, 0.50, 0.75, 1.00];
+        const percentage = phasePercentages[phase] || 0;
+
+        return Math.round(baseXP * percentage);
+    }, []);
+
     const friendLevelInfo: UserLevelInfo | null = useMemo(() => {
         if (!friendData) return null;
-        // Use the same provider logic to calculate friend's level for consistency
-        return currentUserRecords.getUserLevelInfo();
-    }, [friendData, currentUserRecords]);
+
+        const getFriendTaskDefinitionById = (taskId: string): TaskDefinition | undefined => {
+            return friendData.taskDefinitions?.find(task => task.id === taskId);
+        };
+        
+        let cumulativeXp = 0;
+        const sortedRecords = [...(friendData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        let tempXpForLevelCalc = 0;
+        for (const record of sortedRecords) {
+            const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
+            const task = getFriendTaskDefinitionById(record.taskType || '');
+            const recordXp = calculateXpForRecord(record.value, task, currentLevel);
+            tempXpForLevelCalc += recordXp;
+        }
+        cumulativeXp = tempXpForLevelCalc;
+
+        const totalExperience = cumulativeXp + (friendData.bonusPoints || 0);
+
+        return calculateUserLevelInfo(totalExperience);
+    }, [friendData, calculateXpForRecord]);
     
     useEffect(() => {
         const fetchFriendData = async () => {
@@ -544,5 +590,3 @@ export default function FriendProfilePage() {
         </>
     );
 };
-
-    
