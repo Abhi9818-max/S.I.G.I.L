@@ -1,3 +1,4 @@
+
 import type { TaskDefinition, UserLevelInfo, TierConfig, Faction, ReputationLevel } from '@/types';
 import { BookUser, BrainCircuit, Dumbbell, Briefcase, BookOpen, Star } from 'lucide-react';
 
@@ -129,42 +130,24 @@ export const TIER_INFO: readonly TierConfig[] = [
 
 export const LEVEL_THRESHOLDS: readonly number[] = (() => {
   const levels = 100;
-  const totalMonths = 17;
-  const totalTargetXP = totalMonths * 30 * 100;
-
-  const thresholds: number[] = [0];
+  const totalTargetXP = 51000; // Target total XP for level 100
+  let thresholds: number[] = [0];
   let accumulatedXP = 0;
+  let baseXP = 30; // Starting XP for level 2
 
   for (let level = 1; level < levels; level++) {
-    let xpForNextLevel;
-
-    if (level < 50) {
-      const base = 50;
-      const increment = 5;
-      xpForNextLevel = base + (level - 1) * increment;
-    } else if (level < 85) {
-      const base = 300;
-      const exponent = 1.05;
-      xpForNextLevel = base * Math.pow(exponent, level - 50);
-    } else if (level < 95) {
-      const base = 2000;
-      const exponent = 1.15;
-      xpForNextLevel = base * Math.pow(exponent, level - 85);
-    } else {
-      const base = 10000;
-      const exponent = 1.4;
-      xpForNextLevel = base * Math.pow(exponent, level - 95);
-    }
-
+    // A more gradual curve
+    let xpForNextLevel = baseXP * Math.pow(1.05, level - 1) + (level * 2);
     accumulatedXP += Math.round(xpForNextLevel);
     thresholds.push(accumulatedXP);
   }
 
+  // Normalize the curve to the target total XP
   const actualTotalXP = thresholds[thresholds.length - 1];
   const scalingFactor = totalTargetXP / actualTotalXP;
 
   const finalThresholds = thresholds.map(t => Math.round(t * scalingFactor));
-  finalThresholds[0] = 0;
+  finalThresholds[0] = 0; // Ensure level 1 starts at 0 XP
 
   return finalThresholds;
 })();
@@ -314,3 +297,5 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
     pointsForNextLevel: isMaxLevel ? null : pointsForNextLevel,
   };
 };
+
+    
