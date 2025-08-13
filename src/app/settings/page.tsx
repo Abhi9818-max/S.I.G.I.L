@@ -69,6 +69,8 @@ const simpleHash = (s: string) => {
 };
 
 const SECRET_CODE = "9818";
+const DELETE_XP_CODE = "Delete xp";
+
 
 const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boolean, onOpenChange: (open: boolean) => void, currentBio: string, onSave: (newBio: string) => void }) => {
     const [bio, setBio] = useState(currentBio);
@@ -107,7 +109,7 @@ const BioDialog = ({ isOpen, onOpenChange, currentBio, onSave }: { isOpen: boole
 
 
 export default function SettingsPage() {
-  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements } = useUserRecords();
+  const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout, connectGoogleFit, disconnectGoogleFit } = useAuth();
@@ -338,6 +340,14 @@ export default function SettingsPage() {
         title: "Master Control Unlocked",
         description: "Secrets are now available.",
       });
+    } else if (secretCodeInput === DELETE_XP_CODE) {
+        resetUserProgress();
+        toast({
+            title: "Progress Reset",
+            description: "Your level and XP have been reset.",
+            variant: "destructive"
+        });
+        setSecretCodeInput('');
     } else {
       toast({
         title: "Incorrect Code",

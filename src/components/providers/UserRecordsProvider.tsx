@@ -95,6 +95,7 @@ interface UserRecordsContextType {
   awardTierEntryBonus: (bonusAmount: number) => void;
   awardBonusPoints: (bonusAmount: number, isMasterBonus?: boolean) => void;
   deductBonusPoints: (penalty: number) => void;
+  resetUserProgress: () => void;
   updateUserDataInDb: (dataToUpdate: Partial<UserData>) => Promise<void>;
   userData: UserData | null;
   isUserDataLoaded: boolean;
@@ -245,25 +246,11 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const calculateTotalXp = useCallback((): number => {
     if (!isUserDataLoaded) return 0;
     
-    const levelMap = new Map<number, number>();
     let cumulativeXp = 0;
+    const sortedRecords = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-    for (const record of records) {
-        let currentLevel = 1;
-        // Determine level at the time of the record
-        for (const config of XP_CONFIG) {
-            if (cumulativeXp >= (levelMap.get(config.level - 1) || 0)) {
-                currentLevel = config.level;
-            } else {
-                break;
-            }
-        }
-        if (!levelMap.has(currentLevel -1)) {
-            const prevXp = currentLevel > 1 ? levelMap.get(currentLevel - 2) || 0 : 0;
-            const req = XP_CONFIG.find(c => c.level === currentLevel - 1)?.xp_required || 0;
-            levelMap.set(currentLevel - 1, prevXp + req);
-        }
-
+    for (const record of sortedRecords) {
+        const { currentLevel } = calculateUserLevelInfo(cumulativeXp);
         const task = getTaskDefinitionById(record.taskType || '');
         const recordXp = calculateXpForRecord(record.value, task, currentLevel);
         cumulativeXp += recordXp;
@@ -627,6 +614,22 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     updateUserDataInDb({ bonusPoints: newBonus });
   }, [totalBonusPoints, updateUserDataInDb]);
 
+  const resetUserProgress = useCallback(() => {
+    updateUserDataInDb({
+        records: [],
+        bonusPoints: 0,
+        unlockedAchievements: [],
+        spentSkillPoints: {},
+        unlockedSkills: [],
+        freezeCrystals: 0,
+        awardedStreakMilestones: {},
+        highGoals: [],
+        taskMastery: {},
+        aetherShards: 0,
+        reputation: {},
+    });
+  }, [updateUserDataInDb]);
+
   const useFreezeCrystal = useCallback(() => {
     if (freezeCrystals > 0) {
       const newCrystals = freezeCrystals - 1;
@@ -930,6 +933,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     awardTierEntryBonus,
     awardBonusPoints,
     deductBonusPoints,
+    resetUserProgress,
     updateUserDataInDb,
     userData,
     isUserDataLoaded,
@@ -978,6 +982,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       awardTierEntryBonus,
       awardBonusPoints,
       deductBonusPoints,
+      resetUserProgress,
       updateUserDataInDb,
       userData,
       isUserDataLoaded,
