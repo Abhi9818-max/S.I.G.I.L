@@ -129,11 +129,7 @@ export const TIER_INFO: readonly TierConfig[] = [
     { name: "Final Forms", slug: "final-forms", icon: "🌑", minLevel: 91, maxLevel: 100, tierGroup: 5, welcomeMessage: "No more trials. No more thresholds. This is not potential — this is you, fully formed and feared.", tierEntryBonus: 5000 },
 ];
 
-const LEVEL_THRESHOLDS = XP_CONFIG.reduce((acc, level) => {
-    const prevXp = acc.length > 0 ? acc[acc.length - 1] : 0;
-    acc.push(prevXp + level.xp_required);
-    return acc;
-}, [] as number[]);
+const LEVEL_THRESHOLDS = XP_CONFIG.map(level => level.xp_required);
 
 export const MAX_USER_LEVEL = LEVEL_NAMES.length;
 
@@ -191,7 +187,7 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
   let currentLevel = 0;
   for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
     if (totalExperiencePoints >= LEVEL_THRESHOLDS[i]) {
-      currentLevel = i + 1;
+      currentLevel = i + 2; // +2 because level 1 is 0 xp, and arrays are 0-indexed
       break;
     }
   }
