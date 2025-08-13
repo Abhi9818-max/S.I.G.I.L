@@ -308,7 +308,7 @@ export default function FriendProfilePage() {
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     const handleSendKudo = async () => {
-        if (!friendId) return;
+        if (!friendId || !friendData) return;
         setIsSendingKudo(true);
         try {
             const newKudo = await sendKudo(friendId, 'kudos', 'Keep up the great work!');
@@ -490,7 +490,7 @@ export default function FriendProfilePage() {
                       </TabsContent>
                       
                       <TabsContent value="pacts" className="mt-6">
-                        <PactList items={friendPacts} isEditable={false} />
+                        <PactList items={friendPacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
                       </TabsContent>
 
                       <TabsContent value="activity" className="mt-6">
