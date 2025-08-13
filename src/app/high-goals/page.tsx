@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const highGoalFormSchema = z.object({
-  name: z.string().min(3, "Goal name must be at least 3 characters.").max(100, "Goal name is too long."),
+  name: z.string().min(3, "Objective name must be at least 3 characters.").max(100, "Objective name is too long."),
   taskId: z.string().min(1, "You must select a task."),
   targetValue: z.preprocess(
     val => (val === "" || val === undefined || val === null ? undefined : Number(val)),
@@ -122,10 +122,10 @@ export default function HighGoalsPage() {
     };
     if (editingGoal) {
       updateHighGoal({ ...goalData, id: editingGoal.id });
-      toast({ title: "High Goal Updated", description: `Your goal "${data.name}" has been saved.` });
+      toast({ title: "Objective Updated", description: `Your objective "${data.name}" has been saved.` });
     } else {
       addHighGoal(goalData);
-      toast({ title: "High Goal Set!", description: `New goal "${data.name}" has been created.` });
+      toast({ title: "Objective Set!", description: `New objective "${data.name}" has been created.` });
     }
     handleSetEditing(null);
   };
@@ -155,10 +155,17 @@ export default function HighGoalsPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="w-full max-w-4xl mx-auto">
+          <div className="p-6 md:p-0">
+             <div className="flex items-center gap-2">
+                <ShieldCheck className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-semibold leading-none tracking-tight">High-Stakes Objectives</h1>
+            </div>
+            <p className="text-muted-foreground mt-2">Define your "boss battles"—the major objectives that demand your focus and resolve.</p>
+          </div>
           <div className="p-6 md:p-0 pt-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                <h3 className="text-lg font-medium">{editingGoal ? 'Edit High Goal' : 'Create New High Goal'}</h3>
+                <h3 className="text-lg font-medium">{editingGoal ? 'Adjust Objective' : 'Define New Objective'}</h3>
                 {editingGoal && (
                   <Button variant="outline" size="sm" onClick={() => handleSetEditing(null)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -169,12 +176,12 @@ export default function HighGoalsPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                    <Label htmlFor="goal-name">Goal Name</Label>
-                    <Input id="goal-name" {...form.register('name')} className="mt-1" placeholder="e.g., Complete Q3 Project" />
+                    <Label htmlFor="goal-name">Objective Name</Label>
+                    <Input id="goal-name" {...form.register('name')} className="mt-1" placeholder="e.g., Conquer Mount Olympus" />
                     {form.formState.errors.name && <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="task">Task</Label>
+                  <Label htmlFor="task">Required Task</Label>
                   <Controller name="taskId" control={form.control} render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger id="task" className="mt-1"><SelectValue placeholder="Select a task..." /></SelectTrigger>
@@ -211,7 +218,7 @@ export default function HighGoalsPage() {
                 </div>
               </div>
               
-              <Button type="submit" className="w-full">{editingGoal ? 'Save Changes' : 'Create Goal'}</Button>
+              <Button type="submit" className="w-full">{editingGoal ? 'Save Objective' : 'Set Objective'}</Button>
             </form>
           </div>
         </div>
@@ -219,8 +226,8 @@ export default function HighGoalsPage() {
         <div className="space-y-4 max-w-4xl mx-auto px-6 md:px-0">
           {highGoals.length === 0 ? (
             <div className="text-center text-muted-foreground py-10">
-              <p>No high goals set yet.</p>
-              <p className="text-sm">Use the form above to create your first long-term objective.</p>
+              <p>No objectives set.</p>
+              <p className="text-sm">Use the form above to define your first major challenge.</p>
             </div>
           ) : (
             highGoals.map((goal, index) => {
@@ -252,7 +259,7 @@ export default function HighGoalsPage() {
                               <AlertDialogContent>
                                   <AlertDialogHeader>
                                       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>This action will permanently delete your high goal "{goal.name}".</AlertDialogDescription>
+                                      <AlertDialogDescription>This action will permanently delete your objective "{goal.name}".</AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
