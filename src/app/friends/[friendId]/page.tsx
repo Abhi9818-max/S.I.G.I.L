@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
@@ -6,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, MessageSquare } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -45,6 +46,7 @@ import { toPng } from 'html-to-image';
 import ProfileCard from '@/components/profile/ProfileCard';
 import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
+import ChatSheet from '@/components/friends/ChatSheet';
 
 
 // Simple hash function to get a number from a string
@@ -160,6 +162,7 @@ export default function FriendProfilePage() {
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
     const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
     const { toast } = useToast();
     
     const levelInfo = currentUserRecords.getUserLevelInfo();
@@ -206,8 +209,11 @@ export default function FriendProfilePage() {
         let cumulativeXp = 0;
         const sortedRecords = [...(friendData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         
+        // This is a direct implementation of the level calculation logic
+        // to ensure it's accurate for the friend's context.
         let tempXpForLevelCalc = 0;
         for (const record of sortedRecords) {
+            // Calculate what the friend's level was *at the time of the record*
             const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
             const task = getFriendTaskDefinitionById(record.taskType || '');
             const recordXp = calculateXpForRecord(record.value, task, currentLevel);
@@ -444,6 +450,12 @@ export default function FriendProfilePage() {
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                    {getRelationshipContent()}
+                                   {isFriend && (
+                                        <Button onClick={() => setIsChatOpen(true)} variant="outline" size="sm">
+                                            <MessageSquare className="mr-2 h-4 w-4" />
+                                            Message
+                                        </Button>
+                                    )}
                                     <Button onClick={handleDownloadProfileCard} variant="outline" size="sm">
                                         <CreditCard className="mr-2 h-4 w-4" />
                                         Download Card
@@ -584,6 +596,13 @@ export default function FriendProfilePage() {
                         currentRelationship={friendInfo?.relationship || ''}
                         onSave={handleSendRelationshipProposal}
                         friendName={displayName}
+                    />
+                    <ChatSheet
+                        isOpen={isChatOpen}
+                        onOpenChange={setIsChatOpen}
+                        friendId={friendId}
+                        friendName={displayName}
+                        friendAvatar={friendAvatar}
                     />
                 </>
             )}

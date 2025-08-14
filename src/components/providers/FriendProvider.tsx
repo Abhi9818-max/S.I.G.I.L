@@ -1,11 +1,13 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { ref, onValue, off, push, serverTimestamp, get, Unsubscribe as RTDBUnsubscribe } from 'firebase/database';
+import { db, rtdb } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, ChatMessage } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -72,6 +74,9 @@ interface FriendContextType {
     listTitleForSale: (titleId: string, price: number) => Promise<void>;
     purchaseTitle: (listing: MarketplaceListing) => Promise<void>;
     cancelListing: (listingId: string) => Promise<void>;
+    // Chat
+    sendMessage: (friendId: string, text: string) => Promise<void>;
+    getMessages: (friendId: string, callback: (messages: ChatMessage[]) => void) => () => void;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -95,7 +100,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Marketplace listeners
     useEffect(() => {
-        const q = query(collection(db, 'marketplace_listings'), where('sellerId', '!=', user?.uid || ''));
+        if (!user) return;
+        const q = query(collection(db, 'marketplace_listings'), where('sellerId', '!=', user.uid));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setGlobalListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MarketplaceListing)));
         });
@@ -197,10 +203,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     useEffect(() => {
         if (user) {
-            const unsub = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-                fetchFriendsAndRequests();
+            fetchFriendsAndRequests(); // Initial fetch
+            const friendsSubcollectionRef = collection(db, 'users', user.uid, 'friends');
+            const unsubscribe = onSnapshot(friendsSubcollectionRef, () => {
+              fetchFriendsAndRequests();
             });
-            return () => unsub();
+            return () => unsubscribe();
         } else {
              setIncomingRequests([]);
              setPendingRequests([]);
@@ -806,51 +814,44 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const title = ACHIEVEMENTS.find(a => a.id === titleId && a.isTitle);
         if (!title) throw new Error("Invalid title selected.");
         
-        try {
-            await runTransaction(db, async (transaction) => {
-                const userRef = doc(db, 'users', user.uid);
-                const userDoc = await transaction.get(userRef);
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await transaction.get(userRef);
 
-                if (!userDoc.exists()) {
-                    throw new Error("User document not found.");
-                }
+            if (!userDoc.exists()) {
+                throw new Error("User document not found.");
+            }
 
-                const currentData = userDoc.data() as UserData;
-                if (!(currentData.unlockedAchievements || []).includes(titleId)) {
-                    throw new Error("You do not own this title.");
-                }
+            const currentData = userDoc.data() as UserData;
+            if (!(currentData.unlockedAchievements || []).includes(titleId)) {
+                throw new Error("You do not own this title.");
+            }
 
-                // Remove title from user's achievements
-                transaction.update(userRef, {
-                    unlockedAchievements: arrayRemove(titleId)
-                });
-
-                // Create new listing
-                const listingRef = doc(collection(db, 'marketplace_listings'));
-                const newListing: MarketplaceListing = {
-                    id: listingRef.id,
-                    itemId: titleId,
-                    itemName: title.name,
-                    itemDescription: title.description,
-                    itemType: 'title',
-                    sellerId: user.uid,
-                    sellerUsername: currentData.username,
-                    price,
-                    createdAt: new Date().toISOString(),
-                };
-                transaction.set(listingRef, newListing);
+            // Remove title from user's achievements
+            transaction.update(userRef, {
+                unlockedAchievements: arrayRemove(titleId)
             });
-            
-            // This is the critical fix: update local state after the successful transaction.
-            const currentAchievements = userData?.unlockedAchievements || [];
-            const updatedAchievements = currentAchievements.filter(id => id !== titleId);
-            updateUserDataInDb({ unlockedAchievements: updatedAchievements });
 
-        } catch (error) {
-            console.error("Listing failed:", error);
-            // Re-throw the specific error message from the transaction
-            throw error;
-        }
+            // Create new listing
+            const listingRef = doc(collection(db, 'marketplace_listings'));
+            const newListing: MarketplaceListing = {
+                id: listingRef.id,
+                itemId: titleId,
+                itemName: title.name,
+                itemDescription: title.description,
+                itemType: 'title',
+                sellerId: user.uid,
+                sellerUsername: currentData.username,
+                price,
+                createdAt: new Date().toISOString(),
+            };
+            transaction.set(listingRef, newListing);
+        });
+        
+        // Update local state after the successful transaction.
+        updateUserDataInDb({ 
+            unlockedAchievements: userData?.unlockedAchievements?.filter(id => id !== titleId) 
+        });
 
     }, [user, userData, updateUserDataInDb]);
 
@@ -908,6 +909,59 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await batch.commit();
     }, [user]);
 
+    // Chat Functions
+    const getChatId = useCallback((friendId: string) => {
+        if (!user) return null;
+        return [user.uid, friendId].sort().join('_');
+    }, [user]);
+
+    const sendMessage = useCallback(async (friendId: string, text: string) => {
+        if (!user || !rtdb) return;
+        const chatId = getChatId(friendId);
+        if (!chatId) return;
+
+        const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
+        const newMessageRef = push(messagesRef);
+        await setDoc(doc(db, 'chats', newMessageRef.key!), {
+            senderId: user.uid,
+            text,
+            timestamp: serverTimestamp()
+        });
+        
+        const newRTDBMessage = {
+            id: newMessageRef.key,
+            senderId: user.uid,
+            text: text,
+            timestamp: Date.now(),
+        };
+
+        await push(messagesRef, newRTDBMessage);
+
+    }, [user, rtdb, getChatId]);
+
+    const getMessages = useCallback((friendId: string, callback: (messages: ChatMessage[]) => void): () => void => {
+        if (!user || !rtdb) return () => {};
+
+        const chatId = getChatId(friendId);
+        if (!chatId) return () => {};
+        
+        const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
+        
+        const listener = onValue(messagesRef, (snapshot) => {
+            const data = snapshot.val();
+            const messageList: ChatMessage[] = data ? Object.entries(data).map(([id, msg]: [string, any]) => ({
+                id,
+                ...msg,
+            })) : [];
+            callback(messageList.sort((a, b) => a.timestamp - b.timestamp));
+        });
+
+        // Return the unsubscribe function
+        return () => off(messagesRef, 'value', listener);
+
+    }, [user, rtdb, getChatId]);
+
+
 
     return (
         <FriendContext.Provider value={{ 
@@ -954,6 +1008,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             listTitleForSale,
             purchaseTitle,
             cancelListing,
+            sendMessage,
+            getMessages,
         }}>
             {children}
         </FriendContext.Provider>

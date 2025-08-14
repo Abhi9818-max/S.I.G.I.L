@@ -1,9 +1,11 @@
+
 // src/lib/firebase.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getDatabase, Database } from 'firebase/database';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -13,7 +15,8 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 // Check if Firebase config is populated
@@ -25,12 +28,14 @@ let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 let analytics: ReturnType<typeof getAnalytics> | null = null;
+let rtdb: Database | null = null;
 
 if (isFirebaseConfigured) {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
+    rtdb = getDatabase(app);
     if (typeof window !== 'undefined') {
         isSupported().then((enabled) => {
             if (enabled) {
@@ -40,4 +45,4 @@ if (isFirebaseConfigured) {
     }
 }
 
-export { app, analytics, auth, db, storage };
+export { app, analytics, auth, db, storage, rtdb };
