@@ -435,6 +435,28 @@ export default function AllianceDetailPage() {
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 )}
+                                {isCreator && status !== 'ongoing' && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" type="button">Disband</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete this
+                                            alliance and remove all of its data.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDisbandAlliance}>
+                                                Disband
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
                             </div>
                         </div>
 
@@ -552,5 +574,3 @@ export default function AllianceDetailPage() {
         </>
     );
 }
-
-    
