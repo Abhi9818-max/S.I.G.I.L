@@ -48,9 +48,9 @@ interface FriendContextType {
     getPublicUserData: (userId: string) => Promise<UserData | null>;
     unfriend: (friendId: string) => Promise<void>;
     // Alliances
-    createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt'>) => Promise<string>;
+    createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>) => Promise<string>;
     userAlliances: Alliance[];
-    getAllianceWithMembers: (allianceId: string) => Promise<Alliance | null>;
+    getAllianceWithMembers: (allianceId: string) => Promise<{allianceData: Alliance, membersData: UserData[]} | null>;
     leaveAlliance: (allianceId: string, memberId: string) => Promise<void>;
     disbandAlliance: (allianceId: string) => Promise<void>;
     deleteAllCreatedAlliances: () => Promise<void>;
@@ -458,18 +458,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [incomingRelationshipProposals]);
 
     // Alliance Functions
-    const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt'>): Promise<string> => {
+    const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>): Promise<string> => {
         if (!user || !userData) throw new Error("Authentication required.");
         
-        const newAllianceData: Omit<Alliance, 'id'> = {
+        const newAllianceData: Omit<Alliance, 'id' | 'members'> = {
             ...allianceData,
             creatorId: user.uid,
-            members: [{
-                uid: user.uid,
-                username: userData.username,
-                nickname: userData.username,
-                photoURL: userData.photoURL
-            }],
             memberIds: [user.uid],
             progress: 0,
             createdAt: new Date().toISOString(),
@@ -477,10 +471,20 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
         
         const docRef = await addDoc(collection(db, 'alliances'), newAllianceData);
+        
+        // Add the creator's full member object separately
+        const memberData: AllianceMember = {
+            uid: user.uid,
+            username: userData.username,
+            nickname: userData.username,
+            photoURL: userData.photoURL
+        };
+        await updateDoc(docRef, { members: arrayUnion(memberData) });
+
         return docRef.id;
     }, [user, userData]);
 
-    const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<Alliance | null> => {
+    const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<{allianceData: Alliance, membersData: UserData[]} | null> => {
         const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
 
@@ -489,31 +493,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
 
         const memberIds = allianceData.memberIds || [];
+        let membersData: UserData[] = [];
         if (memberIds.length > 0) {
             const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
             const usersSnapshot = await getDocs(usersQuery);
-            const membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
-
-            const friendsSnapshot = user ? await getDocs(collection(db, `users/${user.uid}/friends`)) : null;
-            const nicknames = new Map<string, string>();
-            friendsSnapshot?.docs.forEach(doc => {
-                if (doc.data().nickname) {
-                    nicknames.set(doc.id, doc.data().nickname);
-                }
-            });
-
-            allianceData.members = membersData.map(m => ({
-                uid: m.uid!,
-                username: m.username,
-                photoURL: m.photoURL,
-                nickname: nicknames.get(m.uid!) || m.username,
-            }));
-        } else {
-            allianceData.members = [];
+            membersData = usersSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData));
         }
-
-        return allianceData;
-    }, [user]);
+        
+        return { allianceData, membersData };
+    }, []);
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
         const allianceRef = doc(db, 'alliances', allianceId);
@@ -537,17 +525,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const disbandAlliance = useCallback(async (allianceId: string) => {
         const allianceRef = doc(db, 'alliances', allianceId);
-        const challengesRef = collection(allianceRef, 'challenges');
-        
-        const challengesSnapshot = await getDocs(challengesRef);
-        const batch = writeBatch(db);
-        challengesSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        
-        batch.delete(allianceRef);
-
-        await batch.commit();
+        await deleteDoc(allianceRef);
     }, []);
 
     const deleteAllCreatedAlliances = useCallback(async () => {

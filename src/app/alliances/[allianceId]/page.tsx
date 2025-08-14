@@ -204,9 +204,11 @@ export default function AllianceDetailPage() {
         if (allianceId) {
             setIsLoading(true);
             try {
-                const allianceData = await getAllianceWithMembers(allianceId);
-                if (allianceData) {
+                const data = await getAllianceWithMembers(allianceId);
+                if (data) {
+                    const { allianceData, membersData: fetchedMembersData } = data;
                     setAlliance(allianceData);
+                    setMembersData(fetchedMembersData);
 
                     // Check for dare logic
                     if (allianceData.status === 'failed' && !allianceData.dare) {
@@ -249,15 +251,14 @@ export default function AllianceDetailPage() {
         const endDate = parseISO(alliance.endDate);
         let totalProgress = 0;
 
-        alliance.members.forEach(member => {
+        membersData.forEach(member => {
             let recordsToSearch: RecordEntry[] = [];
-            // If the member is the current user, use the up-to-date local records
+            // If the member is the current user, use the up-to-date local records for real-time feedback
             if (member.uid === user?.uid) {
                 recordsToSearch = currentUserRecords;
             } else {
-                // For other members, use the fetched data (less real-time but available)
-                const memberData = membersData.find(m => m.uid === member.uid);
-                recordsToSearch = memberData?.records || [];
+                // For other members, use the fetched data
+                recordsToSearch = member.records || [];
             }
             
             const relevantRecords = recordsToSearch.filter(r => 
@@ -270,7 +271,7 @@ export default function AllianceDetailPage() {
     }, [alliance, membersData, currentUserRecords, user?.uid]);
     
     const enrichedMembers = useMemo((): AllianceMember[] => {
-        if (!alliance) return [];
+        if (!alliance || !membersData.length) return alliance?.members || [];
 
         const startDate = parseISO(alliance.startDate);
         const endDate = parseISO(alliance.endDate);

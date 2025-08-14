@@ -351,7 +351,7 @@ export interface Alliance {
   members: AllianceMember[];
   memberIds: string[];
   dare?: string; // Optional dare for failed alliances
-  status?: AllianceStatus;
+  status: AllianceStatus;
   activeChallengeId?: string;
   opponentDetails?: {
     allianceId: string;
