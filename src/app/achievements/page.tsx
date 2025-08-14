@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -114,9 +113,6 @@ export default function AchievementsPage() {
               <Trophy className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Achievements</h1>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Milestones that mark your journey of growth and consistency.
-            </p>
             <div className="pt-4">
               <p className="text-sm text-muted-foreground">Unlocked: {unlockedCount} / {totalAchievements}</p>
               <div className="w-full bg-muted rounded-full h-2.5 mt-1">
