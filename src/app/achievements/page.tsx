@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -120,7 +121,7 @@ export default function AchievementsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6 md:p-0 pt-8">
+          <div className="p-6 md:p-0 pt-12">
             <TooltipProvider>
                 {renderAchievementList(standardAchievements)}
             </TooltipProvider>
