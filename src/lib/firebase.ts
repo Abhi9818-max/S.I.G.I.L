@@ -45,4 +45,4 @@ if (isFirebaseConfigured) {
     }
 }
 
-export { app, analytics, auth, db, storage, rtdb };
+export { app, analytics, auth, db, storage };

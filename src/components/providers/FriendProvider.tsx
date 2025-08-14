@@ -3,10 +3,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction } from 'firebase/firestore';
-import { ref, onValue, off, push, serverTimestamp, get, Unsubscribe as RTDBUnsubscribe, set } from 'firebase/database';
-import { db, rtdb } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, ChatMessage } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -73,9 +72,6 @@ interface FriendContextType {
     listTitleForSale: (titleId: string, price: number) => Promise<void>;
     purchaseTitle: (listing: MarketplaceListing) => Promise<void>;
     cancelListing: (listingId: string) => Promise<void>;
-    // Chat
-    sendMessage: (friendId: string, text: string) => Promise<void>;
-    getMessages: (friendId: string, callback: (messages: ChatMessage[]) => void) => () => void;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -908,53 +904,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await batch.commit();
     }, [user]);
 
-    // Chat Functions
-    const getChatId = useCallback((friendId: string) => {
-        if (!user) return null;
-        return [user.uid, friendId].sort().join('_');
-    }, [user]);
-
-    const sendMessage = useCallback(async (friendId: string, text: string) => {
-        if (!user || !rtdb) return;
-        const chatId = getChatId(friendId);
-        if (!chatId) return;
-
-        const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
-        const newMessageRef = push(messagesRef);
-        
-        const newRTDBMessage: Omit<ChatMessage, 'id'> = {
-            senderId: user.uid,
-            text: text,
-            timestamp: Date.now(),
-        };
-
-        await set(newMessageRef, newRTDBMessage);
-
-    }, [user, rtdb, getChatId]);
-
-    const getMessages = useCallback((friendId: string, callback: (messages: ChatMessage[]) => void): () => void => {
-        if (!user || !rtdb) return () => {};
-
-        const chatId = getChatId(friendId);
-        if (!chatId) return () => {};
-        
-        const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
-        
-        const listener = onValue(messagesRef, (snapshot) => {
-            const data = snapshot.val();
-            const messageList: ChatMessage[] = data ? Object.entries(data).map(([id, msg]: [string, any]) => ({
-                id,
-                ...msg,
-            })) : [];
-            callback(messageList.sort((a, b) => a.timestamp - b.timestamp));
-        });
-
-        // Return the unsubscribe function
-        return () => off(messagesRef, 'value', listener);
-
-    }, [user, rtdb, getChatId]);
-
-
 
     return (
         <FriendContext.Provider value={{ 
@@ -1001,8 +950,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             listTitleForSale,
             purchaseTitle,
             cancelListing,
-            sendMessage,
-            getMessages,
         }}>
             {children}
         </FriendContext.Provider>

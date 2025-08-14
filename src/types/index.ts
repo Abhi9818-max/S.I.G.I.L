@@ -249,14 +249,6 @@ export interface MarketplaceListing {
   createdAt: string; // ISO date string
 }
 
-// For Chat
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: number;
-}
-
 // For Auth/User Data
 export interface UserData {
     uid?: string;
