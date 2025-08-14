@@ -35,8 +35,6 @@ interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
-  connectGoogleFit: () => Promise<void>;
-  disconnectGoogleFit: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -333,26 +331,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: 'Error', description: 'Could not equip the title.', variant: 'destructive' });
     }
   }, [user, db, toast, isGuest]);
-
-  const connectGoogleFit = useCallback(async () => {
-    // This is a placeholder. The actual implementation would involve
-    // a library like 'react-google-login' or a custom OAuth flow.
-    console.log("Attempting to connect to Google Fit...");
-    toast({
-        title: "Google Fit Integration",
-        description: "This feature is not fully implemented. This is where the OAuth flow would begin.",
-    });
-  }, [toast]);
-
-  const disconnectGoogleFit = useCallback(async () => {
-    console.log("Disconnecting from Google Fit...");
-     toast({
-        title: "Google Fit Disconnected",
-        description: "The connection has been removed.",
-    });
-  }, [toast]);
   
-
   if (showLoading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -362,7 +341,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, userData, loading, isUserDataLoaded, connectGoogleFit, disconnectGoogleFit }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );

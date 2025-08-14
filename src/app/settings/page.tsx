@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Wifi } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture, updateBio, logout, connectGoogleFit, disconnectGoogleFit, equipTitle } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio, logout, equipTitle } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAlliances, setIsDeletingAlliances] = useState(false);
@@ -749,24 +749,6 @@ export default function SettingsPage() {
                     </div>
                     
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Integrations</h3>
-                        <div className="p-4 border rounded-lg space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className='flex items-center gap-2'>
-                                    <Wifi className="h-5 w-5 text-blue-500" />
-                                    <p className="font-medium">Google Fit</p>
-                                </div>
-                                <Button 
-                                    variant='outline'
-                                    onClick={connectGoogleFit}
-                                >
-                                    Connect
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-4">
                         <h3 className="text-lg font-medium text-primary">Secrets</h3>
                          <div className="p-4 border rounded-lg space-y-4">
                            {!masterControlUnlocked ? (
@@ -907,3 +889,4 @@ export default function SettingsPage() {
     </>
   );
 }
+
