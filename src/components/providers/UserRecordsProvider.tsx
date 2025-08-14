@@ -4,7 +4,7 @@
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
@@ -113,8 +113,8 @@ interface UserRecordsContextType {
   useFreezeCrystal: () => void;
   // Achievements
   unlockedAchievements: string[];
-  newlyUnlockedAchievements: string[];
-  clearNewlyUnlockedAchievements: () => void;
+  claimableAchievements: string[];
+  claimAchievement: (achievementId: string) => void;
   // High Goals
   highGoals: HighGoal[];
   addHighGoal: (goal: Omit<HighGoal, 'id'>) => void;
@@ -132,7 +132,6 @@ const UserRecordsContext = React.createContext<UserRecordsContextType | undefine
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -167,6 +166,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
   const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);
+  const claimableAchievements = useMemo(() => userData?.claimableAchievements || [], [userData]);
   const spentSkillPoints = useMemo(() => userData?.spentSkillPoints || {}, [userData]);
   const unlockedSkills = useMemo(() => userData?.unlockedSkills || [], [userData]);
   const freezeCrystals = useMemo(() => userData?.freezeCrystals || 0, [userData]);
@@ -776,9 +776,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return result;
   }, [getRecordsByDate, taskDefinitions, getTaskDefinitionById]);
   
-  const clearNewlyUnlockedAchievements = useCallback(() => {
-    setNewlyUnlockedAchievements([]);
-  }, []);
   
   const getAggregateSumForTask = useCallback((taskId: string): number => {
     const allTimeRecords = records.filter(r => r.taskType === taskId);
@@ -808,23 +805,37 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const context = { levelInfo, streaks, unlockedSkillCount, loreEntryCount, getAggregateSumForTask };
     
-    const justUnlocked: string[] = [];
+    const nowClaimable: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
-      if (!unlockedAchievements.includes(ach.id) && ach.check(context)) {
-        justUnlocked.push(ach.id);
-        toast({
-          title: `🏆 Achievement Unlocked!`,
-          description: ach.name,
-        });
+      // An achievement is claimable if its conditions are met AND it's not already unlocked or pending claim.
+      if (!unlockedAchievements.includes(ach.id) && !claimableAchievements.includes(ach.id) && ach.check(context)) {
+        nowClaimable.push(ach.id);
       }
     });
 
-    if (justUnlocked.length > 0) {
-      setNewlyUnlockedAchievements(prev => [...new Set([...prev, ...justUnlocked])]);
-      const updatedAchievements = [...new Set([...unlockedAchievements, ...justUnlocked])];
-      updateUserDataInDb({ unlockedAchievements: updatedAchievements });
+    if (nowClaimable.length > 0) {
+      const updatedClaimable = [...new Set([...claimableAchievements, ...nowClaimable])];
+      updateUserDataInDb({ claimableAchievements: updatedClaimable });
+      toast({
+        title: `✨ New Achievement${nowClaimable.length > 1 ? 's' : ''} Ready!`,
+        description: "Visit the achievements page to claim your reward.",
+      });
     }
-  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, toast, updateUserDataInDb, userData, getAggregateSumForTask]);
+  }, [isUserDataLoaded, getUserLevelInfo, taskDefinitions, getCurrentStreak, unlockedSkills.length, unlockedAchievements, claimableAchievements, toast, updateUserDataInDb, userData, getAggregateSumForTask]);
+
+  const claimAchievement = useCallback((achievementId: string) => {
+    if (claimableAchievements.includes(achievementId)) {
+        const ach = ACHIEVEMENTS.find(a => a.id === achievementId);
+        toast({
+          title: `🏆 ${ach?.isTitle ? 'Title' : 'Achievement'} Unlocked!`,
+          description: ach?.name || 'You have unlocked a new achievement.',
+        });
+        updateUserDataInDb({ 
+            unlockedAchievements: arrayUnion(achievementId),
+            claimableAchievements: arrayRemove(achievementId)
+        });
+    }
+  }, [claimableAchievements, updateUserDataInDb, toast]);
 
   // High Goal Functions
   const addHighGoal = useCallback((goalData: Omit<HighGoal, 'id'>) => {
@@ -957,8 +968,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     freezeCrystals,
     useFreezeCrystal,
     unlockedAchievements,
-    newlyUnlockedAchievements,
-    clearNewlyUnlockedAchievements,
+    claimableAchievements,
+    claimAchievement,
     highGoals,
     addHighGoal,
     updateHighGoal,
@@ -1006,8 +1017,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       freezeCrystals,
       useFreezeCrystal,
       unlockedAchievements,
-      newlyUnlockedAchievements,
-      clearNewlyUnlockedAchievements,
+      claimableAchievements,
+      claimAchievement,
       highGoals,
       addHighGoal,
       updateHighGoal,

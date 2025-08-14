@@ -5,18 +5,21 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Trophy, Lock, Award } from 'lucide-react';
+import { Trophy, Lock, Award, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
-const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achievement: typeof ACHIEVEMENTS[0], isUnlocked: boolean, newlyUnlocked: boolean }) => {
+const AchievementCard = ({ achievement, isUnlocked, isClaimable, onClaim }: { achievement: typeof ACHIEVEMENTS[0], isUnlocked: boolean, isClaimable: boolean, onClaim: () => void }) => {
   const Icon = achievement.icon;
-  const showDetails = isUnlocked || !achievement.isSecret;
+  const showDetails = isUnlocked || isClaimable || !achievement.isSecret;
+  const state = isUnlocked ? 'unlocked' : isClaimable ? 'claimable' : 'locked';
 
   const getGlowClass = (category: string) => {
-    if (!isUnlocked) return "from-muted/50 via-muted/20 to-transparent";
+    if (state === 'locked') return "from-muted/50 via-muted/20 to-transparent";
+    if (state === 'claimable') return "from-blue-400/60 via-blue-400/20 to-transparent animate-pulse";
     switch (category) {
       case 'level':
         return "from-yellow-400/50 via-yellow-400/20 to-transparent";
@@ -34,7 +37,8 @@ const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achieveme
   };
 
   const getHoverClass = (category: string) => {
-    if (!isUnlocked) return "hover:shadow-muted/20";
+    if (state === 'locked') return "hover:shadow-muted/20";
+    if (state === 'claimable') return "hover:shadow-blue-400/30";
      switch (category) {
       case 'level':
         return "hover:shadow-yellow-400/20";
@@ -59,55 +63,59 @@ const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achieveme
     <div className={cn(
       "relative perspective-1000 rounded-2xl p-px transition-all duration-300",
       "hover:shadow-xl",
-      hoverClass,
-      newlyUnlocked && 'animate-flip-in'
+      hoverClass
     )}>
       {/* Gradient Glow Background */}
       <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-b", glowClass)} />
 
       <div className={cn(
-        "relative w-full h-full transform-style-3d rounded-[15px] bg-black/50 p-6 text-center backdrop-blur-lg",
+        "relative w-full h-full transform-style-3d rounded-[15px] bg-black/50 p-6 text-center backdrop-blur-lg flex flex-col justify-between"
       )}>
-        <div className="flex justify-center mb-4">
-          <div className={cn(
-            "p-3 rounded-full",
-            isUnlocked ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
-          )}>
-            {isUnlocked ? <Icon className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+        <div>
+          <div className="flex justify-center mb-4">
+            <div className={cn(
+              "p-3 rounded-full",
+              state === 'unlocked' ? "bg-primary/20 text-primary" : state === 'claimable' ? "bg-blue-500/20 text-blue-400" : "bg-muted/50 text-muted-foreground"
+            )}>
+              {state === 'locked' ? <Lock className="h-6 w-6" /> : <Icon className="h-6 w-6" />}
+            </div>
           </div>
+          
+          <h3 className={cn("text-lg font-semibold", !showDetails && "italic text-muted-foreground")}>
+            {showDetails ? achievement.name : "Secret Achievement"}
+          </h3>
+          
+          <p className="text-sm text-muted-foreground mt-2 min-h-[60px]">
+            {showDetails ? achievement.description : "Unlock this achievement to reveal its details."}
+          </p>
         </div>
-        
-        <h3 className={cn("text-lg font-semibold", !showDetails && "italic text-muted-foreground")}>
-          {showDetails ? achievement.name : "Secret Achievement"}
-        </h3>
-        
-        <p className="text-sm text-muted-foreground mt-2 min-h-[60px]">
-          {showDetails ? achievement.description : "Unlock this achievement to reveal its details."}
-        </p>
 
-        <p className={cn(
-          "mt-4 text-xs font-medium",
-          isUnlocked ? "text-primary/80" : "text-muted-foreground/80"
+        <div className="mt-4">
+          {state === 'claimable' && (
+            <Button onClick={onClaim} className="w-full bg-blue-600 hover:bg-blue-500 text-white animate-pulse">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Claim
+            </Button>
           )}
-        >
-          {achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}
-        </p>
+           <p className={cn(
+              "mt-2 text-xs font-medium",
+              state === 'unlocked' ? "text-primary/80" : state === 'claimable' ? 'text-blue-400/80' : "text-muted-foreground/80"
+              )}
+            >
+              {achievement.category.charAt(0).toUpperCase() + achievement.category.slice(1)}
+            </p>
+        </div>
       </div>
     </div>
   );
 };
 
 export default function AchievementsPage() {
-  const { getUserLevelInfo, unlockedAchievements, newlyUnlockedAchievements, clearNewlyUnlockedAchievements } = useUserRecords();
+  const { getUserLevelInfo, unlockedAchievements, claimableAchievements, claimAchievement } = useUserRecords();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
-    // Clear the newly unlocked list after animations have had a chance to play
-    const timer = setTimeout(() => {
-        clearNewlyUnlockedAchievements();
-    }, 2000); // 2 seconds delay
-    return () => clearTimeout(timer);
   }, []);
 
   const levelInfo = getUserLevelInfo();
@@ -131,7 +139,8 @@ export default function AchievementsPage() {
           <AchievementCard
             achievement={ach}
             isUnlocked={unlockedAchievements.includes(ach.id)}
-            newlyUnlocked={newlyUnlockedAchievements.includes(ach.id)}
+            isClaimable={claimableAchievements.includes(ach.id)}
+            onClaim={() => claimAchievement(ach.id)}
           />
         </div>
       ))}
@@ -158,7 +167,8 @@ export default function AchievementsPage() {
               </div>
             </div>
           </Card>
-          <div className="p-6 md:p-0 pt-0">
+          
+          <div className="p-6 md:p-0 pt-6">
             <TooltipProvider>
                 {renderAchievementList(standardAchievements)}
             </TooltipProvider>

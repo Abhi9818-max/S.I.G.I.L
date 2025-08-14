@@ -163,6 +163,7 @@ export interface Achievement {
   icon: React.ElementType;
   isSecret?: boolean; // If true, hide details until unlocked
   isTitle?: boolean; // If true, can be displayed as a user title
+  isClaimable?: boolean;
   check: (context: {
     levelInfo: UserLevelInfo;
     streaks: Record<string, number>;
@@ -262,6 +263,7 @@ export interface UserData {
     taskDefinitions?: TaskDefinition[];
     bonusPoints?: number;
     unlockedAchievements?: string[];
+    claimableAchievements?: string[];
     spentSkillPoints?: Record<string, number>;
     unlockedSkills?: string[];
     freezeCrystals?: number;
