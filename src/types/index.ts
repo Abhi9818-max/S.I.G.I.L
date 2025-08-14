@@ -254,7 +254,7 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   text: string;
-  timestamp: number; // Server timestamp
+  timestamp: number;
 }
 
 // For Auth/User Data

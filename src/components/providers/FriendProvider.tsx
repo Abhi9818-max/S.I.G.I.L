@@ -922,8 +922,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
         const newMessageRef = push(messagesRef);
         
-        const newRTDBMessage: ChatMessage = {
-            id: newMessageRef.key!,
+        const newRTDBMessage: Omit<ChatMessage, 'id'> = {
             senderId: user.uid,
             text: text,
             timestamp: Date.now(),
