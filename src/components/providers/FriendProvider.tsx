@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction } from 'firebase/firestore';
-import { ref, onValue, off, push, serverTimestamp, get, Unsubscribe as RTDBUnsubscribe } from 'firebase/database';
+import { ref, onValue, off, push, serverTimestamp, get, Unsubscribe as RTDBUnsubscribe, set } from 'firebase/database';
 import { db, rtdb } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, ChatMessage } from '@/types';
@@ -922,20 +921,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
         const newMessageRef = push(messagesRef);
-        await setDoc(doc(db, 'chats', newMessageRef.key!), {
-            senderId: user.uid,
-            text,
-            timestamp: serverTimestamp()
-        });
         
-        const newRTDBMessage = {
-            id: newMessageRef.key,
+        const newRTDBMessage: ChatMessage = {
+            id: newMessageRef.key!,
             senderId: user.uid,
             text: text,
             timestamp: Date.now(),
         };
 
-        await push(messagesRef, newRTDBMessage);
+        await set(newMessageRef, newRTDBMessage);
 
     }, [user, rtdb, getChatId]);
 
@@ -1023,3 +1017,6 @@ export const useFriends = (): FriendContextType => {
     }
     return context;
 };
+
+
+    
