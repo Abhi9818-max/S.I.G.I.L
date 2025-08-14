@@ -109,7 +109,7 @@ export default function AchievementsPage() {
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-5xl mx-auto">
-          <div className="p-6 md:p-0">
+          <div className="p-6 md:p-0 mb-12">
             <div className="flex items-center gap-2">
               <Trophy className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Achievements</h1>
@@ -121,7 +121,7 @@ export default function AchievementsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6 md:p-0 pt-10">
+          <div className="p-6 md:p-0">
             <TooltipProvider>
                 {renderAchievementList(standardAchievements)}
             </TooltipProvider>
