@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -13,9 +13,60 @@ import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck } 
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge } from '@/types';
 import Link from 'next/link';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+
+const AllianceCard3D = ({ alliance }: { alliance: Alliance }) => {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - left;
+        const y = e.clientY - top;
+        const rotateX = (y / height - 0.5) * -10;
+        const rotateY = (x / width - 0.5) * 10;
+        cardRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+        cardRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+    };
+
+    const handleMouseLeave = () => {
+        if (!cardRef.current) return;
+        cardRef.current.style.setProperty('--rotate-x', '0deg');
+        cardRef.current.style.setProperty('--rotate-y', '0deg');
+    };
+
+    return (
+        <Link href={`/alliances/${alliance.id}`} className="flex-shrink-0">
+             <div 
+                ref={cardRef} 
+                className="card-3d w-[261px] h-[348px]"
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+            >
+                <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
+                    <div className="relative w-full h-full">
+                        <Image 
+                            src={alliance.photoURL}
+                            alt={alliance.name} 
+                            fill 
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
+                        <div className="absolute bottom-0 left-0 p-4 text-white">
+                             <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
+                             <CardDescription className="text-sm flex items-center gap-1.5 mt-1 text-white/80 text-shadow">
+                                <Users className="h-4 w-4" />
+                                {alliance.memberIds.length} members
+                             </CardDescription>
+                        </div>
+                    </div>
+                </Card>
+             </div>
+        </Link>
+    );
+};
 
 export default function AlliancesPage() {
   const { user } = useAuth();
@@ -118,35 +169,13 @@ export default function AlliancesPage() {
                 {userAlliances.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">You are not part of any alliance.</p>
                 ) : (
-                    <ScrollArea className="h-[60vh] mt-4">
-                        <div className="space-y-3 pr-4">
-                            {userAlliances.map((alliance, index) => (
-                                <div
-                                  key={alliance.id}
-                                  className="animate-fade-in-up"
-                                  style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                  <Link href={`/alliances/${alliance.id}`}>
-                                      <Card className="p-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                        <CardHeader className="p-2 flex flex-row items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="relative w-12 h-12 rounded-md overflow-hidden">
-                                                    <Image src={alliance.photoURL} alt={alliance.name} fill className="object-cover"/>
-                                                </div>
-                                                <div>
-                                                    <CardTitle className="text-md flex items-center gap-2">
-                                                        {alliance.name}
-                                                    </CardTitle>
-                                                    <CardDescription className="text-xs mt-1">{alliance.memberIds.length} members</CardDescription>
-                                                </div>
-                                            </div>
-                                            <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                                        </CardHeader>
-                                      </Card>
-                                  </Link>
-                                </div>
+                    <ScrollArea className="w-full whitespace-nowrap">
+                        <div className="flex space-x-4 pb-4">
+                            {userAlliances.map((alliance) => (
+                                <AllianceCard3D key={alliance.id} alliance={alliance} />
                             ))}
                         </div>
+                        <ScrollBar orientation="horizontal" className="invisible"/>
                     </ScrollArea>
                 )}
             </div>
