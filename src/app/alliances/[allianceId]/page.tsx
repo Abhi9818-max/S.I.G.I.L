@@ -198,6 +198,7 @@ export default function AllianceDetailPage() {
 
     const fetchAllianceData = useCallback(async () => {
         if (allianceId) {
+            setIsLoading(true);
             try {
                 const data = await getAllianceWithMembers(allianceId);
                 if (data) {
@@ -538,3 +539,4 @@ export default function AllianceDetailPage() {
         </>
     );
 }
+ 
