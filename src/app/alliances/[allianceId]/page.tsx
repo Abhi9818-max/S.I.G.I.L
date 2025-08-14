@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download, CheckCircle, XCircle, Swords } from 'lucide-react';
+import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCard, ShieldAlert, Crown, LogOut, Download, CheckCircle, XCircle, Swords, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -55,6 +55,36 @@ const getAvatarForId = (id: string, url?: string | null) => {
     const avatarNumber = (simpleHash(id) % 41) + 1;
     return `/avatars/avatar${avatarNumber}.jpeg`;
 }
+
+const AllianceStatusBadge = ({ status }: { status: Alliance['status'] }) => {
+    const statusMap = {
+        completed: {
+            icon: <CheckCircle className="mr-2 h-4 w-4" />,
+            label: 'Success',
+            className: 'bg-green-600/20 text-green-300 border border-green-500/30'
+        },
+        failed: {
+            icon: <XCircle className="mr-2 h-4 w-4" />,
+            label: 'Failed',
+            className: 'bg-red-600/20 text-red-300 border border-red-500/30'
+        },
+        ongoing: {
+            icon: <RefreshCw className="mr-2 h-4 w-4 animate-spin" />,
+            label: 'In Progress',
+            className: 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+        }
+    };
+    
+    const currentStatus = statusMap[status || 'ongoing'];
+
+    return (
+        <div className={cn("inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold", currentStatus.className)}>
+            {currentStatus.icon}
+            {currentStatus.label}
+        </div>
+    );
+};
+
 
 const InviteFriendsDialog = ({
     isOpen,
@@ -331,18 +361,7 @@ export default function AllianceDetailPage() {
                                 <div className="flex items-center gap-3">
                                     <Shield className="h-8 w-8 text-primary" />
                                     <h1 className="text-3xl font-bold">{name}</h1>
-                                     {status && (
-                                        <Badge
-                                            variant={status === 'completed' ? 'default' : 'destructive'}
-                                            className={cn(
-                                                status === 'completed' && 'bg-green-600/80',
-                                                status === 'failed' && 'bg-red-600/80'
-                                            )}
-                                        >
-                                            {status === 'completed' ? <CheckCircle className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
-                                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                                        </Badge>
-                                    )}
+                                     {status && <AllianceStatusBadge status={status} />}
                                 </div>
                                 <p className="mt-2 text-muted-foreground">{description}</p>
                             </div>
