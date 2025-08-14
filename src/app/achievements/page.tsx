@@ -15,14 +15,51 @@ const AchievementCard = ({ achievement, isUnlocked, newlyUnlocked }: { achieveme
   const Icon = achievement.icon;
   const showDetails = isUnlocked || !achievement.isSecret;
 
-  const glowClass = isUnlocked 
-    ? "from-primary/50 via-primary/20 to-transparent" 
-    : "from-muted/50 via-muted/20 to-transparent";
+  const getGlowClass = (category: string) => {
+    if (!isUnlocked) return "from-muted/50 via-muted/20 to-transparent";
+    switch (category) {
+      case 'level':
+        return "from-yellow-400/50 via-yellow-400/20 to-transparent";
+      case 'streak':
+        return "from-orange-500/50 via-orange-500/20 to-transparent";
+      case 'skills':
+        return "from-purple-500/50 via-purple-500/20 to-transparent";
+      case 'creation':
+        return "from-green-500/50 via-green-500/20 to-transparent";
+      case 'title':
+        return "from-cyan-400/50 via-cyan-400/20 to-transparent";
+      default:
+        return "from-primary/50 via-primary/20 to-transparent";
+    }
+  };
+
+  const getHoverClass = (category: string) => {
+    if (!isUnlocked) return "hover:shadow-muted/20";
+     switch (category) {
+      case 'level':
+        return "hover:shadow-yellow-400/20";
+      case 'streak':
+        return "hover:shadow-orange-500/20";
+      case 'skills':
+        return "hover:shadow-purple-500/20";
+      case 'creation':
+        return "hover:shadow-green-500/20";
+      case 'title':
+        return "hover:shadow-cyan-400/20";
+      default:
+        return "hover:shadow-primary/20";
+    }
+  }
+
+  const glowClass = getGlowClass(achievement.category);
+  const hoverClass = getHoverClass(achievement.category);
+
 
   return (
     <div className={cn(
       "relative perspective-1000 rounded-2xl p-px transition-all duration-300",
-      isUnlocked ? "hover:shadow-xl hover:shadow-primary/20" : "hover:shadow-xl hover:shadow-muted/20",
+      "hover:shadow-xl",
+      hoverClass,
       newlyUnlocked && 'animate-flip-in'
     )}>
       {/* Gradient Glow Background */}
@@ -109,7 +146,7 @@ export default function AchievementsPage() {
       />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-5xl mx-auto">
-          <div className="p-6 md:p-0 mb-12">
+          <Card className="p-6 mb-12">
             <div className="flex items-center gap-2">
               <Trophy className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Achievements</h1>
@@ -120,8 +157,8 @@ export default function AchievementsPage() {
                   <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
               </div>
             </div>
-          </div>
-          <div className="p-6 md:p-0">
+          </Card>
+          <div className="p-6 md:p-0 pt-0">
             <TooltipProvider>
                 {renderAchievementList(standardAchievements)}
             </TooltipProvider>
@@ -129,7 +166,7 @@ export default function AchievementsPage() {
 
           {titleAchievements.length > 0 && (
             <>
-              <Separator className="my-8" />
+              <Separator className="my-12" />
               <div className="p-6 md:p-0">
                 <div className="flex items-center gap-2">
                   <Award className="h-6 w-6 text-yellow-400" />
