@@ -244,34 +244,8 @@ export default function AllianceDetailPage() {
         fetchPendingInvites();
     }, [allianceId, getPendingAllianceInvitesFor]);
     
-    const calculatedProgress = useMemo(() => {
-        if (!alliance) return 0;
-        
-        const startDate = parseISO(alliance.startDate);
-        const endDate = parseISO(alliance.endDate);
-        let totalProgress = 0;
-
-        membersData.forEach(member => {
-            let recordsToSearch: RecordEntry[] = [];
-            // If the member is the current user, use the up-to-date local records for real-time feedback
-            if (member.uid === user?.uid) {
-                recordsToSearch = currentUserRecords;
-            } else {
-                // For other members, use the fetched data
-                recordsToSearch = member.records || [];
-            }
-            
-            const relevantRecords = recordsToSearch.filter(r => 
-                r.taskType === alliance.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate })
-            );
-            totalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
-        });
-
-        return totalProgress;
-    }, [alliance, membersData, currentUserRecords, user?.uid]);
-    
     const enrichedMembers = useMemo((): AllianceMember[] => {
-        if (!alliance || !membersData.length) return alliance?.members || [];
+        if (!alliance || !membersData.length) return [];
 
         const startDate = parseISO(alliance.startDate);
         const endDate = parseISO(alliance.endDate);
@@ -295,6 +269,10 @@ export default function AllianceDetailPage() {
             };
         });
     }, [alliance, membersData, currentUserRecords, user?.uid]);
+
+    const calculatedProgress = useMemo(() => {
+        return enrichedMembers.reduce((sum, member) => sum + member.contribution, 0);
+    }, [enrichedMembers]);
 
 
     const handleLeaveAlliance = async () => {
@@ -334,7 +312,7 @@ export default function AllianceDetailPage() {
             await disbandAlliance(alliance.id);
             toast({ title: "Alliance Disbanded", description: "The alliance has been removed." });
             router.push('/alliances');
-        } catch (error) {
+        } catch (error) => {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
         }
     };

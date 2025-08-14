@@ -330,7 +330,7 @@ export interface AllianceMember {
   username: string;
   nickname?: string;
   photoURL?: string | null;
-  contribution?: number;
+  contribution: number;
 }
 
 export type AllianceStatus = 'ongoing' | 'completed' | 'failed';
