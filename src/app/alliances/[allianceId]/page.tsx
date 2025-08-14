@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { format, parseISO, differenceInDays, isPast, isWithinInterval } from 'date-fns';
+import { format, parseISO, differenceInDays, isPast, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
@@ -247,8 +247,8 @@ export default function AllianceDetailPage() {
     const enrichedMembers = useMemo((): AllianceMember[] => {
         if (!alliance || !membersData.length) return [];
 
-        const startDate = parseISO(alliance.startDate);
-        const endDate = parseISO(alliance.endDate);
+        const startDate = startOfDay(parseISO(alliance.startDate));
+        const endDate = endOfDay(parseISO(alliance.endDate));
         
         return alliance.members.map(member => {
             let recordsToSearch: RecordEntry[] = [];
@@ -552,3 +552,5 @@ export default function AllianceDetailPage() {
         </>
     );
 }
+
+    
