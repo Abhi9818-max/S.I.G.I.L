@@ -84,7 +84,7 @@ export default function AchievementsPage() {
   const progress = totalAchievements > 0 ? (unlockedCount / totalAchievements) * 100 : 0;
 
   const renderAchievementList = (achievements: typeof ACHIEVEMENTS) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {achievements.map((ach, index) => (
         <div
           key={ach.id}
