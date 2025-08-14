@@ -120,7 +120,7 @@ export default function AchievementsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6 md:p-0 pt-6">
+          <div className="p-6 md:p-0 pt-8">
             <TooltipProvider>
                 {renderAchievementList(standardAchievements)}
             </TooltipProvider>
