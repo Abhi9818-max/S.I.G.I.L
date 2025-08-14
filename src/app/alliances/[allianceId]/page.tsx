@@ -312,7 +312,7 @@ export default function AllianceDetailPage() {
             await disbandAlliance(alliance.id);
             toast({ title: "Alliance Disbanded", description: "The alliance has been removed." });
             router.push('/alliances');
-        } catch (error) => {
+        } catch (error) {
             toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
         }
     };
