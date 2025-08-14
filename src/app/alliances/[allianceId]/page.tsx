@@ -10,7 +10,7 @@ import { ArrowLeft, Users, Shield, Target, Calendar, Trash2, UserPlus, CreditCar
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
-import type { Alliance, UserData, TaskDefinition, Friend, AllianceMember } from '@/types';
+import type { Alliance, UserData, TaskDefinition, Friend, AllianceMember, RecordEntry } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -188,7 +188,7 @@ export default function AllianceDetailPage() {
     const allianceId = params.allianceId as string;
     
     const { user } = useAuth();
-    const { friends, getFriendData, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
+    const { friends, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
     const { dashboardSettings } = useSettings();
     const { records: currentUserRecords } = useUserRecords();
     
@@ -207,9 +207,6 @@ export default function AllianceDetailPage() {
                 const allianceData = await getAllianceWithMembers(allianceId);
                 if (allianceData) {
                     setAlliance(allianceData);
-                    const memberPromises = allianceData.memberIds.map(id => getFriendData(id));
-                    const resolvedMembers = await Promise.all(memberPromises);
-                    setMembersData(resolvedMembers.filter(Boolean) as UserData[]);
 
                     // Check for dare logic
                     if (allianceData.status === 'failed' && !allianceData.dare) {
@@ -229,7 +226,7 @@ export default function AllianceDetailPage() {
                 setIsLoading(false);
             }
         }
-    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare, dashboardSettings.dareCategory, getFriendData]);
+    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare, dashboardSettings.dareCategory]);
     
     useEffect(() => {
         fetchAllianceData();
@@ -246,33 +243,48 @@ export default function AllianceDetailPage() {
     }, [allianceId, getPendingAllianceInvitesFor]);
     
     const calculatedProgress = useMemo(() => {
-        if (!alliance || membersData.length === 0) return 0;
+        if (!alliance) return 0;
         
         const startDate = parseISO(alliance.startDate);
         const endDate = parseISO(alliance.endDate);
         let totalProgress = 0;
 
-        membersData.forEach(member => {
-            const memberRecords = member.records || [];
-            const relevantRecords = memberRecords.filter(r => 
+        alliance.members.forEach(member => {
+            let recordsToSearch: RecordEntry[] = [];
+            // If the member is the current user, use the up-to-date local records
+            if (member.uid === user?.uid) {
+                recordsToSearch = currentUserRecords;
+            } else {
+                // For other members, use the fetched data (less real-time but available)
+                const memberData = membersData.find(m => m.uid === member.uid);
+                recordsToSearch = memberData?.records || [];
+            }
+            
+            const relevantRecords = recordsToSearch.filter(r => 
                 r.taskType === alliance.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate })
             );
             totalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
         });
 
         return totalProgress;
-    }, [alliance, membersData, currentUserRecords]); // Depend on currentUserRecords too
-
+    }, [alliance, membersData, currentUserRecords, user?.uid]);
+    
     const enrichedMembers = useMemo((): AllianceMember[] => {
-        if (!alliance || membersData.length === 0) return alliance?.members || [];
-        
+        if (!alliance) return [];
+
         const startDate = parseISO(alliance.startDate);
         const endDate = parseISO(alliance.endDate);
-
+        
         return alliance.members.map(member => {
-            const data = membersData.find(m => m.uid === member.uid);
-            const memberRecords = data?.records || [];
-            const relevantRecords = memberRecords.filter(r => 
+            let recordsToSearch: RecordEntry[] = [];
+             if (member.uid === user?.uid) {
+                recordsToSearch = currentUserRecords;
+            } else {
+                const memberData = membersData.find(m => m.uid === member.uid);
+                recordsToSearch = memberData?.records || [];
+            }
+
+            const relevantRecords = recordsToSearch.filter(r => 
                 r.taskType === alliance.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate })
             );
             const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
@@ -281,7 +293,7 @@ export default function AllianceDetailPage() {
                 contribution,
             };
         });
-    }, [alliance, membersData, currentUserRecords]);
+    }, [alliance, membersData, currentUserRecords, user?.uid]);
 
 
     const handleLeaveAlliance = async () => {
