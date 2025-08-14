@@ -480,15 +480,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return docRef.id;
     }, [user, userData]);
 
-     const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<Alliance | null> => {
+    const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<Alliance | null> => {
         const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
 
         if (!allianceSnap.exists()) return null;
 
-        let allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
-        
-        // --- Calculate Local Alliance Progress ---
+        const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
+
         const memberIds = allianceData.memberIds || [];
         if (memberIds.length > 0) {
             const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
@@ -502,86 +501,17 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     nicknames.set(doc.id, doc.data().nickname);
                 }
             });
-            
-            const startDate = parseISO(allianceData.startDate);
-            const endDate = parseISO(allianceData.endDate);
-            let totalProgress = 0;
 
-            const members: AllianceMember[] = membersData.map(m => {
-                const memberRecords = m.records || [];
-                const relevantRecords = memberRecords.filter(r => {
-                    return r.taskType === allianceData.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate });
-                });
-                const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
-                totalProgress += contribution;
-
-                return {
-                    uid: m.uid!,
-                    username: m.username,
-                    photoURL: m.photoURL,
-                    nickname: nicknames.get(m.uid!) || m.username,
-                    contribution: contribution,
-                };
-            });
-            
-            allianceData.members = members;
-            allianceData.progress = totalProgress;
+            allianceData.members = membersData.map(m => ({
+                uid: m.uid!,
+                username: m.username,
+                photoURL: m.photoURL,
+                nickname: nicknames.get(m.uid!) || m.username,
+            }));
         } else {
             allianceData.members = [];
-            allianceData.progress = 0;
-        }
-        
-        let opponentTotalProgress = 0;
-        // --- Handle Opponent Data ---
-        if (allianceData.opponentDetails?.allianceId) {
-            const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
-            const opponentSnap = await getDoc(opponentAllianceRef);
-            if (opponentSnap.exists()) {
-                const opponentData = opponentSnap.data() as Alliance;
-                const opponentMemberIds = opponentData.memberIds || [];
-                
-                if (opponentMemberIds.length > 0) {
-                    const opponentUsersQuery = query(collection(db, 'users'), where(documentId(), 'in', opponentMemberIds));
-                    const opponentUsersSnapshot = await getDocs(opponentUsersQuery);
-                    const opponentMembersData = opponentUsersSnapshot.docs.map(doc => doc.data() as UserData);
-
-                    const opponentStartDate = parseISO(opponentData.startDate);
-                    const opponentEndDate = parseISO(opponentData.endDate);
-
-                    opponentMembersData.forEach(m => {
-                        const memberRecords = m.records || [];
-                        const relevantRecords = memberRecords.filter(r => 
-                            r.taskType === opponentData.taskId && isWithinInterval(parseISO(r.date), { start: opponentStartDate, end: opponentEndDate })
-                        );
-                        opponentTotalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
-                    });
-                }
-                allianceData.opponentDetails.opponentProgress = opponentTotalProgress;
-            }
         }
 
-        // --- Handle Status ---
-        let status: AllianceStatus = allianceData.status || 'ongoing';
-        if (status === 'ongoing') {
-            if (allianceData.progress >= allianceData.target) {
-                status = 'completed';
-                if (allianceData.opponentDetails?.allianceId) {
-                    const opponentRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
-                    await updateDoc(opponentRef, { status: 'failed' });
-                }
-            } else if (opponentTotalProgress >= allianceData.target) {
-                status = 'failed'; // They lost because opponent won
-            } else if (isPast(parseISO(allianceData.endDate))) {
-                status = 'failed';
-            }
-        }
-
-        if (allianceData.status !== status) {
-            const allianceRef = doc(db, 'alliances', allianceId);
-            await updateDoc(allianceRef, { status: status });
-            allianceData.status = status;
-        }
-        
         return allianceData;
     }, [user]);
 

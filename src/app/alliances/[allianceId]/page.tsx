@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { format, parseISO, differenceInDays, isPast } from 'date-fns';
+import { format, parseISO, differenceInDays, isPast, isWithinInterval } from 'date-fns';
 import { toPng } from 'html-to-image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
@@ -37,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 
 
 // Simple hash function to get a number from a string
@@ -187,9 +188,12 @@ export default function AllianceDetailPage() {
     const allianceId = params.allianceId as string;
     
     const { user } = useAuth();
-    const { friends, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
+    const { friends, getFriendData, getAllianceWithMembers, leaveAlliance, disbandAlliance, sendAllianceInvitation, getPendingAllianceInvitesFor, setAllianceDare } = useFriends();
     const { dashboardSettings } = useSettings();
+    const { records: currentUserRecords } = useUserRecords();
+    
     const [alliance, setAlliance] = useState<Alliance | null>(null);
+    const [membersData, setMembersData] = useState<UserData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [pendingInvites, setPendingInvites] = useState<string[]>([]);
@@ -200,17 +204,19 @@ export default function AllianceDetailPage() {
         if (allianceId) {
             setIsLoading(true);
             try {
-                const data = await getAllianceWithMembers(allianceId);
-                if (data) {
-                    setAlliance(data);
+                const allianceData = await getAllianceWithMembers(allianceId);
+                if (allianceData) {
+                    setAlliance(allianceData);
+                    const memberPromises = allianceData.memberIds.map(id => getFriendData(id));
+                    const resolvedMembers = await Promise.all(memberPromises);
+                    setMembersData(resolvedMembers.filter(Boolean) as UserData[]);
 
                     // Check for dare logic
-                    if (data.status === 'failed' && !data.dare) {
-                        const newDare = await generateAllianceDare(data.name, dashboardSettings.dareCategory);
-                        await setAllianceDare(data.id, newDare);
+                    if (allianceData.status === 'failed' && !allianceData.dare) {
+                        const newDare = await generateAllianceDare(allianceData.name, dashboardSettings.dareCategory);
+                        await setAllianceDare(allianceData.id, newDare);
                         setAlliance(prev => prev ? {...prev, dare: newDare} : null);
                     }
-
                 } else {
                     toast({ title: 'Error', description: 'Alliance not found.', variant: 'destructive' });
                     router.push('/alliances');
@@ -223,7 +229,7 @@ export default function AllianceDetailPage() {
                 setIsLoading(false);
             }
         }
-    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare, dashboardSettings.dareCategory]);
+    }, [allianceId, getAllianceWithMembers, router, toast, setAllianceDare, dashboardSettings.dareCategory, getFriendData]);
     
     useEffect(() => {
         fetchAllianceData();
@@ -238,6 +244,45 @@ export default function AllianceDetailPage() {
         };
         fetchPendingInvites();
     }, [allianceId, getPendingAllianceInvitesFor]);
+    
+    const calculatedProgress = useMemo(() => {
+        if (!alliance || membersData.length === 0) return 0;
+        
+        const startDate = parseISO(alliance.startDate);
+        const endDate = parseISO(alliance.endDate);
+        let totalProgress = 0;
+
+        membersData.forEach(member => {
+            const memberRecords = member.records || [];
+            const relevantRecords = memberRecords.filter(r => 
+                r.taskType === alliance.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate })
+            );
+            totalProgress += relevantRecords.reduce((sum, r) => sum + r.value, 0);
+        });
+
+        return totalProgress;
+    }, [alliance, membersData, currentUserRecords]); // Depend on currentUserRecords too
+
+    const enrichedMembers = useMemo((): AllianceMember[] => {
+        if (!alliance || membersData.length === 0) return alliance?.members || [];
+        
+        const startDate = parseISO(alliance.startDate);
+        const endDate = parseISO(alliance.endDate);
+
+        return alliance.members.map(member => {
+            const data = membersData.find(m => m.uid === member.uid);
+            const memberRecords = data?.records || [];
+            const relevantRecords = memberRecords.filter(r => 
+                r.taskType === alliance.taskId && isWithinInterval(parseISO(r.date), { start: startDate, end: endDate })
+            );
+            const contribution = relevantRecords.reduce((sum, r) => sum + r.value, 0);
+            return {
+                ...member,
+                contribution,
+            };
+        });
+    }, [alliance, membersData, currentUserRecords]);
+
 
     const handleLeaveAlliance = async () => {
         if (!user || !alliance) return;
@@ -320,9 +365,9 @@ export default function AllianceDetailPage() {
       }, [allianceCardRef, toast, alliance]);
 
     const sortedMembers = useMemo(() => {
-        if (!alliance?.members) return [];
-        return [...alliance.members].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
-    }, [alliance?.members]);
+        if (!enrichedMembers) return [];
+        return [...enrichedMembers].sort((a, b) => (b.contribution || 0) - (a.contribution || 0));
+    }, [enrichedMembers]);
 
     const topContributorId = useMemo(() => {
         if (!sortedMembers || sortedMembers.length === 0) return null;
@@ -342,10 +387,10 @@ export default function AllianceDetailPage() {
         );
     }
 
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, creatorId, dare, status, opponentDetails } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, creatorId, dare, status, opponentDetails } = alliance;
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
-    const progressPercentage = Math.min((progress / target) * 100, 100);
+    const progressPercentage = Math.min((calculatedProgress / target) * 100, 100);
     const opponentProgressPercentage = opponentDetails?.opponentProgress !== undefined ? Math.min((opponentDetails.opponentProgress / target) * 100, 100) : 0;
     const timeRemaining = differenceInDays(parseISO(endDate), new Date());
 
@@ -457,7 +502,7 @@ export default function AllianceDetailPage() {
                                     <p className="text-sm font-medium">{name} (Your Alliance)</p>
                                     <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: taskColor}} />
                                     <div className="flex justify-between text-sm text-muted-foreground">
-                                        <span>{progress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
+                                        <span>{calculatedProgress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
                                     </div>
                                 </div>
                                 {opponentDetails && (
@@ -521,7 +566,7 @@ export default function AllianceDetailPage() {
                 <div ref={allianceCardRef}>
                     {alliance && (
                         <AllianceCard 
-                            alliance={alliance}
+                            alliance={{...alliance, progress: calculatedProgress, members: enrichedMembers}}
                         />
                     )}
                 </div>
@@ -539,4 +584,3 @@ export default function AllianceDetailPage() {
         </>
     );
 }
- 
