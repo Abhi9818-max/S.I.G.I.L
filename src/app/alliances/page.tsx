@@ -61,36 +61,6 @@ export default function AlliancesPage() {
           <div className="lg:col-span-2 space-y-8">
             
             <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Swords className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-semibold">Challengers</h2>
-                </div>
-                {incomingAllianceChallenges.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">No pending challenges.</p>
-                ) : (
-                    <div className="space-y-2">
-                        {incomingAllianceChallenges.map(challenge => (
-                            <Card key={challenge.id} className="p-3">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-semibold">{challenge.challengerAllianceName}</p>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => acceptAllianceChallenge(challenge)}>
-                                            <Check className="h-4 w-4 mr-2" /> Accept
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => declineAllianceChallenge(challenge.id)}>
-                                            <X className="h-4 w-4 mr-2" /> Decline
-                                        </Button>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Swords className="h-6 w-6 text-primary" />
