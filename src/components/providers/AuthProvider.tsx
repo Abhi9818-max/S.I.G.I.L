@@ -9,7 +9,7 @@ import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth as firebaseAuth, db, storage as firebaseStorage, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import type { UserData } from '@/types';
+import type { UserData, PrivacySetting } from '@/types';
 import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
@@ -32,6 +32,7 @@ interface AuthContextType {
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
   equipTitle: (titleId: string | null) => Promise<void>;
+  updatePrivacySetting: (setting: 'pacts' | 'activity', value: PrivacySetting) => Promise<void>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -98,6 +99,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     taskMastery: {},
                     aetherShards: 0,
                     reputation: {},
+                    privacySettings: {
+                      pacts: 'everyone',
+                      activity: 'everyone'
+                    },
                 };
                 setUserData(initialGuestData);
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
@@ -220,6 +225,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             taskMastery: {},
             aetherShards: 0,
             reputation: {},
+            privacySettings: {
+              pacts: 'everyone',
+              activity: 'everyone'
+            },
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
@@ -332,6 +341,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, db, toast, isGuest]);
   
+  const updatePrivacySetting = useCallback(async (setting: 'pacts' | 'activity', value: PrivacySetting) => {
+    const dataToUpdate = { 
+        privacySettings: {
+            ...userData?.privacySettings,
+            [setting]: value
+        } 
+    };
+
+    if (isGuest) {
+        setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
+        const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
+        guestData.privacySettings = dataToUpdate.privacySettings;
+        localStorage.setItem('guest-userData', JSON.stringify(guestData));
+        toast({ title: 'Privacy Setting Updated' });
+        return;
+    }
+
+    if (!user || !db) return;
+
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, dataToUpdate);
+        setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
+        toast({ title: 'Privacy Setting Updated' });
+    } catch (error) {
+        console.error('Error updating privacy setting:', error);
+        toast({ title: 'Error', description: 'Could not update privacy setting.', variant: 'destructive' });
+    }
+  }, [user, db, toast, isGuest, userData]);
+  
   if (showLoading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -341,7 +380,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );

@@ -185,6 +185,7 @@ export interface HighGoal {
 // For Settings
 export type DareCategory = 'standard' | '18+' | 'serious';
 export type ProfileCardStat = 'tierName' | 'currentStreak' | 'totalXp' | 'equippedTitle';
+export type PrivacySetting = 'everyone' | 'friends_only';
 export interface DashboardSettings {
   showTotalLast30Days: boolean;
   totalDays: number;
@@ -274,6 +275,10 @@ export interface UserData {
     reputation?: Record<string, number>; // e.g., { 'scholars-guild': 1250, 'iron-legion': 500 }
     marketplaceListings?: MarketplaceListing[]; // User's own active listings
     equippedTitleId?: string;
+    privacySettings?: {
+        pacts?: PrivacySetting;
+        activity?: PrivacySetting;
+    };
 }
 
 // For Friends feature

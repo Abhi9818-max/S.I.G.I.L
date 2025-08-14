@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -34,7 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LOCAL_STORAGE_KEYS } from '@/lib/config';
 import { Switch } from '@/components/ui/switch';
-import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat, DareCategory, Achievement } from '@/types';
+import type { DashboardSettings, ProgressChartTimeRange, ProfileCardStat, DareCategory, Achievement, PrivacySetting } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
   const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
-  const { user, userData, updateProfilePicture, updateBio, logout, equipTitle } = useAuth();
+  const { user, userData, updateProfilePicture, updateBio, logout, equipTitle, updatePrivacySetting } = useAuth();
   const { toast } = useToast();
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAlliances, setIsDeletingAlliances] = useState(false);
@@ -588,6 +588,48 @@ export default function SettingsPage() {
               {activeTab === 'layout' && (
               <div className="animate-fade-in-up py-4">
                 <Accordion type="multiple" className="w-full space-y-4">
+                  <AccordionItem value="privacy" className="border rounded-lg p-4">
+                    <AccordionTrigger>Privacy &amp; Visibility</AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
+                      <div>
+                          <Label className="font-normal">Profile Visibility</Label>
+                          <p className="text-xs text-muted-foreground mt-1">Who can view your stats and activity?</p>
+                          <RadioGroup 
+                              value={userData?.privacySettings?.activity || 'everyone'}
+                              onValueChange={(value: PrivacySetting) => updatePrivacySetting('activity', value)}
+                              className="mt-2 grid grid-cols-2 gap-2"
+                          >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="everyone" id="p-activity-everyone" />
+                                <Label htmlFor="p-activity-everyone" className="font-normal">Everyone</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="friends_only" id="p-activity-friends" />
+                                <Label htmlFor="p-activity-friends" className="font-normal">Friends Only</Label>
+                            </div>
+                          </RadioGroup>
+                      </div>
+                      <Separator/>
+                      <div>
+                          <Label className="font-normal">Pacts Visibility</Label>
+                           <p className="text-xs text-muted-foreground mt-1">Who can view your daily pacts?</p>
+                          <RadioGroup 
+                              value={userData?.privacySettings?.pacts || 'everyone'}
+                              onValueChange={(value: PrivacySetting) => updatePrivacySetting('pacts', value)}
+                              className="mt-2 grid grid-cols-2 gap-2"
+                          >
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="everyone" id="p-pacts-everyone" />
+                                <Label htmlFor="p-pacts-everyone" className="font-normal">Everyone</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="friends_only" id="p-pacts-friends" />
+                                <Label htmlFor="p-pacts-friends" className="font-normal">Friends Only</Label>
+                            </div>
+                          </RadioGroup>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                   <AccordionItem value="dashboard-components" className="border rounded-lg p-4">
                     <AccordionTrigger>Main Dashboard Components</AccordionTrigger>
                     <AccordionContent className="space-y-3 pt-4">
@@ -889,4 +931,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
