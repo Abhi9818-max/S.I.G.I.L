@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -51,7 +50,6 @@ export default function ReputationPage() {
               <Users className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Factions & Reputation</h1>
             </div>
-            <p className="text-muted-foreground mt-2">Earn reputation with different factions by completing related tasks.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
