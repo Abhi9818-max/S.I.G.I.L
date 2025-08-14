@@ -7,6 +7,7 @@ import { Shield, Target, Calendar, Users } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Image from 'next/image';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -30,15 +31,15 @@ interface AllianceCardProps {
 }
 
 const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, progress, photoURL } = alliance;
     const progressPercentage = Math.min((progress / target) * 100, 100);
     const timeRemaining = differenceInDays(parseISO(endDate), new Date());
   
   return (
     <div className="w-[450px] h-auto bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
-        <header className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-muted rounded-lg">
-                <Shield className="h-8 w-8" style={{ color: taskColor }} />
+        <header className="flex items-center gap-4 mb-4">
+             <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-primary/20">
+                <Image src={photoURL} alt={name} fill className="object-cover" />
             </div>
             <div>
                 <h2 className="text-2xl font-bold text-white truncate">{name}</h2>

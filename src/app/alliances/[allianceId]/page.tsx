@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
+import Image from 'next/image';
 
 
 // Simple hash function to get a number from a string
@@ -378,7 +379,7 @@ export default function AllianceDetailPage() {
         );
     }
 
-    const { name, description, taskName, taskColor, target, startDate, endDate, members, creatorId, dare, status, opponentDetails } = alliance;
+    const { name, description, taskName, taskColor, target, startDate, endDate, members, creatorId, dare, status, opponentDetails, photoURL } = alliance;
     const isCreator = user?.uid === creatorId;
     const isMember = user ? members.some(m => m.uid === user.uid) : false;
     const progressPercentage = Math.min((calculatedProgress / target) * 100, 100);
@@ -391,17 +392,20 @@ export default function AllianceDetailPage() {
             <div className="min-h-screen flex flex-col">
                 <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
                 <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
+                    <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden">
+                        <Image src={photoURL} alt={name} fill className="object-cover"/>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6">
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-3xl font-bold text-white text-shadow-lg">{name}</h1>
+                                {status && <AllianceStatusBadge status={status} />}
+                            </div>
+                             <p className="mt-1 text-white/80 text-shadow max-w-2xl">{description}</p>
+                        </div>
+                    </div>
                     
                     <div className="space-y-8">
                         <div className="flex flex-col sm:flex-row justify-between gap-4">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <Shield className="h-8 w-8 text-primary" />
-                                    <h1 className="text-3xl font-bold">{name}</h1>
-                                     {status && <AllianceStatusBadge status={status} />}
-                                </div>
-                                <p className="mt-2 text-muted-foreground">{description}</p>
-                            </div>
+                             <div></div>
                             <div className="flex-shrink-0 flex items-center gap-2">
                                 {isCreator && (
                                     <Button variant="outline" onClick={() => setIsInviteOpen(true)}>

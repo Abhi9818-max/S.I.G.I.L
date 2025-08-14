@@ -341,6 +341,7 @@ export interface Alliance {
   id: string;
   name: string;
   description: string;
+  photoURL: string;
   creatorId: string;
   taskId: string;
   taskName: string;

@@ -24,13 +24,16 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, PlusCircle, CalendarIcon, ArrowLeft } from 'lucide-react';
+import { Shield, PlusCircle, CalendarIcon, ArrowLeft, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import Image from 'next/image';
 
 const allianceFormSchema = z.object({
   name: z.string().min(3, "Alliance name must be at least 3 characters.").max(50, "Alliance name is too long."),
   description: z.string().min(10, "Description must be at least 10 characters.").max(150, "Description is too long."),
+  photoURL: z.string().min(1, "You must select an alliance image."),
   taskId: z.string().min(1, "You must select a task."),
   target: z.preprocess(
     val => (val === "" || val === undefined || val === null ? undefined : Number(val)),
@@ -52,6 +55,8 @@ const allianceFormSchema = z.object({
 
 type AllianceFormData = z.infer<typeof allianceFormSchema>;
 
+const allianceImages = Array.from({ length: 21 }, (_, i) => `/alliances/alliance${i + 1}.jpeg`);
+
 export default function CreateAlliancePage() {
   const { user } = useAuth();
   const { taskDefinitions, getTaskDefinitionById } = useUserRecords();
@@ -64,6 +69,7 @@ export default function CreateAlliancePage() {
     defaultValues: {
       name: '',
       description: '',
+      photoURL: '',
       taskId: undefined,
       target: undefined,
       dateRange: { from: new Date(), to: undefined },
@@ -85,6 +91,7 @@ export default function CreateAlliancePage() {
         const allianceData = {
             name: data.name,
             description: data.description,
+            photoURL: data.photoURL,
             taskId: data.taskId,
             taskName: task.name,
             taskColor: task.color,
@@ -140,6 +147,33 @@ export default function CreateAlliancePage() {
                     <Label htmlFor="alliance-description">Description</Label>
                     <Input id="alliance-description" {...form.register('description')} className="mt-1" placeholder="A short mission statement for your alliance." />
                     {form.formState.errors.description && <p className="text-sm text-destructive mt-1">{form.formState.errors.description.message}</p>}
+                </div>
+                 <div>
+                    <Label>Alliance Emblem</Label>
+                    <Controller
+                        name="photoURL"
+                        control={form.control}
+                        render={({ field }) => (
+                            <ScrollArea className="h-48 w-full mt-1 rounded-md border p-2">
+                                <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                                    {allianceImages.map(img => (
+                                        <button
+                                            key={img}
+                                            type="button"
+                                            onClick={() => field.onChange(img)}
+                                            className={cn(
+                                                "relative aspect-square w-full rounded-md overflow-hidden border-2 transition-all",
+                                                field.value === img ? "border-primary ring-2 ring-primary/50" : "border-transparent"
+                                            )}
+                                        >
+                                            <Image src={img} alt={`Alliance image ${img}`} fill className="object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        )}
+                    />
+                    {form.formState.errors.photoURL && <p className="text-sm text-destructive mt-1">{form.formState.errors.photoURL.message}</p>}
                 </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

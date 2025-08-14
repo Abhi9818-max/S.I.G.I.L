@@ -15,6 +15,7 @@ import type { Alliance, AllianceChallenge } from '@/types';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 
 export default function AlliancesPage() {
   const { user } = useAuth();
@@ -127,17 +128,19 @@ export default function AlliancesPage() {
                                 >
                                   <Link href={`/alliances/${alliance.id}`}>
                                       <Card className="p-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer">
-                                        <CardHeader className="p-2">
-                                           <div className="flex justify-between items-start">
+                                        <CardHeader className="p-2 flex flex-row items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative w-12 h-12 rounded-md overflow-hidden">
+                                                    <Image src={alliance.photoURL} alt={alliance.name} fill className="object-cover"/>
+                                                </div>
                                                 <div>
                                                     <CardTitle className="text-md flex items-center gap-2">
-                                                        <ShieldCheck className="h-4 w-4" />
                                                         {alliance.name}
                                                     </CardTitle>
-                                                    <CardDescription className="text-xs mt-1">{alliance.description}</CardDescription>
+                                                    <CardDescription className="text-xs mt-1">{alliance.memberIds.length} members</CardDescription>
                                                 </div>
-                                                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                                           </div>
+                                            </div>
+                                            <ArrowRight className="h-5 w-5 text-muted-foreground" />
                                         </CardHeader>
                                       </Card>
                                   </Link>
