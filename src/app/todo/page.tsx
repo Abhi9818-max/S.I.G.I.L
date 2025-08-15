@@ -83,9 +83,7 @@ export default function TodoPage() {
   const displayedPacts = todoItems.filter(item => {
     try {
       const createdAtDate = new Date(item.createdAt);
-      const isCreatedOnSelectedDay = isSameDay(createdAtDate, selectedDate);
-      const isDueOnSelectedDay = item.dueDate ? isSameDay(new Date(item.dueDate), selectedDate) : false;
-      return isCreatedOnSelectedDay || isDueOnSelectedDay;
+      return isSameDay(createdAtDate, selectedDate);
     } catch (e) {
       return false;
     }
@@ -98,9 +96,9 @@ export default function TodoPage() {
 
   const handleAddItem = () => {
     if (newItemText.trim()) {
+      const creationDate = newDueDate || selectedDate;
       const dueDateString = newDueDate ? format(newDueDate, 'yyyy-MM-dd') : undefined;
-      // When adding an item, use the selectedDate as the creation date
-      addTodoItem(newItemText, format(selectedDate, 'yyyy-MM-dd'), dueDateString);
+      addTodoItem(newItemText, format(creationDate, 'yyyy-MM-dd'), dueDateString);
       setNewItemText('');
       setNewDueDate(undefined);
     }
