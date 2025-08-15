@@ -87,6 +87,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  .login-background {
+    background-image: url('/Login/Login.gif');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

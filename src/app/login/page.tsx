@@ -13,6 +13,7 @@ import { User, KeyRound } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -171,8 +172,7 @@ export default function LoginPage() {
 
   return (
     <div 
-        className="min-h-screen flex items-center justify-center p-4 bg-no-repeat bg-cover bg-center"
-        style={{backgroundImage: "url('/Login/Login.gif')"}}
+        className={cn("min-h-screen flex items-center justify-center p-4", "login-background")}
     >
       <div className="w-full max-w-sm p-8 space-y-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 text-white animate-fade-in-up">
         <div>
