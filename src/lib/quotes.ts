@@ -503,6 +503,16 @@ export const QUOTES: Quote[] = [
     author: "Hanlon's Razor",
     category: "Wisdom",
   },
+  {
+    text: "If you want to know what a man's like, take a good look at how he treats his inferiors, not his equals.",
+    author: "J.K. Rowling, The Goblet of Fire",
+    category: "Wisdom",
+  },
+  {
+    text: "The trouble with having an open mind, of course, is that people will insist on coming along and trying to put things in it.",
+    author: "Terry Pratchett, Diggers",
+    category: "Wisdom",
+  },
 
   // Perseverance
   {
@@ -752,6 +762,41 @@ export const QUOTES: Quote[] = [
   {
     text: "The difference between stupidity and genius is that genius has its limits.",
     author: "Albert Einstein",
+    category: "Humor",
+  },
+  {
+    text: "The surest sign that intelligent life exists elsewhere in the universe is that it has never tried to contact us.",
+    author: "Bill Watterson, Calvin and Hobbes",
+    category: "Humor",
+  },
+  {
+    text: "Some cause happiness wherever they go; others whenever they go.",
+    author: "Oscar Wilde",
+    category: "Humor",
+  },
+  {
+    text: "Always forgive your enemies; nothing annoys them so much.",
+    author: "Oscar Wilde",
+    category: "Humor",
+  },
+  {
+    text: "My opinions may have changed, but not the fact that I'm right.",
+    author: "Ashleigh Brilliant",
+    category: "Humor",
+  },
+  {
+    text: "I am a man of simple tastes. I am always satisfied with the best.",
+    author: "Oscar Wilde",
+    category: "Humor",
+  },
+  {
+    text: "Sarcasm is the body's natural defense against stupidity.",
+    author: "Unknown",
+    category: "Humor",
+  },
+  {
+    text: "I'm sorry, I don't take orders. I barely take suggestions.",
+    author: "Unknown",
     category: "Humor",
   },
 ];
