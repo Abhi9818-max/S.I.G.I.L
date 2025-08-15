@@ -14,7 +14,7 @@ import PactList from '@/components/todo/PactList';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
-const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate }: any) => {
+const AddPactForm = ({ onAddItem, newItemText, setNewItemText }: any) => {
   const handleAddItemKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newItemText.trim()) {
       e.preventDefault();
@@ -28,33 +28,10 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
         type="text"
         value={newItemText}
         onChange={(e) => setNewItemText(e.target.value)}
-        placeholder="Add a new pact..."
+        placeholder="Add a new pact for the selected date..."
         className="flex-grow bg-white/10 placeholder:text-gray-400 border-gray-500/50"
         onKeyPress={handleAddItemKeyPress}
       />
-       <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant={"outline"}
-            className={cn(
-              "w-full sm:w-auto justify-start text-left font-normal bg-white/10 border-gray-500/50 hover:bg-white/20",
-              !newDueDate && "text-gray-400"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {newDueDate ? format(newDueDate, "PPP") : <span>Due Date</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0">
-          <Calendar
-            mode="single"
-            selected={newDueDate}
-            onSelect={setNewDueDate}
-            disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
       <Button 
           onClick={onAddItem} 
           className="w-full sm:w-auto"
@@ -69,7 +46,6 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
 
 export default function TodoPage() {
   const [newItemText, setNewItemText] = useState('');
-  const [newDueDate, setNewDueDate] = useState<Date | undefined>();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -96,11 +72,8 @@ export default function TodoPage() {
 
   const handleAddItem = () => {
     if (newItemText.trim()) {
-      const creationDate = newDueDate || selectedDate;
-      const dueDateString = newDueDate ? format(newDueDate, 'yyyy-MM-dd') : undefined;
-      addTodoItem(newItemText, format(creationDate, 'yyyy-MM-dd'), dueDateString);
+      addTodoItem(newItemText, format(selectedDate, 'yyyy-MM-dd'));
       setNewItemText('');
-      setNewDueDate(undefined);
     }
   };
 
@@ -111,8 +84,6 @@ export default function TodoPage() {
     onAddItem: handleAddItem,
     newItemText,
     setNewItemText,
-    newDueDate,
-    setNewDueDate,
   };
   
   const completedCount = displayedPacts.filter(p => p.completed).length;
@@ -129,7 +100,7 @@ export default function TodoPage() {
           
           <div className="flex justify-between items-start mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-white">Tasks</h1>
+                <h1 className="text-2xl font-bold text-white">Pacts</h1>
               </div>
               <div className="flex items-center gap-2">
                  <Popover>
@@ -162,7 +133,7 @@ export default function TodoPage() {
             onToggleDare={toggleDareCompleted}
           />
 
-          {isToday(selectedDate) && <AddPactForm {...addPactFormProps} />}
+          <AddPactForm {...addPactFormProps} />
           
         </div>
       </main>
