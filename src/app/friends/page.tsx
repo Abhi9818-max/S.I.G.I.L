@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords, Search } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -185,17 +185,23 @@ export default function FriendsPage() {
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex flex-col sm:flex-row gap-2">
+                                <div className="relative w-full max-w-sm">
                                     <Input
                                         placeholder="Enter username..."
                                         value={usernameQuery}
                                         onChange={(e) => setUsernameQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                        className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
                                     />
-                                    <Button onClick={handleSearch} disabled={isLoadingSearch} className="w-full sm:w-auto">
-                                        {isLoadingSearch ? "Searching..." : "Search"}
-                                    </Button>
+                                    <button 
+                                      onClick={handleSearch} 
+                                      disabled={isLoadingSearch}
+                                      className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
+                                    >
+                                      <Search className="h-5 w-5" />
+                                    </button>
                                 </div>
+
                                 {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                                 {searchedUser && (
                                     <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
