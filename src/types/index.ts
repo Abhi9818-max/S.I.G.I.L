@@ -203,6 +203,7 @@ export interface DashboardSettings {
   pieChartLabelFormat?: 'percentage' | 'time';
   profileCardStat?: ProfileCardStat;
   dareCategory?: DareCategory;
+  calendarView?: 'classic' | 'modern';
 }
 
 // NEW: For Task Mastery
