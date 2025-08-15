@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTodos } from '@/components/providers/TodoProvider';
 import { ListChecks, Trash2, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, startOfDay, isToday, parseISO, isTomorrow, addDays } from 'date-fns';
+import { format, isPast, startOfDay, isToday, parseISO, isTomorrow, addDays, isSameDay } from 'date-fns';
 import { Separator } from '../ui/separator';
 
 const TodoListCard = () => {
