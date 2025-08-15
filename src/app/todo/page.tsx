@@ -106,28 +106,25 @@ export default function TodoPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up flex items-center justify-center">
         <div className="w-full max-w-lg mx-auto">
           
-          <div className="bg-gray-800/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-            <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-white">Tasks</h1>
-                  <p className="text-sm text-gray-400">Great start to the day</p>
-                </div>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
-                  <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
-                </div>
-            </div>
-
-            <PactList 
-              items={displayedPacts}
-              isEditable={view === 'today'}
-              onToggle={toggleTodoItem}
-              onDelete={deleteTodoItem}
-              onToggleDare={toggleDareCompleted}
-            />
-
-            {view === 'today' && <AddPactForm {...addPactFormProps} />}
-
+          <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-white">Tasks</h1>
+                <p className="text-sm text-gray-400">Great start to the day</p>
+              </div>
+              <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
+                <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
+              </div>
           </div>
+
+          <PactList 
+            items={displayedPacts}
+            isEditable={view === 'today'}
+            onToggle={toggleTodoItem}
+            onDelete={deleteTodoItem}
+            onToggleDare={toggleDareCompleted}
+          />
+
+          {view === 'today' && <AddPactForm {...addPactFormProps} />}
 
           <div className="text-center mt-6">
             <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
