@@ -9,12 +9,12 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, KeyRound } from 'lucide-react';
+import { User, KeyRound } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Email is required."),
+  username: z.string().min(1, "Username is required."),
   password: z.string().min(1, "Password is required."),
 });
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
     setError(null);
     const success = await login(data.username, data.password);
     if (!success) {
-      setError("Invalid email or password.");
+      setError("Invalid username or password.");
       loginForm.reset();
     }
   };
@@ -68,11 +68,11 @@ export default function LoginPage() {
         </div>
         <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-300" />
             <Input
-              id="email"
+              id="username"
               type="text"
-              placeholder="Email"
+              placeholder="Username"
               {...loginForm.register('username')}
               className="pl-10 bg-white/10 border-white/20 placeholder:text-gray-300 rounded-lg focus:bg-white/20 focus:ring-white/50"
             />
