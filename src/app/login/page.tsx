@@ -172,8 +172,7 @@ export default function LoginPage() {
   return (
     <div 
         className="min-h-screen flex items-center justify-center p-4 bg-no-repeat bg-cover bg-center"
-        style={{backgroundImage: "url('https://placehold.co/1920x1080.png')"}}
-        data-ai-hint="forest silhouette"
+        style={{backgroundImage: "url('/Login.gif')"}}
     >
       <div className="w-full max-w-sm p-8 space-y-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 text-white animate-fade-in-up">
         <div>
