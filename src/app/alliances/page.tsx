@@ -119,21 +119,21 @@ export default function AlliancesPage() {
                     <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
                 </div>
               </div>
-              <div className="flex w-full max-w-sm items-center space-x-2">
+              <div className="relative w-full max-w-sm">
                 <Input 
-                  placeholder="Search..."
+                  placeholder="Search for an alliance..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
                 />
-                <Button 
+                <button 
                   onClick={handleSearch} 
                   disabled={isSearching}
-                  type="submit"
+                  className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
                 >
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
+                  <Search className="h-5 w-5" />
+                </button>
               </div>
 
               {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
