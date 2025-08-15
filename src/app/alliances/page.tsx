@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -11,13 +11,32 @@ import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Alliance, AllianceChallenge } from '@/types';
+import type { Alliance, AllianceChallenge, AllianceMember, UserData } from '@/types';
 import Link from 'next/link';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const AllianceCard3D = ({ alliance }: { alliance: Alliance }) => {
+
+// Simple hash function to get a number from a string
+const simpleHash = (s: string) => {
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+        const char = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+};
+
+const getAvatarForId = (id: string, url?: string | null) => {
+    if (url) return url;
+    const avatarNumber = (simpleHash(id) % 41) + 1;
+    return `/avatars/avatar${avatarNumber}.jpeg`;
+}
+
+const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: AllianceMember[] } }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -56,10 +75,19 @@ const AllianceCard3D = ({ alliance }: { alliance: Alliance }) => {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
                         <div className="absolute bottom-0 left-0 p-4 text-white">
                              <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
-                             <CardDescription className="text-sm flex items-center gap-1.5 mt-1 text-white/80 text-shadow">
-                                <Users className="h-4 w-4" />
-                                {alliance.memberIds.length} members
-                             </CardDescription>
+                             <div className="flex items-center mt-2 -space-x-2">
+                                {alliance.members.slice(0, 4).map(member => (
+                                    <Avatar key={member.uid} className="h-6 w-6 border-2 border-background">
+                                        <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
+                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                ))}
+                                {alliance.members.length > 4 && (
+                                    <Avatar className="h-6 w-6 border-2 border-background">
+                                        <AvatarFallback className="text-xs">+{alliance.members.length - 4}</AvatarFallback>
+                                    </Avatar>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </Card>
@@ -75,6 +103,13 @@ export default function AlliancesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  const alliancesWithMemberData = useMemo(() => {
+    return userAlliances.map(alliance => {
+      const members = alliance.members || [];
+      return { ...alliance, members };
+    });
+  }, [userAlliances]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -173,12 +208,12 @@ export default function AlliancesPage() {
                   </Link>
                 </Button>
               </div>
-                {userAlliances.length === 0 ? (
+                {alliancesWithMemberData.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">You are not part of any alliance.</p>
                 ) : (
                     <ScrollArea className="w-full whitespace-nowrap">
                         <div className="flex space-x-4 pb-4">
-                            {userAlliances.map((alliance) => (
+                            {alliancesWithMemberData.map((alliance) => (
                                 <AllianceCard3D key={alliance.id} alliance={alliance} />
                             ))}
                         </div>
