@@ -95,7 +95,7 @@ const PactList: React.FC<PactListProps> = ({ items, isEditable, title, onToggle,
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+    <div className="grid grid-cols-1 gap-3 my-4">
       {items.map((item) => (
         <PactItem 
             key={item.id}
