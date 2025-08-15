@@ -9,7 +9,7 @@ import { ListChecks, PlusCircle, RotateCcw, CalendarIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { format, isToday, isSameDay } from 'date-fns';
+import { format, isToday, isSameDay, parseISO, addDays, subDays } from 'date-fns';
 import PactList from '@/components/todo/PactList';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,7 +32,7 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNe
         className="flex-grow bg-white/10 placeholder:text-gray-400 border-gray-500/50"
         onKeyPress={handleAddItemKeyPress}
       />
-      <Popover>
+       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
@@ -82,7 +82,7 @@ export default function TodoPage() {
 
   const displayedPacts = todoItems.filter(item => {
     try {
-      const createdAtDate = new Date(item.createdAt);
+      const createdAtDate = parseISO(item.createdAt);
       return isSameDay(createdAtDate, selectedDate);
     } catch (e) {
       return false;
@@ -130,7 +130,6 @@ export default function TodoPage() {
           <div className="flex justify-between items-start mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-white">Tasks</h1>
-                <p className="text-sm text-gray-400">Great start to the day</p>
               </div>
               <div className="flex items-center gap-2">
                  <Popover>
@@ -157,7 +156,7 @@ export default function TodoPage() {
 
           <PactList 
             items={displayedPacts}
-            isEditable={isToday(selectedDate)}
+            isEditable={true}
             onToggle={toggleTodoItem}
             onDelete={deleteTodoItem}
             onToggleDare={toggleDareCompleted}
