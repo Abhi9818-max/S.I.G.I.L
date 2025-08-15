@@ -254,37 +254,4 @@
   .friends-scroller-container [data-radix-scroll-area-viewport]::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
   }
-
-  /* Bottom Nav Bar Styles */
-  .nav-pill {
-    @apply absolute top-1/2 -translate-y-1/2 left-0 h-12 bg-primary rounded-full transition-all duration-500 ease-in-out;
-    z-index: -1;
-  }
-
-  .nav-item {
-    @apply relative flex-1 flex flex-col items-center justify-center h-full text-center transition-colors duration-300 z-10;
-  }
-
-  .nav-item.active {
-    @apply text-primary-foreground;
-  }
-
-  .nav-item:not(.active) {
-    @apply text-muted-foreground;
-  }
-
-  .nav-label {
-    @apply text-xs font-medium transition-all duration-300;
-    /* Hide label by default */
-    opacity: 0;
-    transform: translateY(5px);
-    max-height: 0;
-  }
-  
-  .nav-item.active .nav-label {
-    /* Show label for active item */
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 1rem; /* allow space for label to appear */
-  }
 }
