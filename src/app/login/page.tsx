@@ -172,7 +172,7 @@ export default function LoginPage() {
   return (
     <div 
         className="min-h-screen flex items-center justify-center p-4 bg-no-repeat bg-cover bg-center"
-        style={{backgroundImage: "url('/Login.gif')"}}
+        style={{backgroundImage: "url('/Login/Login.gif')"}}
     >
       <div className="w-full max-w-sm p-8 space-y-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 text-white animate-fade-in-up">
         <div>
