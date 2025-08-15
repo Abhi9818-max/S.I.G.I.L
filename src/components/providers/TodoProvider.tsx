@@ -37,7 +37,7 @@ interface InsultDialogInfo {
 
 interface TodoContextType {
   todoItems: TodoItem[];
-  addTodoItem: (text: string, dueDate?: string) => void;
+  addTodoItem: (text: string, createdAtDate: string, dueDate?: string) => void;
   toggleTodoItem: (id: string) => void;
   deleteTodoItem: (id: string) => void;
   getTodoItemById: (id: string) => TodoItem | undefined;
@@ -158,7 +158,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isUserDataLoaded, userData?.todoItems]);
 
 
-  const addTodoItem = async (text: string, dueDate?: string) => {
+  const addTodoItem = async (text: string, createdAtDate: string, dueDate?: string) => {
     if (text.trim() === '') return;
     
     if (dueDate && typeof window !== 'undefined' && 'Notification' in window) {
@@ -172,7 +172,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: uuidv4(),
       text,
       completed: false,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(createdAtDate).toISOString(),
       ...(dueDate && { dueDate }),
       penaltyApplied: false,
     };

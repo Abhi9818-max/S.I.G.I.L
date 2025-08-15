@@ -9,7 +9,7 @@ import { ListChecks, PlusCircle, RotateCcw, CalendarIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { format, isToday, isYesterday } from 'date-fns';
+import { format, isToday, isSameDay } from 'date-fns';
 import PactList from '@/components/todo/PactList';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -71,7 +71,7 @@ export default function TodoPage() {
   const [newItemText, setNewItemText] = useState('');
   const [newDueDate, setNewDueDate] = useState<Date | undefined>();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
-  const [view, setView] = useState<'today' | 'yesterday'>('today');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const { todoItems, addTodoItem, checkMissedDares, toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
@@ -80,21 +80,17 @@ export default function TodoPage() {
     checkMissedDares();
   }, [checkMissedDares]);
 
-  const todaysPacts = todoItems.filter(item => {
+  const displayedPacts = todoItems.filter(item => {
     try {
-      return isToday(new Date(item.createdAt));
+      const createdAtDate = new Date(item.createdAt);
+      const isCreatedOnSelectedDay = isSameDay(createdAtDate, selectedDate);
+      const isDueOnSelectedDay = item.dueDate ? isSameDay(new Date(item.dueDate), selectedDate) : false;
+      return isCreatedOnSelectedDay || isDueOnSelectedDay;
     } catch (e) {
       return false;
     }
   });
 
-  const yesterdaysPacts = todoItems.filter(item => {
-    try {
-      return isYesterday(new Date(item.createdAt));
-    } catch (e) {
-      return false;
-    }
-  });
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
@@ -103,7 +99,8 @@ export default function TodoPage() {
   const handleAddItem = () => {
     if (newItemText.trim()) {
       const dueDateString = newDueDate ? format(newDueDate, 'yyyy-MM-dd') : undefined;
-      addTodoItem(newItemText, dueDateString);
+      // When adding an item, use the selectedDate as the creation date
+      addTodoItem(newItemText, format(selectedDate, 'yyyy-MM-dd'), dueDateString);
       setNewItemText('');
       setNewDueDate(undefined);
     }
@@ -120,7 +117,6 @@ export default function TodoPage() {
     setNewDueDate,
   };
   
-  const displayedPacts = view === 'today' ? todaysPacts : yesterdaysPacts;
   const completedCount = displayedPacts.filter(p => p.completed).length;
   const totalCount = displayedPacts.length;
 
@@ -139,10 +135,22 @@ export default function TodoPage() {
                 <p className="text-sm text-gray-400">Great start to the day</p>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
-                    <RotateCcw className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
-                </Button>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                          <CalendarIcon className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">{format(selectedDate, "MMM d, yyyy")}</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
                   <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
                 </div>
@@ -151,13 +159,13 @@ export default function TodoPage() {
 
           <PactList 
             items={displayedPacts}
-            isEditable={view === 'today'}
+            isEditable={isToday(selectedDate)}
             onToggle={toggleTodoItem}
             onDelete={deleteTodoItem}
             onToggleDare={toggleDareCompleted}
           />
 
-          {view === 'today' && <AddPactForm {...addPactFormProps} />}
+          {isToday(selectedDate) && <AddPactForm {...addPactFormProps} />}
           
         </div>
       </main>

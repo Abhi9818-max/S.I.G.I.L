@@ -16,7 +16,11 @@ const TodoListCard = () => {
   const { todoItems, toggleTodoItem, deleteTodoItem } = useTodos();
 
   const incompleteItems = todoItems
-    .filter(item => !item.completed && isToday(parseISO(item.createdAt)))
+    .filter(item => {
+        const isCreatedToday = isToday(parseISO(item.createdAt));
+        const isDueToday = item.dueDate ? isToday(parseISO(item.dueDate)) : false;
+        return !item.completed && (isCreatedToday || isDueToday);
+    })
     .slice(0, 5);
 
   return (
