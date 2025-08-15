@@ -119,18 +119,26 @@ export default function AlliancesPage() {
                     <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="relative w-full max-w-lg">
                 <Input 
-                  placeholder="Search for an alliance by name..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="rounded-full h-12 pr-14 text-black bg-white shadow-md focus-visible:ring-offset-0 focus-visible:ring-2 focus-visible:ring-primary/50"
                 />
-                <Button onClick={handleSearch} disabled={isSearching}>
-                  <Search className="h-4 w-4 mr-2" />
-                  {isSearching ? 'Searching...' : 'Search'}
+                <Button 
+                  onClick={handleSearch} 
+                  disabled={isSearching}
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-black text-white hover:bg-gray-800"
+                >
+                  <Search className="h-5 w-5" />
                 </Button>
               </div>
+
+              {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
+
               {searchResults.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
@@ -175,7 +183,7 @@ export default function AlliancesPage() {
                                 <AllianceCard3D key={alliance.id} alliance={alliance} />
                             ))}
                         </div>
-                        <ScrollBar orientation="horizontal" className="invisible"/>
+                        <ScrollBar orientation="horizontal" />
                     </ScrollArea>
                 )}
             </div>
