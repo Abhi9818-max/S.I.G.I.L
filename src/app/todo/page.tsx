@@ -111,8 +111,14 @@ export default function TodoPage() {
                 <h1 className="text-2xl font-bold text-white">Tasks</h1>
                 <p className="text-sm text-gray-400">Great start to the day</p>
               </div>
-              <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
-                <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
+                    <RotateCcw className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
+                </Button>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
+                  <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
+                </div>
               </div>
           </div>
 
@@ -125,13 +131,6 @@ export default function TodoPage() {
           />
 
           {view === 'today' && <AddPactForm {...addPactFormProps} />}
-
-          <div className="text-center mt-6">
-            <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
-                <RotateCcw className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
-            </Button>
-          </div>
           
         </div>
       </main>
