@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ListChecks, ShieldAlert, Check, Dumbbell, BookOpen, Droplets, Utensils, X, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,11 +29,38 @@ interface PactItemProps {
 
 const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDare }: PactItemProps) => {
     const Icon = getIconForPact(item.text);
+    const [showDelete, setShowDelete] = useState(false);
+    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleInteractionStart = () => {
+        if (!isEditable) return;
+        longPressTimer.current = setTimeout(() => {
+            setShowDelete(true);
+        }, 800); // 800ms for long press
+    };
+
+    const handleInteractionEnd = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+    
+    const handleDoubleClick = () => {
+        if (!isEditable) return;
+        setShowDelete(true);
+    };
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
              <button 
                 onClick={() => onToggle(item.id)} 
+                onDoubleClick={handleDoubleClick}
+                onTouchStart={handleInteractionStart}
+                onTouchEnd={handleInteractionEnd}
+                onMouseDown={handleInteractionStart}
+                onMouseUp={handleInteractionEnd}
+                onMouseLeave={handleInteractionEnd} // Cancel timer if mouse leaves
                 disabled={!isEditable}
                 className={cn(
                     "flex items-center w-full p-3 rounded-xl transition-all duration-300 ease-in-out",
@@ -48,6 +75,13 @@ const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDar
                     {item.completed && <Check className="h-4 w-4" />}
                 </div>
             </button>
+            
+            {showDelete && isEditable && (
+                <div className="flex justify-end gap-2 animate-fade-in-up">
+                    <Button variant="secondary" size="sm" onClick={() => setShowDelete(false)}>Cancel</Button>
+                    <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>Delete</Button>
+                </div>
+            )}
 
             {item.dare && (
                 <div className="p-2 mt-2 bg-destructive/10 border border-destructive/20 rounded-md text-destructive w-full animate-fade-in-up">
