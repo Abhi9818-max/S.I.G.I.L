@@ -5,14 +5,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { ListChecks, PlusCircle, RotateCcw } from 'lucide-react';
+import { ListChecks, PlusCircle, RotateCcw, CalendarIcon } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { format, isToday, isYesterday } from 'date-fns';
 import PactList from '@/components/todo/PactList';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
-const AddPactForm = ({ onAddItem, newItemText, setNewItemText }: any) => {
+const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate }: any) => {
   const handleAddItemKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newItemText.trim()) {
       e.preventDefault();
@@ -30,6 +32,29 @@ const AddPactForm = ({ onAddItem, newItemText, setNewItemText }: any) => {
         className="flex-grow bg-white/10 placeholder:text-gray-400 border-gray-500/50"
         onKeyPress={handleAddItemKeyPress}
       />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-full sm:w-auto justify-start text-left font-normal bg-white/10 border-gray-500/50 hover:bg-white/20",
+              !newDueDate && "text-gray-400"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {newDueDate ? format(newDueDate, "PPP") : <span>Due Date</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={newDueDate}
+            onSelect={setNewDueDate}
+            disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
       <Button 
           onClick={onAddItem} 
           className="w-full sm:w-auto"
@@ -91,6 +116,8 @@ export default function TodoPage() {
     onAddItem: handleAddItem,
     newItemText,
     setNewItemText,
+    newDueDate,
+    setNewDueDate,
   };
   
   const displayedPacts = view === 'today' ? todaysPacts : yesterdaysPacts;
@@ -103,7 +130,7 @@ export default function TodoPage() {
         onAddRecordClick={() => {}} 
         onManageTasksClick={() => {}}
       />
-      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up flex items-center justify-center">
+      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
         <div className="w-full max-w-lg mx-auto">
           
           <div className="flex justify-between items-start mb-4">
