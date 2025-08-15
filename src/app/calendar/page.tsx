@@ -112,16 +112,14 @@ export default function CalendarPage() {
              </div>
            </div>
 
-           <div className="max-w-2xl mx-auto">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Time Breakdown for {format(dateForChart, 'MMMM d, yyyy')}</CardTitle>
-                        <CardDescription>A 24-hour visualization of your time-based tasks.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <DailyTimeBreakdownChart date={dateForChart} hideFooter={true} />
-                    </CardContent>
-                </Card>
+           <div className="max-w-2xl mx-auto p-6 md:p-0">
+               <div className="mb-4">
+                    <h2 className="text-2xl font-semibold">Time Breakdown for {format(dateForChart, 'MMMM d, yyyy')}</h2>
+                    <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-card/50">
+                    <DailyTimeBreakdownChart date={dateForChart} hideFooter={true} />
+                </div>
            </div>
           
            <div className="text-center mt-8">
