@@ -4,100 +4,40 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { ListChecks, CalendarIcon, PlusCircle, RotateCcw } from 'lucide-react';
+import { ListChecks, PlusCircle, RotateCcw } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format, isPast, startOfDay, isToday, isYesterday } from 'date-fns';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { format, isToday, isYesterday } from 'date-fns';
 import PactList from '@/components/todo/PactList';
 
-const AddPactForm = ({ onAddItem, newItemText, setNewItemText, newDueDate, setNewDueDate }: any) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (newDueDate && date && startOfDay(newDueDate).getTime() === startOfDay(date).getTime()) {
-      setNewDueDate(undefined);
-    } else {
-      setNewDueDate(date);
-    }
-  };
-  
+const AddPactForm = ({ onAddItem, newItemText, setNewItemText }: any) => {
   const handleAddItemKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newItemText.trim()) {
-      e.preventDefault(); // Prevent form submission if any
+      e.preventDefault();
       onAddItem();
     }
   };
 
-  useEffect(() => {
-    // If advanced options are hidden, clear the values
-    if (!showAdvanced) {
-      setNewDueDate(undefined);
-    }
-  }, [showAdvanced, setNewDueDate]);
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Input
-          type="text"
-          value={newItemText}
-          onChange={(e) => setNewItemText(e.target.value)}
-          placeholder="What needs to be done?"
-          className="flex-grow"
-          onKeyPress={handleAddItemKeyPress}
-        />
-        <Button 
-            onClick={onAddItem} 
-            className="w-full sm:w-auto"
-            disabled={newItemText.trim() === ''}
-          >
-            Add Pact
-          </Button>
-      </div>
-
-      {!showAdvanced ? (
-        <Button variant="outline" size="sm" onClick={() => setShowAdvanced(true)} className="w-full sm:w-auto">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Details (Due Date)
+    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+      <Input
+        type="text"
+        value={newItemText}
+        onChange={(e) => setNewItemText(e.target.value)}
+        placeholder="Add a new pact..."
+        className="flex-grow bg-white/10 placeholder:text-gray-400 border-gray-500/50"
+        onKeyPress={handleAddItemKeyPress}
+      />
+      <Button 
+          onClick={onAddItem} 
+          className="w-full sm:w-auto"
+          disabled={newItemText.trim() === ''}
+          variant="secondary"
+        >
+          <PlusCircle className="mr-2 h-4 w-4" /> Add
         </Button>
-      ) : (
-        <div className="flex flex-col sm:flex-row gap-2 animate-fade-in-up">
-          <div className="flex-grow">
-            <Label htmlFor="due-date-button" className="sr-only">Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="due-date-button"
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !newDueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {newDueDate ? format(newDueDate, "PPP") : <span>Pick due date (optional)</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={newDueDate}
-                  onSelect={handleDateSelect}
-                  initialFocus
-                  disabled={(date) => date < startOfDay(new Date())}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -151,11 +91,11 @@ export default function TodoPage() {
     onAddItem: handleAddItem,
     newItemText,
     setNewItemText,
-    newDueDate,
-    setNewDueDate,
   };
   
   const displayedPacts = view === 'today' ? todaysPacts : yesterdaysPacts;
+  const completedCount = displayedPacts.filter(p => p.completed).length;
+  const totalCount = displayedPacts.length;
 
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -163,59 +103,39 @@ export default function TodoPage() {
         onAddRecordClick={() => {}} 
         onManageTasksClick={() => {}}
       />
-      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-        <div className="w-full max-w-2xl mx-auto">
-          <div className="p-6 md:p-0">
-             <div className="flex justify-between items-center gap-2">
-                <div className="flex items-center gap-2">
-                    <ListChecks className="h-6 w-6 text-primary" />
-                    <h1 className="text-lg sm:text-2xl font-semibold leading-none tracking-tight">{view === 'today' ? "Today's Pacts" : "Yesterday's Pacts"}</h1>
+      <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up flex items-center justify-center">
+        <div className="w-full max-w-lg mx-auto">
+          
+          <div className="bg-gray-800/20 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+            <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Tasks</h1>
+                  <p className="text-sm text-gray-400">Great start to the day</p>
                 </div>
-                 <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')} className="sm:w-auto w-10 p-0 sm:px-3 sm:py-2">
-                    <RotateCcw className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
-                </Button>
+                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
+                  <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
+                </div>
             </div>
-             <p className="text-sm text-muted-foreground mt-2">
-              {view === 'today' ? "What promises will you keep today?" : "Review and finalize yesterday's tasks."}
-            </p>
+
+            <PactList 
+              items={displayedPacts}
+              isEditable={view === 'today'}
+              onToggle={toggleTodoItem}
+              onDelete={deleteTodoItem}
+              onToggleDare={toggleDareCompleted}
+            />
+
+            {view === 'today' && <AddPactForm {...addPactFormProps} />}
+
           </div>
-          <div className="p-6 md:p-0 pt-6">
-            {displayedPacts.length === 0 && view !== 'today' ? (
-              <p className="text-center text-muted-foreground py-4">No pacts were created yesterday.</p>
-            ) : (
-                <div className="space-y-6">
-                    {view === 'today' && displayedPacts.length === 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-4">Add a New Pact</h4>
-                        <AddPactForm {...addPactFormProps} />
-                        <Separator className="mt-6" />
-                      </div>
-                    )}
-                    <ScrollArea className="h-[400px] pr-3">
-                        <PactList 
-                          items={displayedPacts}
-                          isEditable={view === 'today'}
-                          onToggle={toggleTodoItem}
-                          onDelete={deleteTodoItem}
-                          onToggleDare={toggleDareCompleted}
-                        />
-                         {displayedPacts.length === 0 && view === 'today' && (
-                            <p className="text-center text-muted-foreground py-4">No pacts for today yet.</p>
-                        )}
-                    </ScrollArea>
-                    {view === 'today' && displayedPacts.length > 0 && (
-                      <>
-                        <Separator />
-                        <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-4">Add a New Pact</h4>
-                        <AddPactForm {...addPactFormProps} />
-                        </div>
-                      </>
-                    )}
-                </div>
-            )}
+
+          <div className="text-center mt-6">
+            <Button variant="outline" size="sm" onClick={() => setView(v => v === 'today' ? 'yesterday' : 'today')}>
+                <RotateCcw className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">View {view === 'today' ? 'Yesterday' : 'Today'}</span>
+            </Button>
           </div>
+          
         </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">

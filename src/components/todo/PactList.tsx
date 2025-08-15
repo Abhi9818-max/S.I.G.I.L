@@ -2,12 +2,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { ListChecks, Trash2, CalendarDays, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
+import { ListChecks, ShieldAlert, Check, Dumbbell, BookOpen, Droplets, Utensils, X, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, isPast, startOfDay, isToday, parseISO } from 'date-fns';
 import type { TodoItem } from '@/types';
+
+const getIconForPact = (text: string) => {
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('workout') || lowerText.includes('gym') || lowerText.includes('exercise')) return Dumbbell;
+    if (lowerText.includes('read')) return BookOpen;
+    if (lowerText.includes('water')) return Droplets;
+    if (lowerText.includes('eat') || lowerText.includes('diet') || lowerText.includes('food')) return Utensils;
+    if (lowerText.includes('morning') || lowerText.includes('am')) return Sun;
+    if (lowerText.includes('night') || lowerText.includes('pm')) return Moon;
+    return ListChecks;
+}
 
 interface PactItemProps {
     item: TodoItem;
@@ -18,68 +27,42 @@ interface PactItemProps {
     completedPact: string | null;
 }
 
-const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDare, completedPact }: PactItemProps) => {
-    const isOverdue = item.dueDate && !item.completed && isPast(startOfDay(new Date(item.dueDate))) && !isToday(parseISO(item.dueDate));
-    
+const PactItem = React.memo(({ item, isEditable, onToggle, onDelete, onToggleDare }: PactItemProps) => {
+    const Icon = getIconForPact(item.text);
+
     return (
-        <li className="flex items-start gap-3 p-3 border rounded-md bg-card hover:bg-muted/50 transition-colors">
-            <Checkbox
-                id={`todo-${item.id}`}
-                checked={item.completed}
-                onCheckedChange={() => onToggle(item.id)}
-                aria-label={item.completed ? "Mark as incomplete" : "Mark as complete"}
-                className="mt-1"
+        <div className="flex flex-col">
+             <button 
+                onClick={() => onToggle(item.id)} 
                 disabled={!isEditable}
-            />
-            <div className="flex-grow">
-                <label
-                    htmlFor={`todo-${item.id}`}
-                    className={cn(
-                        "cursor-pointer text-sm font-medium transition-all",
-                        item.completed && "line-through text-muted-foreground",
-                        completedPact === item.id && 'text-pulse-and-fade'
-                    )}
-                >
-                    {item.text}
-                </label>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                    {item.dueDate && (
-                        <div className={cn(
-                            "text-xs flex items-center",
-                            isOverdue ? "text-destructive" : "text-muted-foreground"
-                        )}>
-                            <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                            Due: {format(new Date(item.dueDate), "MMM d, yyyy")}
-                            {isOverdue && <span className="ml-1 font-semibold">(Overdue)</span>}
-                        </div>
-                    )}
-                    {item.dare && (
-                        <div className="p-2 mt-2 bg-destructive/10 border border-destructive/20 rounded-md text-destructive w-full">
-                           <div className="flex items-center gap-2">
-                             <ShieldAlert className="h-4 w-4" />
-                             <p className="text-xs font-semibold">{item.dare}</p>
-                           </div>
-                           <div className="mt-2 flex items-center justify-end gap-2">
-                                <span className="text-xs font-medium">Completed?</span>
-                                 <Button size="sm" variant={item.dareCompleted === true ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
-                                <Button size="sm" variant={item.dareCompleted === false ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, false)} className="h-7 px-2 text-xs">Not yet</Button>
-                           </div>
-                        </div>
-                    )}
+                className={cn(
+                    "flex items-center w-full p-3 rounded-xl transition-all duration-300 ease-in-out",
+                    item.completed ? 'bg-white text-black shadow-lg' : 'bg-white/10 text-white hover:bg-white/20'
+                )}
+            >
+                <div className="w-8 h-8 rounded-full bg-black/80 flex items-center justify-center mr-3 flex-shrink-0">
+                    <Icon className="h-5 w-5" />
                 </div>
-            </div>
-            {isEditable && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
-                    onClick={() => onDelete(item.id)}
-                    aria-label={`Delete task: ${item.text}`}
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                <span className="flex-grow text-left text-sm font-medium">{item.text}</span>
+                <div className="w-6 h-6 rounded-full border-2 border-current/30 flex items-center justify-center ml-3 flex-shrink-0">
+                    {item.completed && <Check className="h-4 w-4" />}
+                </div>
+            </button>
+
+            {item.dare && (
+                <div className="p-2 mt-2 bg-destructive/10 border border-destructive/20 rounded-md text-destructive w-full animate-fade-in-up">
+                    <div className="flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4" />
+                        <p className="text-xs font-semibold">{item.dare}</p>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end gap-2">
+                        <span className="text-xs font-medium">Completed?</span>
+                        <Button size="sm" variant={item.dareCompleted === true ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, true)} className="h-7 px-2 text-xs">I did it!</Button>
+                        <Button size="sm" variant={item.dareCompleted === false ? "secondary" : "outline"} onClick={() => onToggleDare(item.id, false)} className="h-7 px-2 text-xs">Not yet</Button>
+                    </div>
+                </div>
             )}
-        </li>
+        </div>
     );
 });
 PactItem.displayName = 'PactItem';
@@ -104,15 +87,15 @@ const PactList: React.FC<PactListProps> = ({ items, isEditable, title, onToggle,
 
   if (items.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-4">
-        No pacts to display.
+      <div className="text-center text-gray-400 py-10">
+        <p>No pacts for today.</p>
+        <p className="text-xs">Add one below to get started.</p>
       </div>
     );
   }
 
   return (
-    <ul className="space-y-3">
-      {title && <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
       {items.map((item) => (
         <PactItem 
             key={item.id}
@@ -124,7 +107,7 @@ const PactList: React.FC<PactListProps> = ({ items, isEditable, title, onToggle,
             completedPact={completedPact}
         />
       ))}
-    </ul>
+    </div>
   );
 };
 
