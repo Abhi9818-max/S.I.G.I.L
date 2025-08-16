@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -14,14 +15,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 const getReputationLevelInfo = (reputation: number) => {
   const currentLevelInfo = [...REPUTATION_LEVELS].reverse().find(level => reputation >= level.minRep);
-  if (!currentLevelInfo) return REPUTATION_LEVELS[0];
+  
+  if (!currentLevelInfo) {
+      const baseLevel = REPUTATION_LEVELS[0];
+      const nextLevel = REPUTATION_LEVELS[1];
+      const repForNext = nextLevel.minRep - baseLevel.minRep;
+      return {
+        ...baseLevel,
+        nextLevelInfo: nextLevel,
+        repInCurrentLevel: 0,
+        repForNextLevel: repForNext,
+        progressPercentage: 0,
+      };
+  }
 
   const nextLevelIndex = REPUTATION_LEVELS.findIndex(level => level.level === currentLevelInfo.level + 1);
   const nextLevelInfo = nextLevelIndex !== -1 ? REPUTATION_LEVELS[nextLevelIndex] : null;
 
   const repInCurrentLevel = reputation - currentLevelInfo.minRep;
   const repForNextLevel = nextLevelInfo ? nextLevelInfo.minRep - currentLevelInfo.minRep : 0;
-  const progressPercentage = nextLevelInfo ? (repInCurrentLevel / repForNextLevel) * 100 : 100;
+  const progressPercentage = nextLevelInfo && repForNextLevel > 0 ? (repInCurrentLevel / repForNextLevel) * 100 : 100;
 
   return {
     ...currentLevelInfo,
@@ -78,7 +91,7 @@ export default function ReputationPage() {
                         </div>
                         <Tooltip>
                             <TooltipTrigger className="w-full">
-                                <Progress value={repLevelInfo.progressPercentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: faction.color}} />
+                                <Progress value={repLevelInfo.progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: faction.color}} />
                             </TooltipTrigger>
                             <TooltipContent>
                                 {repLevelInfo.nextLevelInfo ? (
