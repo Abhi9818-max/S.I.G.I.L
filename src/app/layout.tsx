@@ -31,8 +31,8 @@ export default function RootLayout({
         <AppProviders>
             <div className="min-h-screen flex flex-col transition-colors duration-700 ease-in-out pb-20 md:pb-0">
                 {children}
+                <BottomNavBar />
             </div>
-            <BottomNavBar />
             <Toaster />
         </AppProviders>
       </body>
