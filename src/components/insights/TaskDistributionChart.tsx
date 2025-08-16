@@ -45,7 +45,7 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
       chartData.forEach((item) => {
         config[item.name] = { // Use name as key
           label: item.name,
-          color: item.color,
+          color: item.fill,
         };
       });
     }
