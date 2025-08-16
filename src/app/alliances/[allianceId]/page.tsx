@@ -494,7 +494,7 @@ export default function AllianceDetailPage() {
                                 </div>
                                 <div className="space-y-2 mt-4">
                                     <p className="text-sm font-medium">{name} (Your Alliance)</p>
-                                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: taskColor}} />
+                                     <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
                                     <div className="flex justify-between text-sm text-muted-foreground">
                                         <span>{calculatedProgress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
                                     </div>
