@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem } from 'lucide-react';
+import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LevelIndicator from './LevelIndicator'; 
 import { useUserRecords } from '@/components/providers/UserRecordsProvider'; 
@@ -38,6 +38,15 @@ interface HeaderProps {
   onManageTasksClick: () => void;
 }
 
+type NavLink = {
+  href: string;
+  label: string;
+  icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
+};
+
+type MobileMenuLink = (NavLink & { isSeparator?: never }) | { isSeparator: true; href?: never; label?: never; icon?: never };
+
+
 const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick }) => {
   const { getUserLevelInfo } = useUserRecords(); 
   const { user, userData, logout } = useAuth();
@@ -66,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
   
 
-  const navLinks = [
+  const navLinks: NavLink[] = [
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/alliances", label: "Alliances", icon: ShieldCheck },
     { href: "/todo", label: "Pacts", icon: ListChecks },
@@ -77,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/tiers", label: "Tiers", icon: Star },
   ];
 
-  const mobileMenuLinks = [
+  const mobileMenuLinks: MobileMenuLink[] = [
     ...navLinks,
     { isSeparator: true },
     { href: "/settings", label: "Settings", icon: Settings },
@@ -138,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
               <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={userAvatar} alt={userData?.username} />
+                      <AvatarImage src={userAvatar} alt={userData?.username}/>
                       <AvatarFallback>
                         {userData?.username ? userData.username.charAt(0).toUpperCase() : '?'}
                       </AvatarFallback>
