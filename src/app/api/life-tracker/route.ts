@@ -1,1 +1,6 @@
-// This file is intentionally left blank because it has been moved or deleted.
+export async function GET(request: Request) {
+    return new Response("Life Tracker is alive!", {
+      status: 200,
+    });
+  }
+  
