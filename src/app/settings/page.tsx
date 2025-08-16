@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon, BarChart2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                         {userData?.bio || "No bio yet."}
                     </div>
                     <div className="flex gap-2">
-                        <DropdownMenu>
+                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                     <Pencil className="h-4 w-4" />
@@ -562,7 +562,7 @@ export default function SettingsPage() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button variant="ghost" size="icon" onClick={handleDownloadProfileCard}>
+                         <Button variant="ghost" size="icon" onClick={handleDownloadProfileCard}>
                             <CreditCard className="h-4 w-4" />
                             <span className="sr-only">Download Profile Card</span>
                         </Button>
@@ -571,7 +571,12 @@ export default function SettingsPage() {
 
               
               <div className="border-b mt-4">
-                 <div className="flex justify-around">
+                 <div className="flex justify-around md:hidden">
+                    <Link href="/insights" className="p-3 text-muted-foreground"><BarChart2 /></Link>
+                    <Link href="/reputation" className="p-3 text-muted-foreground"><UsersIcon /></Link>
+                    <Link href="/tiers" className="p-3 text-muted-foreground"><Star /></Link>
+                  </div>
+                 <div className="hidden md:flex justify-around">
                       <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
                       <button className={cn("p-3", activeTab === 'layout' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('layout')}><LayoutDashboard/></button>
                       <button className={cn("p-3", activeTab === 'data' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('data')}><Database/></button>
