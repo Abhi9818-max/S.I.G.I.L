@@ -86,7 +86,7 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
             stroke="hsl(var(--background))"
         >
             {data.map((entry) => (
-              <Cell key={`cell-${entry.name}`} fill={entry.color} />
+              <Cell key={`cell-${entry.name}`} fill={entry.fill} />
             ))}
         </Pie>
       </PieChart>
@@ -98,10 +98,10 @@ const TaskDistributionChart: React.FC<TaskDistributionChartProps> = ({ startDate
     <div className="flex flex-col justify-center gap-4">
         {items.map(item => (
             <div key={item.name} className="flex items-center gap-3">
-                <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: item.color }} />
+                <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: item.fill }} />
                 <div>
                     <p className="font-semibold text-sm text-foreground">{item.name}</p>
-                    <p className="text-lg font-bold" style={{ color: item.color }}>{item.percentage?.toFixed(0) ?? 0}%</p>
+                    <p className="text-lg font-bold" style={{ color: item.fill }}>{item.percentage?.toFixed(0) ?? 0}%</p>
                 </div>
             </div>
         ))}
