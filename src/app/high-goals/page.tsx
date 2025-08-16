@@ -272,7 +272,7 @@ export default function HighGoalsPage() {
                     </CardHeader>
                     <CardContent>
                        <div className="space-y-2">
-                          <Progress value={percentage} indicatorClassName="transition-all duration-500" style={{'--tw-bg-opacity': '1', backgroundColor: task?.color}} />
+                          <Progress value={percentage} indicatorClassName="transition-all duration-500" style={{backgroundColor: task?.color}} />
                           <div className="flex justify-between text-sm text-muted-foreground">
                               <span>{progress.toLocaleString()} / {goal.targetValue.toLocaleString()} ({percentage.toFixed(1)}%)</span>
                               <span>{format(parseISO(goal.startDate), 'MMM d, yyyy')} - {format(parseISO(goal.endDate), 'MMM d, yyyy')}</span>
