@@ -540,27 +540,31 @@ export default function SettingsPage() {
                         {userData?.bio || "No bio yet."}
                     </div>
                     <div className="flex gap-2">
-                      <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit Profile</span>
-                              </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                              <DropdownMenuItem onSelect={() => setIsBioDialogOpen(true)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit Bio
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setIsTitleDialogOpen(true)}>
-                                  <Award className="mr-2 h-4 w-4" />
-                                  Change Title
-                              </DropdownMenuItem>
-                          </DropdownMenuContent>
-                      </DropdownMenu>
-                        <Button variant="ghost" size="icon" onClick={handleShareProfile}>
-                            <Share2 className="h-4 w-4" />
-                            <span className="sr-only">Share Profile</span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit Profile</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onSelect={() => setIsBioDialogOpen(true)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit Bio
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setIsTitleDialogOpen(true)}>
+                                    <Award className="mr-2 h-4 w-4" />
+                                    Change Title
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleShareProfile}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    Share Profile
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button variant="ghost" size="icon" onClick={handleDownloadProfileCard}>
+                            <CreditCard className="h-4 w-4" />
+                            <span className="sr-only">Download Profile Card</span>
                         </Button>
                     </div>
                 </div>
