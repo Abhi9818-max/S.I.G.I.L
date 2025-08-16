@@ -536,7 +536,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                                 </div>
                                 <Tooltip>
                                     <TooltipTrigger className="w-full">
-                                        <Progress value={masteryInfo.progressPercentage} indicatorClassName="transition-all duration-500" style={{ '--tw-bg-opacity': '1', backgroundColor: task.color }} />
+                                        <Progress value={masteryInfo.progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: task.color }} />
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>{masteryInfo.xp.toLocaleString()} / {masteryInfo.xpForNextLevel.toLocaleString()} XP to next level</p>
