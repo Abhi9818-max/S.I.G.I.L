@@ -9,8 +9,8 @@ import { doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth as firebaseAuth, db, storage as firebaseStorage, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
-import type { UserData, PrivacySetting } from '@/types';
-import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS } from '@/lib/config';
+import type { UserData, PrivacySetting, TaskStatus } from '@/types';
+import { TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS_BASE } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 
@@ -19,6 +19,11 @@ const GUEST_KEY = 'sigil-guest-mode';
 
 const MALE_AVATAR_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 const FEMALE_AVATAR_NUMBERS = [13, 15, 16, 17, 33, 34, 35, 36, 37, 38, 39, 40, 41];
+
+const DEFAULT_TASK_DEFINITIONS = DEFAULT_TASK_DEFINITIONS_BASE.map(task => ({
+    ...task,
+    status: 'active' as TaskStatus
+}));
 
 
 interface AuthContextType {
