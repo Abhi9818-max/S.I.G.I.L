@@ -1,12 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export', // 👈 REQUIRED for static export
+
   images: {
     loader: 'default',
-    unoptimized: true,
+    unoptimized: true, // 👈 Required if you're using <Image />
   },
+
   experimental: {
-    // This is required for some environments (like Docker) where the output directory
-    // is not directly writeable. It can help prevent build issues.
+    // Useful for Docker & restricted environments
     outputFileTracingExcludes: {
       '*': [
         './node_modules/@swc/core-linux-x64-gnu',
