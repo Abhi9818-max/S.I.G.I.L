@@ -1,4 +1,16 @@
-// This file has been removed to improve deployment compatibility.
-// Modern hosting platforms like Vercel and Netlify have excellent
-// default support for Next.js, and this simplified configuration
-// ensures maximum portability.
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    // This is required for some environments (like Docker) where the output directory
+    // is not directly writeable. It can help prevent build issues.
+    outputFileTracingExcludes: {
+      '*': [
+        './node_modules/@swc/core-linux-x64-gnu',
+        './node_modules/@swc/core-linux-x64-musl',
+        './node_modules/esbuild-linux-64',
+      ],
+    },
+  },
+};
+
+module.exports = nextConfig;
