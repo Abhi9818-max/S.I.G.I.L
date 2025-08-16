@@ -12,7 +12,7 @@ import type { UserData } from '@/types';
  * @returns A UserData object or null if not found.
  */
 export async function getPublicUserData(userId: string): Promise<UserData | null> {
-    if (!userId) return null;
+    if (!userId || !db) return null;
     try {
         const userDocRef = doc(db, 'users', userId);
         const docSnap = await getDoc(userDocRef);
@@ -26,3 +26,4 @@ export async function getPublicUserData(userId: string): Promise<UserData | null
         return null;
     }
 };
+
