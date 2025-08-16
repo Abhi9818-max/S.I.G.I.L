@@ -56,6 +56,9 @@ import {
 import ProfileCard from '@/components/profile/ProfileCard';
 import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import TiersPage from '@/app/tiers/page';
+import ReputationPage from '@/app/reputation/page';
+import InsightsPage from '@/app/insights/page';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -572,9 +575,10 @@ export default function SettingsPage() {
               
               <div className="border-b mt-4">
                  <div className="flex justify-around md:hidden">
-                    <Link href="/insights" className="p-3 text-muted-foreground"><BarChart2 /></Link>
-                    <Link href="/reputation" className="p-3 text-muted-foreground"><UsersIcon /></Link>
-                    <Link href="/tiers" className="p-3 text-muted-foreground"><Star /></Link>
+                    <button className={cn("p-3 text-muted-foreground", activeTab === 'profile' && 'text-primary')} onClick={() => setActiveTab('profile')}><User/></button>
+                    <button className={cn("p-3 text-muted-foreground", activeTab === 'insights' && 'text-primary')} onClick={() => setActiveTab('insights')}><BarChart2 /></button>
+                    <button className={cn("p-3 text-muted-foreground", activeTab === 'reputation' && 'text-primary')} onClick={() => setActiveTab('reputation')}><UsersIcon /></button>
+                    <button className={cn("p-3 text-muted-foreground", activeTab === 'tiers' && 'text-primary')} onClick={() => setActiveTab('tiers')}><Star /></button>
                   </div>
                  <div className="hidden md:flex justify-around">
                       <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
@@ -593,6 +597,19 @@ export default function SettingsPage() {
                     </Button>
                 </div>
               )}
+              
+              {activeTab === 'insights' && (
+                 <div className="animate-fade-in-up py-4"><InsightsPage /></div>
+              )}
+              
+              {activeTab === 'reputation' && (
+                 <div className="animate-fade-in-up py-4"><ReputationPage /></div>
+              )}
+
+              {activeTab === 'tiers' && (
+                 <div className="animate-fade-in-up py-4"><TiersPage /></div>
+              )}
+
 
               {activeTab === 'layout' && (
               <div className="animate-fade-in-up py-4">
