@@ -44,8 +44,7 @@ const config: Config = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
+
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         chart: {
@@ -70,6 +69,7 @@ const config: Config = {
         "progress-tier-group-3": "hsl(var(--progress-tier-group-3))",
         "progress-tier-group-4": "hsl(var(--progress-tier-group-4))",
         "progress-tier-group-5": "hsl(var(--progress-tier-group-5))",
+ border: "hsl(var(--border))",
       },
       borderRadius: {
         lg: "var(--radius)",
