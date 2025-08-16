@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  images: {
+    loader: 'default',
+    unoptimized: true,
+  },
   experimental: {
     // This is required for some environments (like Docker) where the output directory
     // is not directly writeable. It can help prevent build issues.
