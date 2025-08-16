@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -114,7 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
             }
             setIsUserDataLoaded(true);
-        } else if (user) {
+        } else if (user && db) {
             setIsUserDataLoaded(false);
             const docRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(docRef);
