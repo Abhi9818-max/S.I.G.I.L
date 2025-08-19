@@ -8,8 +8,7 @@
         "build": "rimraf ./.next && next build",
         "start": "next start",
         "lint": "next lint",
-        "typecheck": "tsc --noEmit",
-        "export": "next export"
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@firebase/app": "^0.13.2",
