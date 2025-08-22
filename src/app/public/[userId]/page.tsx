@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -15,13 +15,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
-import { subDays, startOfDay, isToday, parseISO } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday, parseISO, formatDistanceToNowStrict } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import PactList from '@/components/todo/PactList';
+import TaskFilterBar from '@/components/records/TaskFilterBar';
+import LevelIndicator from '@/components/layout/LevelIndicator';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
-import LevelIndicator from '@/components/layout/LevelIndicator';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -48,17 +50,24 @@ const PrivateContent = ({ message }: { message: string }) => (
   </div>
 );
 
-type PageProps = {
-  params: { userId: string };
+type PublicProfilePageProps = {
+  params: {
+    userId: string;
+  };
 };
 
-export default function PublicProfilePage({ params }: PageProps) {
+export default function PublicProfilePage({ params }: PublicProfilePageProps) {
     const { userId } = params;
     const { getPublicUserData } = useFriends();
+    const { toast } = useToast();
+    const currentUserRecords = useUserRecords();
+    const { user } = useAuth();
+    
     const [publicUserData, setPublicUserData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const { toast } = useToast();
-    const router = useRouter();
+    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
+    
+    const levelInfo = currentUserRecords.getUserLevelInfo();
 
     const calculateXpForRecord = useCallback((
       recordValue: number,
@@ -68,11 +77,11 @@ export default function PublicProfilePage({ params }: PageProps) {
         if (!task || !XP_CONFIG || XP_CONFIG.length === 0) return 0;
         
         const levelConfig = XP_CONFIG.find(c => c.level === userLevel);
-        if (!levelConfig) return 0;
+        if (!levelConfig) return 0; // No config for this level
 
         let value = recordValue;
         if (task.unit === 'hours') {
-            value = recordValue * 60;
+            value = recordValue * 60; // Convert hours to minutes for consistent threshold checks
         }
 
         const phase = getContributionLevel(value, task.intensityThresholds);
@@ -89,7 +98,7 @@ export default function PublicProfilePage({ params }: PageProps) {
     const publicUserLevelInfo: UserLevelInfo | null = useMemo(() => {
         if (!publicUserData) return null;
 
-        const getPublicUserTaskDef = (taskId: string): TaskDefinition | undefined => {
+        const getFriendTaskDefinitionById = (taskId: string): TaskDefinition | undefined => {
             return publicUserData.taskDefinitions?.find(task => task.id === taskId);
         };
         
@@ -99,7 +108,7 @@ export default function PublicProfilePage({ params }: PageProps) {
         let tempXpForLevelCalc = 0;
         for (const record of sortedRecords) {
             const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
-            const task = getPublicUserTaskDef(record.taskType || '');
+            const task = getFriendTaskDefinitionById(record.taskType || '');
             const recordXp = calculateXpForRecord(record.value, task, currentLevel);
             tempXpForLevelCalc += recordXp;
         }
@@ -119,12 +128,10 @@ export default function PublicProfilePage({ params }: PageProps) {
                         setPublicUserData(data);
                     } else {
                         toast({ title: 'Error', description: 'User not found.', variant: 'destructive' });
-                        router.push('/friends');
                     }
                 } catch (error) {
                     console.error("Error fetching public user data:", error);
                     toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
-                    router.push('/friends');
                 } finally {
                     setIsLoading(false);
                 }
@@ -132,7 +139,7 @@ export default function PublicProfilePage({ params }: PageProps) {
         };
 
         fetchPublicData();
-    }, [userId, getPublicUserData, router, toast]);
+    }, [userId, getPublicUserData, toast]);
 
     const publicUserPacts = useMemo(() => {
         if (!publicUserData?.todoItems) return [];
@@ -145,80 +152,140 @@ export default function PublicProfilePage({ params }: PageProps) {
         })
     }, [publicUserData?.todoItems]);
 
-    const canViewPacts = publicUserData?.privacySettings?.pacts === 'everyone';
-    const canViewActivity = publicUserData?.privacySettings?.activity === 'everyone';
-    const userAvatar = publicUserData?.photoURL || getAvatarForId(userId, publicUserData?.photoURL);
-    const displayName = publicUserData?.username || 'User';
+    const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
     if (isLoading) {
-        return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
+        return <div className="flex items-center justify-center min-h-screen">Loading public profile...</div>;
     }
 
     if (!publicUserData) {
-        return <div className="flex items-center justify-center min-h-screen">Could not load user data.</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                User could not be found.
+            </div>
+        );
     }
+    
+    const publicUserRecords = publicUserData.records || [];
+    const publicUserTasks = publicUserData.taskDefinitions || [];
+    
+    const publicUserAvatar = publicUserData.photoURL || getAvatarForId(userId, publicUserData.photoURL);
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+    const displayName = publicUserData.username;
+
+    const canViewPacts = publicUserData.privacySettings?.pacts === 'everyone';
+    const canViewActivity = publicUserData.privacySettings?.activity === 'everyone';
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto px-4 pb-4 md:p-8 animate-fade-in-up space-y-8">
                 <div className="pt-6 md:p-0">
                     <div className="flex flex-col md:flex-row items-start gap-4">
                         <div className="flex items-center gap-4 md:items-start">
                              <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                                <AvatarImage src={userAvatar} />
+                                <AvatarImage src={publicUserAvatar} />
                                 <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
+                             <div className="md:hidden">
+                                <h1 className="text-lg font-semibold">{displayName}</h1>
+                            </div>
                         </div>
                         <div className="w-full">
-                            <h1 className="text-xl font-semibold">{displayName}</h1>
-                            {publicUserLevelInfo && <LevelIndicator levelInfo={publicUserLevelInfo} />}
+                            <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                                <h1 className="text-xl font-semibold">{displayName}</h1>
+                                {publicUserLevelInfo && <LevelIndicator levelInfo={publicUserLevelInfo} />}
+                            </div>
+                             <div className="mt-1 md:hidden">
+                                {publicUserLevelInfo && <LevelIndicator levelInfo={publicUserLevelInfo} />}
+                            </div>
                             <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                                 {publicUserData.bio || "No bio yet."}
                             </p>
                         </div>
                     </div>
                 </div>
-
+                
                 <Tabs defaultValue="stats" className="w-full">
-                    <TabsList>
-                        <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                        <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
-                        <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="stats" className="mt-6">
-                        <StatsPanel friendData={publicUserData} />
-                    </TabsContent>
-                    
-                    <TabsContent value="pacts" className="mt-6">
-                        {canViewPacts ? (
-                            <PactList items={publicUserPacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
-                        ) : (
-                            <PrivateContent message={`${displayName} has made their pacts private.`} />
-                        )}
-                    </TabsContent>
+                  <TabsList>
+                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+                    <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
+                    <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="stats" className="mt-6">
+                    <StatsPanel friendData={publicUserData} />
+                    {user && user.uid !== userId && <div className="mt-8"><TaskComparisonChart friendData={publicUserData} /></div>}
+                  </TabsContent>
+                  
+                  <TabsContent value="pacts" className="mt-6">
+                     {canViewPacts ? (
+                        <PactList items={publicUserPacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
+                      ) : (
+                        <PrivateContent message={`${displayName} has made their pacts private.`} />
+                      )}
+                  </TabsContent>
 
-                    <TabsContent value="activity" className="mt-6">
-                        {canViewActivity ? (
-                            <>
-                                <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                                <ContributionGraph 
-                                    year={new Date().getFullYear()}
-                                    onDayClick={() => {}}
-                                    onDayDoubleClick={() => {}} 
-                                    selectedTaskFilterId={null}
-                                    records={publicUserData.records} 
-                                    taskDefinitions={publicUserData.taskDefinitions}
-                                    displayMode="full"
-                                />
-                            </>
-                        ) : (
-                            <PrivateContent message={`${displayName} has made their activity private.`} />
-                        )}
-                    </TabsContent>
+                  <TabsContent value="activity" className="mt-6">
+                     {canViewActivity ? (
+                     <>
+                        <div className="mb-8 max-w-4xl mx-auto">
+                            <h2 className="text-2xl font-semibold mb-4">Daily Breakdown</h2>
+                            <ScrollArea className="w-full whitespace-nowrap">
+                                <Tabs defaultValue="today" className="w-full inline-block min-w-full">
+                                    <TabsList>
+                                        <TabsTrigger value="today">Today</TabsTrigger>
+                                        <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="today" className="mt-4">
+                                        <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
+                                            <DailyTimeBreakdownChart
+                                                date={today}
+                                                records={publicUserRecords}
+                                                taskDefinitions={publicUserTasks}
+                                                hideFooter={true}
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value="yesterday" className="mt-4">
+                                        <div className="w-full md:mx-auto">
+                                            <DailyTimeBreakdownChart
+                                                date={yesterday}
+                                                records={publicUserRecords}
+                                                taskDefinitions={publicUserTasks}
+                                                hideFooter={true}
+                                            />
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
+                                <ScrollBar orientation="horizontal" />
+                            </ScrollArea>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                            <TaskFilterBar
+                                taskDefinitions={publicUserTasks}
+                                selectedTaskId={selectedTaskFilterId}
+                                onSelectTask={setSelectedTaskFilterId}
+                            />
+                            <ContributionGraph 
+                                year={new Date().getFullYear()}
+                                onDayClick={() => {}}
+                                onDayDoubleClick={() => {}} 
+                                selectedTaskFilterId={selectedTaskFilterId}
+                                records={publicUserRecords} 
+                                taskDefinitions={publicUserTasks}
+                                displayMode="full"
+                            />
+                        </div>
+                     </>
+                     ) : (
+                       <PrivateContent message={`${displayName} has made their activity private.`} />
+                     )}
+                  </TabsContent>
                 </Tabs>
             </main>
         </div>
     );
-}
+};
