@@ -141,7 +141,7 @@ export default function HomePage() {
   if (!isUserDataLoaded || !currentLevelInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
-        <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
+        <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
       </div>
     );
   }
