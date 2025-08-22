@@ -5,24 +5,21 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Lock } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, BarChart2, Activity, Heart, Lock } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import type { UserData, RecordEntry, TaskDefinition, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
-import StatsPanel from '@/components/records/StatsPanel';
-import { subDays, startOfDay, parseISO } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday, parseISO } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import PactList from '@/components/todo/PactList';
-import { AppProviders } from '@/components/providers/AppProviders';
-import { getPublicUserData } from '@/lib/server/get-public-data';
-import LevelIndicator from '@/components/layout/LevelIndicator';
+import { Separator } from '@/components/ui/separator';
 import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
+import { AppProviders } from '@/components/providers/AppProviders';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -49,23 +46,21 @@ const PrivateContent = ({ message }: { message: string }) => (
   </div>
 );
 
-// Correctly typed props for a Next.js dynamic route page
+// Correctly typed props for the page
 interface PublicProfilePageProps {
   params: {
     userId: string;
   };
 }
 
-function PublicProfilePageComponent({ params }: PublicProfilePageProps) {
+function PublicProfilePageContent({ params }: PublicProfilePageProps) {
     const { userId } = params;
-    const { user } = useAuth();
+    const { getPublicUserData } = useFriends();
+    
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     
-    const [friendData, setFriendData] = useState<UserData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const isOwnProfile = user?.uid === userId;
-
     const calculateXpForRecord = useCallback((
       recordValue: number,
       task: TaskDefinition | undefined,
@@ -77,80 +72,71 @@ function PublicProfilePageComponent({ params }: PublicProfilePageProps) {
         if (!levelConfig) return 0;
 
         let value = recordValue;
-        if (task.unit === 'hours') {
-            value = recordValue * 60;
-        }
+        if (task.unit === 'hours') value = recordValue * 60;
 
         const phase = getContributionLevel(value, task.intensityThresholds);
         if (phase === 0) return 0;
 
         const baseXP = task.priority === 'high' ? levelConfig.base_high_xp : levelConfig.base_low_xp;
-        
         const phasePercentages = [0, 0.25, 0.50, 0.75, 1.00];
         const percentage = phasePercentages[phase] || 0;
 
         return Math.round(baseXP * percentage);
     }, []);
 
-    const friendLevelInfo: UserLevelInfo | null = useMemo(() => {
-        if (!friendData) return null;
-
-        const getFriendTaskDefinitionById = (taskId: string): TaskDefinition | undefined => {
-            return friendData.taskDefinitions?.find(task => task.id === taskId);
-        };
+    const userLevelInfo: UserLevelInfo | null = useMemo(() => {
+        if (!userData) return null;
+        const getTaskDef = (taskId: string) => userData.taskDefinitions?.find(t => t.id === taskId);
         
         let cumulativeXp = 0;
-        const sortedRecords = [...(friendData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedRecords = [...(userData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         
-        let tempXpForLevelCalc = 0;
         for (const record of sortedRecords) {
-            const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
-            const task = getFriendTaskDefinitionById(record.taskType || '');
-            const recordXp = calculateXpForRecord(record.value, task, currentLevel);
-            tempXpForLevelCalc += recordXp;
+            const { currentLevel } = calculateUserLevelInfo(cumulativeXp);
+            const task = getTaskDef(record.taskType || '');
+            cumulativeXp += calculateXpForRecord(record.value, task, currentLevel);
         }
-        cumulativeXp = tempXpForLevelCalc;
-
-        const totalExperience = cumulativeXp + (friendData.bonusPoints || 0);
-
-        return calculateUserLevelInfo(totalExperience);
-    }, [friendData, calculateXpForRecord]);
+        
+        return calculateUserLevelInfo(cumulativeXp + (userData.bonusPoints || 0));
+    }, [userData, calculateXpForRecord]);
     
     useEffect(() => {
-        const fetchPublicData = async () => {
+        const fetchUserData = async () => {
             if (userId) {
-                setIsLoading(true);
                 try {
                     const data = await getPublicUserData(userId);
                     if (data) {
-                        setFriendData(data);
+                        setUserData(data);
                     } else {
-                        toast({ title: 'Error', description: 'User not found.', variant: 'destructive' });
+                        toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
                     }
                 } catch (error) {
-                    console.error("Error fetching public data:", error);
+                    console.error("Error fetching user data:", error);
                     toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
                 } finally {
                     setIsLoading(false);
                 }
             }
         };
-        fetchPublicData();
-    }, [userId, toast]);
-    
+
+        fetchUserData();
+    }, [userId, getPublicUserData, toast]);
+
+    const userPacts = useMemo(() => {
+        if (!userData?.todoItems) return [];
+        return userData.todoItems.filter(pact => isToday(new Date(pact.createdAt)));
+    }, [userData?.todoItems]);
+
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
     }
 
-    if (!friendData) {
+    if (!userData) {
         return <div className="flex items-center justify-center min-h-screen">Could not load user data.</div>;
     }
 
-    const friendAvatar = friendData.photoURL || getAvatarForId(userId, friendData.photoURL);
-    const displayName = friendData.username;
-    
-    const canViewActivity = friendData.privacySettings?.activity === 'everyone' || isOwnProfile;
-    const canViewPacts = friendData.privacySettings?.pacts === 'everyone' || isOwnProfile;
+    const canViewPacts = userData.privacySettings?.pacts === 'everyone';
+    const canViewActivity = userData.privacySettings?.activity === 'everyone';
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -158,67 +144,44 @@ function PublicProfilePageComponent({ params }: PublicProfilePageProps) {
             <main className="flex-grow container mx-auto px-4 pb-4 md:p-8 animate-fade-in-up space-y-8">
                 <div className="pt-6 md:p-0">
                     <div className="flex flex-col md:flex-row items-start gap-4">
-                        <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                            <AvatarImage src={friendAvatar} />
-                            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                        <Avatar className="h-16 w-16 md:h-20 md:w-20">
+                            <AvatarImage src={getAvatarForId(userId, userData.photoURL)} />
+                            <AvatarFallback>{userData.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <div className="w-full">
-                            <h1 className="text-xl font-semibold">{displayName}</h1>
-                            {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
-                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
-                                {friendData.bio || "No bio yet."}
-                            </p>
+                        <div>
+                            <h1 className="text-xl font-semibold">{userData.username}</h1>
+                            <p className="text-sm text-muted-foreground italic mt-2">{userData.bio || "No bio yet."}</p>
                         </div>
                     </div>
                 </div>
-
-                <Tabs defaultValue="stats" className="w-full">
+                
+                <Tabs defaultValue="activity" className="w-full">
                     <TabsList>
-                        <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                        <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
                         <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+                        <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="stats" className="mt-6">
-                        <StatsPanel friendData={friendData} />
+                    <TabsContent value="activity" className="mt-6">
+                        {canViewActivity ? (
+                            <>
+                                <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                                <ContributionGraph 
+                                    year={new Date().getFullYear()}
+                                    onDayClick={() => {}}
+                                    onDayDoubleClick={() => {}}
+                                    selectedTaskFilterId={null}
+                                    records={userData.records}
+                                    taskDefinitions={userData.taskDefinitions}
+                                    displayMode="full"
+                                />
+                            </>
+                        ) : <PrivateContent message={`${userData.username} has made their activity private.`} />}
                     </TabsContent>
                     
                     <TabsContent value="pacts" className="mt-6">
                         {canViewPacts ? (
-                            <PactList items={friendData.todoItems || []} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
-                        ) : (
-                            <PrivateContent message={`${displayName} has made their pacts private.`} />
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="activity" className="mt-6">
-                        {canViewActivity ? (
-                            <>
-                                <div className="mb-8">
-                                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                                    <DailyTimeBreakdownChart
-                                        date={new Date()}
-                                        records={friendData.records}
-                                        taskDefinitions={friendData.taskDefinitions}
-                                        hideFooter={true}
-                                    />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                                    <ContributionGraph 
-                                        year={new Date().getFullYear()}
-                                        onDayClick={() => {}}
-                                        onDayDoubleClick={() => {}} 
-                                        selectedTaskFilterId={null}
-                                        records={friendData.records} 
-                                        taskDefinitions={friendData.taskDefinitions}
-                                        displayMode="full"
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <PrivateContent message={`${displayName} has made their activity private.`} />
-                        )}
+                            <PactList items={userPacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
+                        ) : <PrivateContent message={`${userData.username} has made their pacts private.`} />}
                     </TabsContent>
                 </Tabs>
             </main>
@@ -226,10 +189,10 @@ function PublicProfilePageComponent({ params }: PublicProfilePageProps) {
     );
 }
 
-export default function PublicProfilePage(props: PublicProfilePageProps) {
-    return (
-        <AppProviders>
-            <PublicProfilePageComponent {...props} />
-        </AppProviders>
-    );
+export default function PublicProfilePageWrapper(props: PublicProfilePageProps) {
+  return (
+    <AppProviders>
+      <PublicProfilePageContent {...props} />
+    </AppProviders>
+  )
 }

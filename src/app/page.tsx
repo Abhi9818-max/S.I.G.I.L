@@ -28,6 +28,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
+import { AppProviders } from '@/components/providers/AppProviders';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -140,11 +141,11 @@ function HomePageContent() {
 
   if (!isUserDataLoaded) {
     return (
-        <div className="fixed inset-0 z-50 bg-black">
-            <div className="flex items-center justify-center min-h-screen">
-                <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
-            </div>
-        </div>
+      <div className="fixed inset-0 z-50 bg-black">
+          <div className="flex items-center justify-center min-h-screen">
+              <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
+          </div>
+      </div>
     );
   }
   
@@ -233,6 +234,8 @@ function HomePageContent() {
 
 export default function HomePage() {
   return (
+    <AppProviders>
       <HomePageContent />
+    </AppProviders>
   );
 }
