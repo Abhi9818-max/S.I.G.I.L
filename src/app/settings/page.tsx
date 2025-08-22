@@ -425,14 +425,24 @@ export default function SettingsPage() {
     });
   };
 
-  const handleShareProfile = () => {
+  const handleShareProfile = async () => {
     if (!user) return;
-    const url = `${window.location.origin}/public/${user.uid}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Link Copied!",
-      description: "Your public profile link has been copied to your clipboard.",
-    });
+    const url = `${window.location.origin}/friends/${user.uid}`;
+    try {
+        await navigator.clipboard.writeText(url);
+        toast({
+            title: "Link Copied!",
+            description: "Your public profile link has been copied.",
+        });
+    } catch (err) {
+        console.error("Failed to copy link:", err);
+        console.log("Shareable Link:", url); // Log for manual copying
+        toast({
+            title: "Copy Failed",
+            description: "Could not copy link. It has been logged to the console for you.",
+            variant: "destructive",
+        });
+    }
   };
 
   if (showLoading) {
