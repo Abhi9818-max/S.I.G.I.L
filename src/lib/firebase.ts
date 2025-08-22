@@ -33,7 +33,8 @@ let rtdb: Database | null = null;
 if (isFirebaseConfigured) {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     auth = getAuth(app);
-    db = getFirestore(app);
+    // Use the full firestore library
+    db = getFirestore(app); 
     storage = getStorage(app);
     rtdb = getDatabase(app);
     if (typeof window !== 'undefined') {
