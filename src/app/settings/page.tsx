@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -347,7 +346,7 @@ export default function SettingsPage() {
       { key: 'showHighGoalStat', label: 'High Goal Card' },
   ];
 
-  const handleDaysChange = (key: keyof DashboardSettings, value: string) => {
+  const handleDaysChange = (key: keyof DashboardSettings, value: any) => {
     // Allow empty string for editing, otherwise convert to number
     const numValue = value === '' ? '' : Number(value);
     
@@ -427,21 +426,21 @@ export default function SettingsPage() {
 
   const handleShareProfile = async () => {
     if (!user) return;
-    const url = `${window.location.origin}/friends/${user.uid}`;
+    const url = `${window.location.origin}/public/${user.uid}`;
     try {
-        await navigator.clipboard.writeText(url);
-        toast({
-            title: "Link Copied!",
-            description: "Your public profile link has been copied.",
-        });
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link Copied!",
+        description: "Your public profile link has been copied.",
+      });
     } catch (err) {
-        console.error("Failed to copy link:", err);
-        console.log("Shareable Link:", url); // Log for manual copying
-        toast({
-            title: "Copy Failed",
-            description: "Could not copy link. It has been logged to the console for you.",
-            variant: "destructive",
-        });
+      console.error("Failed to copy link:", err);
+      console.log("Shareable Link:", url); // Log for manual copying
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy link. It has been logged to the console for you.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -937,6 +936,7 @@ export default function SettingsPage() {
                     displayStat={dashboardSettings.profileCardStat}
                     currentStreak={getCurrentStreak(null)}
                     equippedTitle={equippedTitle}
+                    relationship={null}
                 />
             )}
         </div>
@@ -967,3 +967,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
