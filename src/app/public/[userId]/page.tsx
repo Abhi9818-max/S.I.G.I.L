@@ -1,25 +1,23 @@
 
-'use client';
+"use client";
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, BarChart2, Activity, Lock } from 'lucide-react';
-import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { useFriends } from '@/components/providers/FriendProvider';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Lock } from 'lucide-react';
+import { getPublicUserData } from '@/lib/server/get-public-data';
 import type { UserData, RecordEntry, TaskDefinition, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
-import { subDays, startOfDay, isToday, parseISO } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, isWithinInterval, startOfDay, isToday, parseISO, formatDistanceToNowStrict } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import PactList from '@/components/todo/PactList';
-import TaskFilterBar from '@/components/records/TaskFilterBar';
+import Image from 'next/image';
 import { AppProviders } from '@/components/providers/AppProviders';
 import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
@@ -49,17 +47,13 @@ const PrivateContent = ({ message }: { message: string }) => (
   </div>
 );
 
-function PublicProfilePageComponent({ params }: { params: { userId: string } }) {
-    const router = useRouter();
-    const { userId } = params;
+const PublicProfilePageContent = ({ params }: { params: { userId: string } }) => {
+    const userId = params.userId;
     
-    const { getPublicUserData } = useFriends();
-    
-    const [publicUserData, setPublicUserData] = useState<UserData | null>(null);
+    const [publicData, setPublicData] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     const { toast } = useToast();
-    
+
     const calculateXpForRecord = useCallback((
       recordValue: number,
       task: TaskDefinition | undefined,
@@ -86,156 +80,132 @@ function PublicProfilePageComponent({ params }: { params: { userId: string } }) 
         return Math.round(baseXP * percentage);
     }, []);
 
-    const publicUserLevelInfo: UserLevelInfo | null = useMemo(() => {
-        if (!publicUserData) return null;
-
+    const publicLevelInfo: UserLevelInfo | null = useMemo(() => {
+        if (!publicData) return null;
+        
         const getTaskDef = (taskId: string): TaskDefinition | undefined => {
-            return publicUserData.taskDefinitions?.find(task => task.id === taskId);
+            return publicData.taskDefinitions?.find(task => task.id === taskId);
         };
         
-        let tempXpForLevelCalc = 0;
-        const sortedRecords = [...(publicUserData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        let cumulativeXp = 0;
+        const sortedRecords = [...(publicData.records || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         
+        let tempXpForLevelCalc = 0;
         for (const record of sortedRecords) {
             const { currentLevel } = calculateUserLevelInfo(tempXpForLevelCalc);
             const task = getTaskDef(record.taskType || '');
             const recordXp = calculateXpForRecord(record.value, task, currentLevel);
             tempXpForLevelCalc += recordXp;
         }
-        
-        const totalExperience = tempXpForLevelCalc + (publicUserData.bonusPoints || 0);
+        cumulativeXp = tempXpForLevelCalc;
+
+        const totalExperience = cumulativeXp + (publicData.bonusPoints || 0);
+
         return calculateUserLevelInfo(totalExperience);
-    }, [publicUserData, calculateXpForRecord]);
+    }, [publicData, calculateXpForRecord]);
     
     useEffect(() => {
         const fetchPublicData = async () => {
             if (userId) {
-                setIsLoading(true);
                 try {
                     const data = await getPublicUserData(userId);
                     if (data) {
-                        setPublicUserData(data);
+                        setPublicData(data);
                     } else {
                         toast({ title: 'Error', description: 'User not found.', variant: 'destructive' });
-                        router.push('/friends');
                     }
                 } catch (error) {
-                    console.error("Error fetching public user data:", error);
+                    console.error("Error fetching public data:", error);
                     toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
-                    router.push('/friends');
                 } finally {
                     setIsLoading(false);
                 }
             }
         };
         fetchPublicData();
-    }, [userId, getPublicUserData, router, toast]);
-
-    const pacts = useMemo(() => {
-        if (!publicUserData?.todoItems) return [];
-        return publicUserData.todoItems.filter(pact => isToday(parseISO(pact.createdAt)))
-    }, [publicUserData?.todoItems]);
-
+    }, [userId, toast]);
+    
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
     }
 
-    if (!publicUserData) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                Could not load user data.
-                <Button onClick={() => router.push('/friends')} className="ml-4">Back to Friends</Button>
-            </div>
-        );
+    if (!publicData || !publicLevelInfo) {
+        return <div className="flex items-center justify-center min-h-screen">Could not load user data.</div>;
     }
-    
-    const records = publicUserData.records || [];
-    const tasks = publicUserData.taskDefinitions || [];
-    const userAvatar = publicUserData.photoURL || getAvatarForId(userId, publicUserData.photoURL);
-    const displayName = publicUserData.username;
-    
-    const canViewPacts = publicUserData.privacySettings?.pacts === 'everyone';
-    const canViewActivity = publicUserData.privacySettings?.activity === 'everyone';
+
+    const { username, photoURL, bio, records, taskDefinitions, todoItems, privacySettings } = publicData;
+    const canViewPacts = privacySettings?.pacts === 'everyone';
+    const canViewActivity = privacySettings?.activity === 'everyone';
+
+    const userPacts = todoItems?.filter(pact => {
+        try { return isToday(new Date(pact.createdAt)); } catch { return false; }
+    }) || [];
+
+    const userAvatar = photoURL || getAvatarForId(userId);
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
+        <div className="min-h-screen flex flex-col bg-background text-foreground">
             <main className="flex-grow container mx-auto px-4 pb-4 md:p-8 animate-fade-in-up space-y-8">
-                <Button variant="outline" onClick={() => router.back()} className="hidden md:inline-flex mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                </Button>
                 <div className="pt-6 md:p-0">
-                    <div className="flex flex-col md:flex-row items-start gap-4">
-                        <div className="flex items-center gap-4 md:items-start">
-                             <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                                <AvatarImage src={userAvatar} />
-                                <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                        </div>
-                        <div className="w-full">
-                            <h1 className="text-xl font-semibold">{displayName}</h1>
-                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
-                                {publicUserData.bio || "No bio yet."}
-                            </p>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16 md:h-20 md:w-20">
+                            <AvatarImage src={userAvatar} alt={username} />
+                            <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-2xl font-semibold">{username}</h1>
+                            <p className="text-sm text-muted-foreground italic mt-1">{bio || "No bio available."}</p>
                         </div>
                     </div>
                 </div>
                 
                 <Tabs defaultValue="stats" className="w-full">
                     <TabsList>
-                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                    <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
-                    <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+                        <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+                        <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
+                        <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="stats" className="mt-6">
-                        <StatsPanel friendData={publicUserData} />
+                        <StatsPanel friendData={publicData} />
                     </TabsContent>
                     
                     <TabsContent value="pacts" className="mt-6">
                         {canViewPacts ? (
-                            <PactList items={pacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
+                            <PactList items={userPacts} isEditable={false} onToggle={()=>{}} onDelete={()=>{}} onToggleDare={()=>{}} />
                         ) : (
-                            <PrivateContent message={`${displayName} has made their pacts private.`} />
+                            <PrivateContent message={`${username} has made their pacts private.`} />
                         )}
                     </TabsContent>
 
                     <TabsContent value="activity" className="mt-6">
                         {canViewActivity ? (
                             <>
-                                <div>
-                                    <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                                    <TaskFilterBar
-                                        taskDefinitions={tasks}
-                                        selectedTaskId={selectedTaskFilterId}
-                                        onSelectTask={setSelectedTaskFilterId}
-                                    />
-                                    <ContributionGraph 
-                                        year={new Date().getFullYear()}
-                                        onDayClick={() => {}}
-                                        onDayDoubleClick={() => {}} 
-                                        selectedTaskFilterId={selectedTaskFilterId}
-                                        records={records} 
-                                        taskDefinitions={tasks}
-                                        displayMode="full"
-                                    />
-                                </div>
+                                <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                                <ContributionGraph 
+                                    year={new Date().getFullYear()}
+                                    onDayClick={() => {}}
+                                    onDayDoubleClick={() => {}} 
+                                    selectedTaskFilterId={null}
+                                    records={records} 
+                                    taskDefinitions={taskDefinitions}
+                                    displayMode="full"
+                                />
                             </>
                         ) : (
-                            <PrivateContent message={`${displayName} has made their activity private.`} />
+                            <PrivateContent message={`${username} has made their activity private.`} />
                         )}
                     </TabsContent>
                 </Tabs>
             </main>
         </div>
     );
-};
+}
 
-export default function PublicProfilePageWrapper(props: { params: { userId: string } }) {
-  return (
-    <AppProviders>
-      <PublicProfilePageComponent {...props} />
-    </AppProviders>
-  );
+export default function PublicProfilePage({ params }: { params: { userId: string } }) {
+    return (
+        <AppProviders>
+            <PublicProfilePageContent params={params} />
+        </AppProviders>
+    );
 }
