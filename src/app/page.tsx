@@ -28,11 +28,12 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
+import { AppProviders } from '@/components/providers/AppProviders';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
 
-export default function HomePage() {
+function HomePageContent() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
   const [isManageTasksModalOpen, setIsManageTasksModalOpen] = useState(false);
@@ -138,10 +139,12 @@ export default function HomePage() {
     setIsManageTasksModalOpen(true);
   };
 
-  if (!isUserDataLoaded || !currentLevelInfo) {
+  if (!isUserDataLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
+      <div className="fixed inset-0 z-50 bg-black">
+          <div className="flex items-center justify-center min-h-screen">
+              <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
+          </div>
       </div>
     );
   }
@@ -226,5 +229,13 @@ export default function HomePage() {
         S.I.G.I.L. &copy; {currentYear}
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <AppProviders>
+      <HomePageContent />
+    </AppProviders>
   );
 }
