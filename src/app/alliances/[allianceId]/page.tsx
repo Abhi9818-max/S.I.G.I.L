@@ -1,5 +1,7 @@
 // src/app/alliances/[allianceId]/page.tsx
 
+"use client";
+
 import React from 'react';
 import type { Alliance } from '@/types';
 import { calculateUserLevelInfo } from '@/lib/config';
@@ -16,7 +18,6 @@ import Link from 'next/link';
 
 // Replace with your real data-fetching logic
 async function fetchAllAllianceIds(): Promise<string[]> {
-  // Example static list; fetch from your database or API instead
   return ['alliance1', 'alliance2', 'alliance3'];
 }
 
@@ -32,8 +33,7 @@ interface PageProps {
 export default function AlliancePage({ params }: PageProps) {
   const { allianceId } = params;
 
-  // For demonstration, fetch or derive the alliance object here.
-  // Replace with your real fetch logic.
+  // Dummy alliance data - replace with real fetch
   const alliance: Alliance = {
     id: allianceId,
     name: `Alliance ${allianceId}`,
@@ -51,19 +51,18 @@ export default function AlliancePage({ params }: PageProps) {
     opponentDetails: undefined,
     photoURL: '',
     taskId: 'task1',
+    progress: 0,        // added required field
+    createdAt: new Date().toISOString(), // added required field
   };
 
-  const totalRecordValue = allianceId.length; // replace with real sum
-  const totalExperience = totalRecordValue;
+  const totalExperience = 0; // replace with real calculation
   const levelInfo = calculateUserLevelInfo(totalExperience);
-
   const pageTierClass = `page-tier-group-${levelInfo.tierGroup}`;
-
   const daysLeft = differenceInDays(parseISO(alliance.endDate), new Date());
 
   return (
     <div className={cn("min-h-screen flex flex-col bg-background", pageTierClass)}>
-      <Header />
+      <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
@@ -76,9 +75,12 @@ export default function AlliancePage({ params }: PageProps) {
           </div>
         </div>
 
-        <StatsPanel friendData={{ 
-          uid: alliance.id, username: alliance.name, 
-          records: [], bonusPoints: 0, taskDefinitions: [] 
+        <StatsPanel friendData={{
+          uid: alliance.id,
+          username: alliance.name,
+          records: [],
+          bonusPoints: 0,
+          taskDefinitions: []
         }} />
 
         <div>
