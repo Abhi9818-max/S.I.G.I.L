@@ -3,12 +3,13 @@ const nextConfig = {
   output: 'export',
   images: {
     loader: 'default',
-    unoptimized: true, // 👈 Required if you're using <Image />
+    unoptimized: true, // Required if you're using <Image />
   },
+  allowedDevOrigins: [
+    '*.cloudworkstations.dev',
+  ],
   devIndicators: {
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev',
-    ],
+    // other dev indicator configs if needed
   },
 };
 
