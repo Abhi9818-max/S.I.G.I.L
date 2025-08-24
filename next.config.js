@@ -1,18 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Removed: output: 'export',  // <-- This line is now removed
+  
   images: {
     loader: 'default',
-    unoptimized: true, // Required for static export with images
+    unoptimized: true, // Keep this if you want unoptimized images
   },
   allowedDevOrigins: [
     '*.cloudworkstations.dev',
   ],
-  // Optional: Customize output directory
-  // distDir: 'dist',
-  
-  // Optional: Add trailing slashes to URLs  
-  // trailingSlash: true,
 };
 
 module.exports = nextConfig;
