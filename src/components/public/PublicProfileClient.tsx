@@ -34,6 +34,7 @@ interface PublicProfileClientPageProps {
 
 const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initialUserData, userId }) => {
     const [friendData, setFriendData] = useState<UserData | null>(initialUserData);
+    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     
     const friendLevelInfo: UserLevelInfo | null = React.useMemo(() => {
         if (!friendData) return null;
@@ -109,11 +110,15 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                   <TabsContent value="activity" className="mt-6">
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                        
+                        {/* Task Filter Component - if it exists */}
+                        {/* Replace this comment with your actual task filter component if you have one */}
+                        
                         <ContributionGraph 
                             year={new Date().getFullYear()}
                             onDayClick={() => {}} 
-                            onDayDoubleClick={() => {}}
-                            selectedTaskFilterId={null}
+                            onDayDoubleClick={() => {}}  // Added missing prop
+                            selectedTaskFilterId={selectedTaskFilterId}
                             records={friendRecords}
                             taskDefinitions={friendTasks}
                             displayMode="full"
