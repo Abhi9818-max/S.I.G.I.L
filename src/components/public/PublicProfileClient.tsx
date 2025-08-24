@@ -60,7 +60,7 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
     const friendRecords = friendData.records || [];
     const friendTasks = friendData.taskDefinitions || [];
     const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(userId) % 12) + 1}.jpeg`;
-    const displayName = friendData.username;
+    const displayName = friendData.username || 'Unknown User';
     
     const pageTierClass = friendLevelInfo ? `page-tier-group-${friendLevelInfo.tierGroup}` : 'page-tier-group-1';
 
@@ -111,13 +111,12 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
                         
-                        {/* Task Filter Component - if it exists */}
-                        {/* Replace this comment with your actual task filter component if you have one */}
+                        {/* Task Filter Component - add this if it exists in your original code */}
                         
                         <ContributionGraph 
                             year={new Date().getFullYear()}
                             onDayClick={() => {}} 
-                            onDayDoubleClick={() => {}}  // Added missing prop
+                            onDayDoubleClick={() => {}}
                             selectedTaskFilterId={selectedTaskFilterId}
                             records={friendRecords}
                             taskDefinitions={friendTasks}
