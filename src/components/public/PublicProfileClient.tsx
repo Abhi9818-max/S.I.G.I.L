@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
-import TaskFilterComponent from '@/components/records/TaskFilterComponent';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
@@ -26,6 +25,41 @@ const simpleHash = (s: string) => {
         hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash);
+};
+
+// Inline TaskFilterComponent
+interface TaskFilterComponentProps {
+    tasks: any[];
+    selectedTaskId: string | null;
+    onSelectTask: (taskId: string | null) => void;
+}
+
+const TaskFilterComponent: React.FC<TaskFilterComponentProps> = ({ 
+    tasks, 
+    selectedTaskId, 
+    onSelectTask 
+}) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value;
+        onSelectTask(value === '' ? null : value);
+    };
+
+    return (
+        <div className="mb-4">
+            <select 
+                value={selectedTaskId || ''} 
+                onChange={handleChange}
+                className="px-3 py-2 border rounded-md bg-background text-foreground"
+            >
+                <option value="">All Tasks</option>
+                {tasks.map(task => (
+                    <option key={task.id} value={task.id}>
+                        {task.name}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
 };
 
 interface PublicProfileClientPageProps {
@@ -112,7 +146,7 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
                         
-                        {/* Task Filter Component */}
+                        {/* Inline Task Filter Component */}
                         <TaskFilterComponent
                             tasks={friendTasks}
                             selectedTaskId={selectedTaskFilterId}
