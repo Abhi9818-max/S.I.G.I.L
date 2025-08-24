@@ -2,9 +2,9 @@ import React from 'react';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import ClientHeader from '@/components/ClientHeader';  // Import the new ClientHeader
+import ClientHeader from '@/components/ClientHeader';
 import StatsPanel from '@/components/records/StatsPanel';
-import ContributionGraph from '@/components/records/ContributionGraph';
+import ClientContributionGraph from '@/components/ClientContributionGraph';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -52,7 +52,7 @@ export default async function AlliancePage({ params }: { params: Params }) {
 
   return (
     <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
-      <ClientHeader />  {/* Use ClientHeader instead of Header with event handlers */}
+      <ClientHeader />
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
@@ -87,10 +87,8 @@ export default async function AlliancePage({ params }: { params: Params }) {
 
         <div>
           <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-          <ContributionGraph
+          <ClientContributionGraph
             year={new Date().getFullYear()}
-            onDayClick={() => {}}
-            onDayDoubleClick={() => {}}
             selectedTaskFilterId={null}
             records={[]}
             taskDefinitions={[]}
