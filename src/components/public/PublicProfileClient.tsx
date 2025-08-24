@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
 import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
+import TaskFilterComponent from '@/components/records/TaskFilterComponent';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
@@ -111,7 +112,12 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
                         
-                        {/* Task Filter Component - add this if it exists in your original code */}
+                        {/* Task Filter Component */}
+                        <TaskFilterComponent
+                            tasks={friendTasks}
+                            selectedTaskId={selectedTaskFilterId}
+                            onSelectTask={setSelectedTaskFilterId}
+                        />
                         
                         <ContributionGraph 
                             year={new Date().getFullYear()}
