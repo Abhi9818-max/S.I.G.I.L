@@ -27,14 +27,14 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
-// Inline TaskFilterComponent
-interface TaskFilterComponentProps {
+// Inline TaskFilter Component
+interface TaskFilterProps {
     tasks: any[];
     selectedTaskId: string | null;
     onSelectTask: (taskId: string | null) => void;
 }
 
-const TaskFilterComponent: React.FC<TaskFilterComponentProps> = ({ 
+const TaskFilterComponent: React.FC<TaskFilterProps> = ({ 
     tasks, 
     selectedTaskId, 
     onSelectTask 
@@ -146,7 +146,6 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
                         
-                        {/* Inline Task Filter Component */}
                         <TaskFilterComponent
                             tasks={friendTasks}
                             selectedTaskId={selectedTaskFilterId}
