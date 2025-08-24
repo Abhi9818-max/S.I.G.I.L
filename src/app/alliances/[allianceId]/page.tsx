@@ -1,3 +1,5 @@
+// src/app/alliances/[allianceId]/page.tsx
+
 import React from 'react';
 import type { Alliance } from '@/types';
 import { calculateUserLevelInfo } from '@/lib/config';
@@ -12,7 +14,6 @@ import { differenceInDays, parseISO } from 'date-fns';
 import Link from 'next/link';
 
 async function fetchAllAllianceIds(): Promise<string[]> {
-  // Your actual data fetching here
   return ['alliance1', 'alliance2', 'alliance3'];
 }
 
@@ -21,18 +22,10 @@ export async function generateStaticParams() {
   return ids.map(id => ({ allianceId: id }));
 }
 
-export default async function AlliancePage({
-  params,
-}: // Type for params is inherited by Next.js automatically for async component
-{
-  params: { allianceId: string };
-}) {
+export default async function AlliancePage({ params }) {
   const { allianceId } = params;
 
-  // Fetch real alliance data asynchronously here
-  // For example:
-  // const alliance = await fetchAllianceById(allianceId);
-  // For demo, dummy data:
+  // Dummy alliance data – replace with your real fetch data
   const alliance: Alliance = {
     id: allianceId,
     name: `Alliance ${allianceId}`,
@@ -74,19 +67,22 @@ export default async function AlliancePage({
           </div>
         </div>
 
-        <StatsPanel
-          friendData={{
-            uid: alliance.id,
-            username: alliance.name,
-            records: [],
-            bonusPoints: 0,
-            taskDefinitions: [],
-          }}
-        />
+        <StatsPanel friendData={{
+          uid: alliance.id,
+          username: alliance.name,
+          records: [],
+          bonusPoints: 0,
+          taskDefinitions: []
+        }} />
 
         <div>
           <h2 className="text-2xl font-semibold mb-4">Daily Time Breakdown</h2>
-          <DailyTimeBreakdownChart date={new Date()} records={[]} taskDefinitions={[]} hideFooter />
+          <DailyTimeBreakdownChart
+            date={new Date()}
+            records={[]}
+            taskDefinitions={[]}
+            hideFooter={true}
+          />
         </div>
 
         <div>
