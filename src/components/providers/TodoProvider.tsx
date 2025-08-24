@@ -291,7 +291,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={insultDialog.isOpen}>
-        <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+        <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
             <AlertDialogHeader>
                 <AlertDialogTitle>{insultDialog.title}</AlertDialogTitle>
                 <AlertDialogDescription>
