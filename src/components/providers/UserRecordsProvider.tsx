@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
@@ -38,6 +36,7 @@ import {
   subMonths,
   eachWeekOfInterval,
   eachMonthOfInterval,
+  Interval,
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
@@ -68,7 +67,6 @@ const removeUndefinedValues = (obj: any): any => {
   }
   return obj;
 };
-
 
 interface UserRecordsContextType {
   records: RecordEntry[];
@@ -138,7 +136,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (isUserDataLoaded && authUserData) {
       // Data migration for tasks without a status
       const needsMigration = authUserData.taskDefinitions?.some(task => !task.status);
-      if (needsMigration) {
+      if (needsMigration && authUserData.taskDefinitions) {
         const migratedTasks = authUserData.taskDefinitions.map(task => 
           task.status ? task : { ...task, status: 'active' as TaskStatus }
         );
@@ -161,7 +159,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       return userData.taskDefinitions;
     }
     // Ensure default tasks also have a status
-    return DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active'}));
+    return DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active' as TaskStatus}));
   }, [userData]);
 
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
@@ -176,7 +174,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const taskMastery = useMemo(() => userData?.taskMastery || {}, [userData]);
   const reputation = useMemo(() => userData?.reputation || {}, [userData]);
   const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
-
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
       const getNewState = (prevData: UserData | null) => {
@@ -261,7 +258,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     return cumulativeXp + totalBonusPoints;
   }, [records, getTaskDefinitionById, totalBonusPoints, isUserDataLoaded, calculateXpForRecord]);
-
 
   const getUserLevelInfo = useCallback((): UserLevelInfo | null => {
     if (!isUserDataLoaded) return null;
@@ -469,7 +465,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const newTask: TaskDefinition = {
       ...taskData,
       id: newId,
-      status: 'active',
+      status: 'active' as TaskStatus,
     };
     const updatedTasks = [...taskDefinitions, newTask];
     updateUserDataInDb({ taskDefinitions: updatedTasks });
@@ -645,7 +641,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateUserDataInDb({ freezeCrystals: newCrystals });
     }
   }, [freezeCrystals, updateUserDataInDb]);
-
 
   // Constellation Functions
   const getAvailableSkillPoints = useCallback((taskId: string): number => {
@@ -830,12 +825,16 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           title: `🏆 ${ach?.isTitle ? 'Title' : 'Achievement'} Unlocked!`,
           description: ach?.name || 'You have unlocked a new achievement.',
         });
+        
+        const newUnlockedAchievements = [...unlockedAchievements, achievementId];
+        const newClaimableAchievements = claimableAchievements.filter(id => id !== achievementId);
+        
         updateUserDataInDb({ 
-            unlockedAchievements: arrayUnion(achievementId),
-            claimableAchievements: arrayRemove(achievementId)
+            unlockedAchievements: newUnlockedAchievements,
+            claimableAchievements: newClaimableAchievements
         });
     }
-  }, [claimableAchievements, updateUserDataInDb, toast]);
+  }, [claimableAchievements, unlockedAchievements, updateUserDataInDb, toast]);
 
   // High Goal Functions
   const addHighGoal = useCallback((goalData: Omit<HighGoal, 'id'>) => {
