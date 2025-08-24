@@ -22,10 +22,9 @@ export async function generateStaticParams() {
   return ids.map(id => ({ allianceId: id }));
 }
 
-export default async function AlliancePage({ params }) {
+export default async function AlliancePage({ params }: { params: { allianceId: string } }) {
   const { allianceId } = params;
 
-  // Dummy alliance data – replace with your real fetch data
   const alliance: Alliance = {
     id: allianceId,
     name: `Alliance ${allianceId}`,
