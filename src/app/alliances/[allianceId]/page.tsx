@@ -1,7 +1,6 @@
 // src/app/alliances/[allianceId]/page.tsx
 
 import React from 'react';
-import type { Alliance } from '@/types';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,13 +18,13 @@ async function fetchAllAllianceIds(): Promise<string[]> {
 
 export async function generateStaticParams() {
   const ids = await fetchAllAllianceIds();
-  return ids.map(id => ({ allianceId: id }));
+  return ids.map((id) => ({ allianceId: id }));
 }
 
-export default async function AlliancePage({ params }: { params: { allianceId: string } }) {
-  const { allianceId } = params;
+export default async function AlliancePage({ params }: any) {
+  const allianceId = params.allianceId;
 
-  const alliance: Alliance = {
+  const alliance = {
     id: allianceId,
     name: `Alliance ${allianceId}`,
     description: 'Alliance description goes here.',
@@ -52,7 +51,7 @@ export default async function AlliancePage({ params }: { params: { allianceId: s
   const daysLeft = differenceInDays(parseISO(alliance.endDate), new Date());
 
   return (
-    <div className={cn("min-h-screen flex flex-col bg-background", pageTierClass)}>
+    <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4">
@@ -66,13 +65,15 @@ export default async function AlliancePage({ params }: { params: { allianceId: s
           </div>
         </div>
 
-        <StatsPanel friendData={{
-          uid: alliance.id,
-          username: alliance.name,
-          records: [],
-          bonusPoints: 0,
-          taskDefinitions: []
-        }} />
+        <StatsPanel
+          friendData={{
+            uid: alliance.id,
+            username: alliance.name,
+            records: [],
+            bonusPoints: 0,
+            taskDefinitions: [],
+          }}
+        />
 
         <div>
           <h2 className="text-2xl font-semibold mb-4">Daily Time Breakdown</h2>
