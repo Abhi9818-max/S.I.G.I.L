@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { User, BarChart2, Activity } from 'lucide-react';
+import { BarChart2, Activity } from 'lucide-react';
 import type { UserData, UserLevelInfo, RecordEntry, TaskDefinition } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +20,7 @@ const simpleHash = (s: string) => {
     for (let i = 0; i < s.length; i++) {
         const char = s.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32bit integer
+        hash = hash & hash;
     }
     return Math.abs(hash);
 };
@@ -44,7 +44,7 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                 <div className="text-center p-8">
                     <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
                     <p className="text-muted-foreground">This user profile could not be loaded or does not exist.</p>
-                     <Button asChild variant="outline" className="mt-8">
+                    <Button asChild variant="outline" className="mt-8">
                         <Link href="/">Return to Dashboard</Link>
                     </Button>
                 </div>
@@ -75,7 +75,11 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                         </Avatar>
                         <div className="w-full text-center md:text-left">
                            <h1 className="text-3xl font-bold">{displayName}</h1>
-                           {friendLevelInfo && <div className="mt-2 flex justify-center md:justify-start"><LevelIndicator levelInfo={friendLevelInfo} /></div>}
+                           {friendLevelInfo && (
+                             <div className="mt-2 flex justify-center md:justify-start">
+                               <LevelIndicator levelInfo={friendLevelInfo} />
+                             </div>
+                           )}
                             <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto md:mx-0">
                                 {userData.bio || "No bio available."}
                             </p>
@@ -85,8 +89,14 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                 
                 <Tabs defaultValue="stats" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats & Overview</TabsTrigger>
-                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Full Activity</TabsTrigger>
+                    <TabsTrigger value="stats">
+                      <BarChart2 className="mr-2 h-4 w-4" />
+                      Stats & Overview
+                    </TabsTrigger>
+                    <TabsTrigger value="activity">
+                      <Activity className="mr-2 h-4 w-4" />
+                      Full Activity
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="stats" className="mt-6">
