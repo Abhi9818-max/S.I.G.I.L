@@ -1,22 +1,20 @@
-
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
-import Header from '@/components/layout/Header';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BarChart2, Activity, Award } from 'lucide-react';
-import { UserData, UserLevelInfo } from '@/types';
+import { User, BarChart2, Activity } from 'lucide-react';
+import type { UserData, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
+import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
-import { subDays } from 'date-fns';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import TaskFilterBar from '@/components/records/TaskFilterBar';
 import LevelIndicator from '@/components/layout/LevelIndicator';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -29,147 +27,151 @@ const simpleHash = (s: string) => {
     return Math.abs(hash);
 };
 
-interface PublicProfileClientPageProps {
-    initialUserData: UserData;
+// Inline TaskFilter Component
+interface TaskFilterProps {
+    tasks: any[];
+    selectedTaskId: string | null;
+    onSelectTask: (taskId: string | null) => void;
 }
 
-export default function PublicProfileClientPage({ initialUserData }: PublicProfileClientPageProps) {
-    const [userData] = useState<UserData>(initialUserData);
-    const [isLoading, setIsLoading] = useState(false); // Can be used for future client-side updates
-    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
-
-    const userLevelInfo: UserLevelInfo | null = useMemo(() => {
-        if (!userData) return null;
-        const totalRecordValue = userData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
-        const totalExperience = totalRecordValue + (userData.bonusPoints || 0);
-        return calculateUserLevelInfo(totalExperience);
-    }, [userData]);
-    
-    // Client-side effect for animations or other browser-specific tasks
-    useEffect(() => {
-        // e.g., trigger animations on load
-    }, []);
-
-    if (isLoading || !userData) {
-        return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
-    }
-
-    const { username, bio, photoURL, records, taskDefinitions, unlockedAchievements } = userData;
-    const userAvatar = photoURL || `/avatars/avatar${(simpleHash(userData.uid || '') % 12) + 1}.jpeg`;
-    const today = new Date();
-    const yesterday = subDays(today, 1);
+const TaskFilterComponent: React.FC<TaskFilterProps> = ({ 
+    tasks, 
+    selectedTaskId, 
+    onSelectTask 
+}) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value;
+        onSelectTask(value === '' ? null : value);
+    };
 
     return (
-        <div className={cn("min-h-screen flex flex-col", userLevelInfo ? `page-tier-group-${userLevelInfo.tierGroup}` : 'page-tier-group-1')}>
-            <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
-                <Button variant="outline" onClick={() => window.history.back()} className="hidden md:inline-flex mb-4">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                </Button>
-                <div className="pt-6 md:p-0">
-                    <div className="flex flex-col md:flex-row items-start gap-4">
-                        <div className="flex items-center gap-4 md:items-start">
-                             <Avatar className="h-16 w-16 md:h-20 md:w-20 flex-shrink-0">
-                                <AvatarImage src={userAvatar} />
-                                <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                             <div className="md:hidden">
-                                <h1 className="text-lg font-semibold">{username}</h1>
-                            </div>
-                        </div>
+        <div className="mb-4">
+            <select 
+                value={selectedTaskId || ''} 
+                onChange={handleChange}
+                className="px-3 py-2 border rounded-md bg-background text-foreground"
+            >
+                <option value="">All Tasks</option>
+                {tasks.map(task => (
+                    <option key={task.id} value={task.id}>
+                        {task.name}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+};
 
-                        <div className="w-full">
-                            <div className="hidden md:flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
-                                <h1 className="text-xl font-semibold">{username}</h1>
-                               <div className="hidden md:block">
-                                    {userLevelInfo && <LevelIndicator levelInfo={userLevelInfo} />}
-                                </div>
-                            </div>
-                             <div className="mt-1 md:hidden">
-                                {userLevelInfo && <LevelIndicator levelInfo={userLevelInfo} />}
-                            </div>
-                            <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
-                                {bio || "No bio yet."}
+interface PublicProfileClientPageProps {
+  initialUserData: UserData;
+  userId: string;
+}
+
+const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initialUserData, userId }) => {
+    const [friendData, setFriendData] = useState<UserData | null>(initialUserData);
+    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
+    
+    const friendLevelInfo: UserLevelInfo | null = React.useMemo(() => {
+        if (!friendData) return null;
+        const totalRecordValue = friendData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
+        const totalExperience = totalRecordValue + (friendData.bonusPoints || 0);
+        return calculateUserLevelInfo(totalExperience);
+    }, [friendData]);
+    
+    if (!friendData) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center p-8">
+                    <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
+                    <p className="text-muted-foreground">This user profile could not be loaded or does not exist.</p>
+                     <Button asChild variant="outline" className="mt-8">
+                        <Link href="/">Return to Dashboard</Link>
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+    
+    const friendRecords = friendData.records || [];
+    const friendTasks = friendData.taskDefinitions || [];
+    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(userId) % 12) + 1}.jpeg`;
+    const displayName = friendData.username || 'Unknown User';
+    
+    const pageTierClass = friendLevelInfo ? `page-tier-group-${friendLevelInfo.tierGroup}` : 'page-tier-group-1';
+
+    return (
+        <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
+            <header className="py-4 border-b border-border/50 bg-background/50 backdrop-blur-sm">
+                <div className="container mx-auto flex justify-center">
+                    <h1 className="text-lg font-semibold text-primary">Public Profile</h1>
+                </div>
+            </header>
+            <main className="flex-grow container mx-auto px-4 pb-8 md:p-8 animate-fade-in-up space-y-8">
+                <div className="pt-6 md:p-0">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <Avatar className="h-24 w-24">
+                            <AvatarImage src={friendAvatar} />
+                            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="w-full text-center md:text-left">
+                           <h1 className="text-3xl font-bold">{displayName}</h1>
+                           {friendLevelInfo && <div className="mt-2 flex justify-center md:justify-start"><LevelIndicator levelInfo={friendLevelInfo} /></div>}
+                            <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto md:mx-0">
+                                {friendData.bio || "No bio available."}
                             </p>
                         </div>
                     </div>
                 </div>
                 
-                <Tabs defaultValue="activity" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
-                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                    <TabsTrigger value="achievements"><Award className="mr-2 h-4 w-4" />Achievements ({unlockedAchievements?.length || 0})</TabsTrigger>
+                <Tabs defaultValue="stats" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats & Overview</TabsTrigger>
+                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Full Activity</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="activity" className="mt-6">
-                     <div className="mb-8 max-w-4xl mx-auto">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                            <Tabs defaultValue="today" className="w-auto">
-                                <TabsList>
-                                    <TabsTrigger value="today">Today</TabsTrigger>
-                                    <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </div>
-                        <ScrollArea className="w-full whitespace-nowrap">
-                            <Tabs defaultValue="today" className="w-full inline-block min-w-full">
-                                <TabsContent value="today" className="mt-4">
-                                    <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
-                                        <DailyTimeBreakdownChart
-                                            date={today}
-                                            records={records}
-                                            taskDefinitions={taskDefinitions}
-                                            hideFooter={true}
-                                        />
-                                    </div>
-                                </TabsContent>
-                                <TabsContent value="yesterday" className="mt-4">
-                                    <div className="w-full md:mx-auto">
-                                        <DailyTimeBreakdownChart
-                                            date={yesterday}
-                                            records={records}
-                                            taskDefinitions={taskDefinitions}
-                                            hideFooter={true}
-                                        />
-                                    </div>
-                                </TabsContent>
-                            </Tabs>
-                            <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
+                  <TabsContent value="stats" className="mt-6">
+                    <StatsPanel friendData={friendData} />
+                    <div className="mt-8">
+                        <h2 className="text-2xl font-semibold mb-4">Daily Time Breakdown</h2>
+                         <DailyTimeBreakdownChart
+                            date={new Date()}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
+                            hideFooter={true}
+                        />
                     </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="activity" className="mt-6">
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                        <TaskFilterBar
-                            taskDefinitions={taskDefinitions || []}
+                        
+                        <TaskFilterComponent
+                            tasks={friendTasks}
                             selectedTaskId={selectedTaskFilterId}
                             onSelectTask={setSelectedTaskFilterId}
                         />
+                        
                         <ContributionGraph 
                             year={new Date().getFullYear()}
                             onDayClick={() => {}} 
+                            onDayDoubleClick={() => {}}
                             selectedTaskFilterId={selectedTaskFilterId}
-                            records={records} 
-                            taskDefinitions={taskDefinitions}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
                             displayMode="full"
                         />
                     </div>
                   </TabsContent>
-                  
-                  <TabsContent value="stats" className="mt-6">
-                    <StatsPanel friendData={userData} selectedTaskFilterId={selectedTaskFilterId} />
-                  </TabsContent>
-                  
-                  <TabsContent value="achievements" className="mt-6">
-                     <div className="text-center text-muted-foreground py-10">
-                        Feature coming soon.
-                    </div>
-                  </TabsContent>
-                  
                 </Tabs>
+                <div className="text-center mt-8">
+                    <Button asChild variant="outline">
+                        <Link href="/">Return to Dashboard</Link>
+                    </Button>
+                </div>
             </main>
         </div>
     );
 };
+
+export default PublicProfileClientPage;
