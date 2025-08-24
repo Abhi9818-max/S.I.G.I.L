@@ -1,7 +1,5 @@
 // src/app/alliances/[allianceId]/page.tsx
 
-"use client";
-
 import React from 'react';
 import type { Alliance } from '@/types';
 import { calculateUserLevelInfo } from '@/lib/config';
@@ -11,8 +9,6 @@ import Header from '@/components/layout/Header';
 import StatsPanel from '@/components/records/StatsPanel';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import LevelIndicator from '@/components/layout/LevelIndicator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 
@@ -51,8 +47,8 @@ export default function AlliancePage({ params }: PageProps) {
     opponentDetails: undefined,
     photoURL: '',
     taskId: 'task1',
-    progress: 0,        // added required field
-    createdAt: new Date().toISOString(), // added required field
+    progress: 0,
+    createdAt: new Date().toISOString(),
   };
 
   const totalExperience = 0; // replace with real calculation
