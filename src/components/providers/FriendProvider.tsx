@@ -95,7 +95,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Marketplace listeners
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
         const q = query(collection(db, 'marketplace_listings'), where('sellerId', '!=', user.uid));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setGlobalListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MarketplaceListing)));
@@ -104,7 +104,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !db) {
             setUserListings([]);
             return;
         }
@@ -116,7 +116,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !db) {
             setUserAlliances([]);
             return;
         };
@@ -132,7 +132,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     const fetchFriendsAndRequests = useCallback(async () => {
-        if (!user) return;
+        if (!user || !db) return;
 
         // Fetch incoming friend requests
         const incomingQuery = query(collection(db, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
@@ -197,7 +197,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     useEffect(() => {
-        if (user) {
+        if (user && db) {
             fetchFriendsAndRequests(); // Initial fetch
             const friendsSubcollectionRef = collection(db, 'users', user.uid, 'friends');
             const unsubscribe = onSnapshot(friendsSubcollectionRef, () => {
@@ -216,6 +216,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
+        if (!db) return null;
         const usersRef = collection(db, 'users');
         const searchTerm = username.toLowerCase();
         const q = query(usersRef, where('username_lowercase', '==', searchTerm));
@@ -235,7 +236,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const sendFriendRequest = useCallback(async (recipient: SearchedUser) => {
-        if (!user || !userData) throw new Error("You must be logged in to send requests.");
+        if (!user || !userData || !db) throw new Error("You must be logged in to send requests.");
         if (user.uid === recipient.uid) throw new Error("You cannot send a request to yourself.");
 
         const requestId = `${user.uid}_${recipient.uid}`;
@@ -266,7 +267,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
-        if (!user || !userData) {
+        if (!user || !userData || !db) {
             toast({ title: 'Error', description: 'You must be logged in.', variant: 'destructive' });
             return;
         }
@@ -302,6 +303,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, toast, fetchFriendsAndRequests]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
+        if (!db) return;
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
         await fetchFriendsAndRequests();
@@ -309,6 +311,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [toast, fetchFriendsAndRequests]);
     
     const cancelFriendRequest = useCallback(async (requestId: string) => {
+        if (!db) return;
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
         await fetchFriendsAndRequests();
@@ -316,7 +319,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [toast, fetchFriendsAndRequests]);
     
     const getFriendData = useCallback(async (friendId: string): Promise<UserData | null> => {
-        if (!user) return null;
+        if (!user || !db) return null;
         
         const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
         const friendSnap = await getDoc(friendRef);
@@ -335,6 +338,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     const getPublicUserData = useCallback(async (userId: string): Promise<UserData | null> => {
+        if (!db) return null;
         const userDocRef = doc(db, 'users', userId);
         const docSnap = await getDoc(userDocRef);
         
@@ -345,14 +349,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const updateFriendNickname = useCallback(async (friendId: string, nickname: string) => {
-        if (!user) return;
+        if (!user || !db) return;
         const friendRef = doc(db, `users/${user.uid}/friends`, friendId);
         await updateDoc(friendRef, { nickname });
         await fetchFriendsAndRequests();
     }, [user, fetchFriendsAndRequests]);
 
     const unfriend = useCallback(async (friendId: string) => {
-        if (!user) throw new Error("You must be logged in.");
+        if (!user || !db) throw new Error("You must be logged in.");
 
         const batch = writeBatch(db);
 
@@ -376,7 +380,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, fetchFriendsAndRequests, toast, router]);
 
     const sendRelationshipProposal = useCallback(async (friendId: string, recipientUsername: string, recipientPhotoURL: string | null | undefined, relationship: string) => {
-        if (!user || !userData) throw new Error("You must be logged in.");
+        if (!user || !userData || !db) throw new Error("You must be logged in.");
 
         if (relationship === 'none') {
             const batch = writeBatch(db);
@@ -420,7 +424,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
     
     const acceptRelationshipProposal = useCallback(async (proposal: RelationshipProposal) => {
-        if (!user) return;
+        if (!user || !db) return;
         const batch = writeBatch(db);
 
         const userFriendRef = doc(db, `users/${user.uid}/friends`, proposal.senderId);
@@ -438,12 +442,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, fetchFriendsAndRequests, toast]);
 
     const declineRelationshipProposal = useCallback(async (proposalId: string) => {
+        if (!db) return;
         await deleteDoc(doc(db, 'relationship_proposals', proposalId));
         await fetchFriendsAndRequests();
         toast({ title: 'Proposal Declined', variant: 'destructive' });
     }, [fetchFriendsAndRequests, toast]);
 
     const cancelRelationshipProposal = useCallback(async (proposalId: string) => {
+        if (!db) return;
         await deleteDoc(doc(db, 'relationship_proposals', proposalId));
         await fetchFriendsAndRequests();
         toast({ title: 'Proposal Cancelled' });
@@ -459,7 +465,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Alliance Functions
     const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>): Promise<string> => {
-        if (!user || !userData) throw new Error("Authentication required.");
+        if (!user || !userData || !db) throw new Error("Authentication required.");
         
         const newAllianceData: Omit<Alliance, 'id' | 'members'> = {
             ...allianceData,
@@ -477,7 +483,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             uid: user.uid,
             username: userData.username,
             nickname: userData.username,
-            photoURL: userData.photoURL
+            photoURL: userData.photoURL,
+            contribution: 0
         };
         await updateDoc(docRef, { members: arrayUnion(memberData) });
 
@@ -485,6 +492,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData]);
 
     const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<{allianceData: Alliance, membersData: UserData[]} | null> => {
+        if (!db) return null;
         const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
 
@@ -504,6 +512,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
+        if (!db) return;
         const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
         if (!allianceSnap.exists()) throw new Error("Alliance not found.");
@@ -524,12 +533,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const disbandAlliance = useCallback(async (allianceId: string) => {
+        if (!db) return;
         const allianceRef = doc(db, 'alliances', allianceId);
         await deleteDoc(allianceRef);
     }, []);
 
     const deleteAllCreatedAlliances = useCallback(async () => {
-        if (!user) throw new Error("Authentication required.");
+        if (!user || !db) throw new Error("Authentication required.");
 
         const alliancesRef = collection(db, 'alliances');
         const q = query(alliancesRef, where('creatorId', '==', user.uid));
@@ -550,7 +560,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, toast]);
 
     const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
-        if (!user || !userData) throw new Error("Authentication required.");
+        if (!user || !userData || !db) throw new Error("Authentication required.");
 
         const invitationId = `${user.uid}_${recipientId}_${allianceId}`;
         const inviteRef = doc(db, 'alliance_invitations', invitationId);
@@ -581,7 +591,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptAllianceInvitation = useCallback(async (invitation: AllianceInvitation) => {
-        if (!user || !userData) throw new Error("Authentication required.");
+        if (!user || !userData || !db) throw new Error("Authentication required.");
         
         const allianceRef = doc(db, 'alliances', invitation.allianceId);
         const allianceSnap = await getDoc(allianceRef);
@@ -591,7 +601,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             uid: user.uid,
             username: userData.username,
             nickname: userData.username,
-            photoURL: userData.photoURL
+            photoURL: userData.photoURL,
+            contribution: 0
         };
 
         await updateDoc(allianceRef, {
@@ -606,12 +617,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests, toast, router]);
     
     const declineAllianceInvitation = useCallback(async (invitationId: string) => {
+        if (!db) return;
         await deleteDoc(doc(db, 'alliance_invitations', invitationId));
         await fetchFriendsAndRequests();
         toast({ title: 'Invitation Declined', variant: 'destructive' });
     }, [fetchFriendsAndRequests, toast]);
 
     const getPendingAllianceInvitesFor = useCallback(async (allianceId: string): Promise<AllianceInvitation[]> => {
+        if (!db) return [];
         const invitesQuery = query(
             collection(db, 'alliance_invitations'),
             where('allianceId', '==', allianceId),
@@ -622,11 +635,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const setAllianceDare = useCallback(async (allianceId: string, dare: string) => {
+        if (!db) return;
         const allianceRef = doc(db, 'alliances', allianceId);
         await updateDoc(allianceRef, { dare });
     }, []);
 
     const searchAlliances = useCallback(async (name: string): Promise<Alliance[]> => {
+        if (!db) return [];
         const alliancesRef = collection(db, 'alliances');
         // Firestore doesn't support case-insensitive or partial text search natively.
         // A common workaround is to search for >= and <= a range.
@@ -640,7 +655,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const sendAllianceChallenge = useCallback(async (challengerAlliance: Alliance, challengedAlliance: Alliance) => {
-        if (!user) throw new Error("Authentication required.");
+        if (!user || !db) throw new Error("Authentication required.");
 
         const challengeId = `${challengerAlliance.id}_${challengedAlliance.id}`;
         const reverseChallengeId = `${challengedAlliance.id}_${challengerAlliance.id}`;
@@ -670,6 +685,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user]);
 
     const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
+        if (!db) return;
         const batch = writeBatch(db);
         
         const challengeRef = doc(db, 'alliance_challenges', challenge.id);
@@ -699,6 +715,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [toast, fetchFriendsAndRequests]);
 
     const declineAllianceChallenge = useCallback(async (challengeId: string) => {
+        if (!db) return;
         const challengeRef = doc(db, 'alliance_challenges', challengeId);
         await updateDoc(challengeRef, { status: 'declined' });
         await fetchFriendsAndRequests();
@@ -706,13 +723,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [toast, fetchFriendsAndRequests]);
 
     const updateAlliance = useCallback(async (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => {
+        if (!db) return;
         const allianceRef = doc(db, 'alliances', allianceId);
         await updateDoc(allianceRef, data);
     }, []);
 
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
-        if (!user) throw new Error("Authentication required.");
+        if (!user || !db) throw new Error("Authentication required.");
 
         const title = ACHIEVEMENTS.find(a => a.id === titleId && a.isTitle);
         if (!title) throw new Error("Invalid title selected.");
@@ -759,7 +777,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, updateUserDataInDb]);
 
     const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
-        if (!user || !userData) throw new Error("Authentication required.");
+        if (!user || !userData || !db) throw new Error("Authentication required.");
         if (user.uid === listing.sellerId) throw new Error("You cannot buy your own item.");
         if ((userData.aetherShards || 0) < listing.price) throw new Error("Not enough Aether Shards.");
 
@@ -789,7 +807,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData]);
 
     const cancelListing = useCallback(async (listingId: string) => {
-        if (!user) throw new Error("Authentication required.");
+        if (!user || !db) throw new Error("Authentication required.");
         
         const listingRef = doc(db, 'marketplace_listings', listingId);
         const listingSnap = await getDoc(listingRef);

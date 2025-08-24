@@ -22,21 +22,25 @@ const firebaseConfig = {
 // Check if Firebase config is populated
 export const isFirebaseConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key';
 
-// Initialize Firebase
-let app: FirebaseApp | undefined;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
-let storage: FirebaseStorage | null = null;
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 let analytics: ReturnType<typeof getAnalytics> | null = null;
-let rtdb: Database | null = null;
+let rtdb: Database;
 
 if (isFirebaseConfigured) {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    if (getApps().length === 0) {
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApps()[0];
+    }
+
     auth = getAuth(app);
-    // Use the full firestore library
-    db = getFirestore(app); 
+    db = getFirestore(app);
     storage = getStorage(app);
     rtdb = getDatabase(app);
+
     if (typeof window !== 'undefined') {
         isSupported().then((enabled) => {
             if (enabled) {
@@ -46,4 +50,6 @@ if (isFirebaseConfigured) {
     }
 }
 
-export { app, analytics, auth, db, storage };
+
+export { app, auth, db, storage, analytics, rtdb };
+

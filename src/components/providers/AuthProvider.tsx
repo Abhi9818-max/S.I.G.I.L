@@ -324,7 +324,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user, db, toast, isGuest]);
 
   const equipTitle = useCallback(async (titleId: string | null) => {
-    const dataToUpdate = { equippedTitleId: titleId || null };
+    const dataToUpdate = { equippedTitleId: titleId };
      if (isGuest) {
         setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
         const guestData = JSON.parse(localStorage.getItem('guest-userData') || '{}');
