@@ -35,12 +35,13 @@ if (isFirebaseConfigured) {
         app = getApps()[0];
     }
 
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    rtdb = getDatabase(app);
-
+    // Initialize services only in the browser
     if (typeof window !== 'undefined') {
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
+        rtdb = getDatabase(app);
+        
         isSupported().then((enabled) => {
             if (enabled) {
                 analytics = getAnalytics(app);

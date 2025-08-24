@@ -23,7 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import AllianceCard from '@/components/alliances/AllianceCard';
-import { generateAllianceDare } from '@/lib/server/alliance-dare';
+import { generateAllianceDare } from '@/lib/server/actions/alliance-dare';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,

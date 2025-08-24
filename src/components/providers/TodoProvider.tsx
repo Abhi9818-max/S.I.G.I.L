@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { isPast, startOfDay, format, parseISO, isToday, isSameDay, isYesterday, differenceInHours } from 'date-fns';
 import { useAuth } from './AuthProvider';
 import { v4 as uuidv4 } from 'uuid';
-import { generateDare } from '@/lib/server/dare';
+import { generateDare } from '@/lib/server/actions/dare';
 import {
   AlertDialog,
   AlertDialogContent,
