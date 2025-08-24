@@ -28,7 +28,6 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { AppProviders } from '@/components/providers/AppProviders';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -234,8 +233,6 @@ function HomePageContent() {
 
 export default function HomePage() {
   return (
-    <AppProviders>
-      <HomePageContent />
-    </AppProviders>
+    <HomePageContent />
   );
 }

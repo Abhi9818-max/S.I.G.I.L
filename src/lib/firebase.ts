@@ -1,4 +1,3 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
@@ -20,7 +19,7 @@ const firebaseConfig = {
 };
 
 // Check if Firebase config is populated
-export const isFirebaseConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key';
+export const isFirebaseConfigured = !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
 
 let app: FirebaseApp;
 let auth: Auth;
@@ -52,4 +51,3 @@ if (isFirebaseConfigured) {
 
 
 export { app, auth, db, storage, analytics, rtdb };
-

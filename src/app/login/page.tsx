@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
+import { isFirebaseConfigured } from '@/lib/firebase';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required."),
@@ -32,9 +33,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 type SetupForm = z.infer<typeof setupSchema>;
 
 export default function LoginPage() {
-  const { login, setupCredentials, loading, continueAsGuest } = useAuth();
+  const { login, setupCredentials, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(!isFirebaseConfigured);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),

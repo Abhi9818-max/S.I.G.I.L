@@ -14,7 +14,6 @@ import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 
 const FAKE_DOMAIN = 'sigil.local';
-const GUEST_KEY = 'sigil-guest-mode';
 
 const MALE_AVATAR_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 const FEMALE_AVATAR_NUMBERS = [13, 15, 16, 17, 33, 34, 35, 36, 37, 38, 39, 40, 41];
@@ -32,7 +31,6 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   setupCredentials: (username: string, password: string, gender: 'male' | 'female' | 'other' | 'prefer_not_to_say') => Promise<boolean>;
-  continueAsGuest: () => void;
   updateProfilePicture: (url: string) => Promise<string | null>;
   updateBio: (newBio: string) => Promise<void>;
   equipTitle: (titleId: string | null) => Promise<void>;
@@ -49,23 +47,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [isUserDataLoaded, setIsUserDataLoaded] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
-  const [showLoading, setShowLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
   const auth = isFirebaseConfigured ? firebaseAuth : null;
   const storage = isFirebaseConfigured ? firebaseStorage : null;
+  const isGuest = !user && !loading && !isFirebaseConfigured;
 
 
   useEffect(() => {
-    const isGuestSession = sessionStorage.getItem(GUEST_KEY) === 'true';
-    if (isGuestSession) {
-      setIsGuest(true);
-      setLoading(false);
-      return;
-    }
-    
     if (!auth) {
       setLoading(false);
       return;
@@ -136,25 +126,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const isAuthPage = pathname === '/login';
 
-    if (!isFirebaseConfigured && !isGuest && !isAuthPage) {
+    if (!isFirebaseConfigured && !isAuthPage) {
         router.push('/login');
         return;
     }
 
-    if (!isGuest && !user) {
+    if (!user) {
       if (!isAuthPage) router.push('/login');
     } else {
       if (isAuthPage) router.push('/');
     }
 
-  }, [user, isGuest, loading, pathname, router]);
-
-  useEffect(() => {
-    // This effect ensures the loading screen is only shown on the client
-    // after the initial render, preventing the hydration error.
-    setShowLoading(loading);
-  }, [loading]);
-
+  }, [user, loading, pathname, router]);
 
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
     if (!auth) return false;
@@ -178,16 +161,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [auth, toast, router]);
 
   const logout = useCallback(async () => {
-    if (isGuest) {
-      sessionStorage.removeItem(GUEST_KEY);
-      setIsGuest(false);
-      setUserData(null);
-      setIsUserDataLoaded(false);
-      router.push('/login');
-      return;
-    }
-
-    if (!auth) return;
+    if (!auth) {
+        router.push('/login');
+        return;
+    };
     try {
       await signOut(auth);
       router.push('/login');
@@ -195,7 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error("Logout failed:", error);
       toast({ title: 'Logout Failed', description: 'Could not log you out. Please try again.', variant: 'destructive' });
     }
-  }, [auth, router, toast, isGuest]);
+  }, [auth, router, toast]);
 
   const setupCredentials = useCallback(async (username: string, password: string, gender: 'male' | 'female' | 'other' | 'prefer_not_to_say'): Promise<boolean> => {
     if (!auth || !db) return false;
@@ -257,12 +234,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
     }
   }, [auth, db, toast, router]);
-
-  const continueAsGuest = useCallback(() => {
-    sessionStorage.setItem(GUEST_KEY, 'true');
-    setIsGuest(true);
-    router.push('/');
-  }, [router]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
     if (isGuest) {
@@ -377,7 +348,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, db, toast, isGuest, userData]);
   
-  if (showLoading && pathname !== '/login') {
+  if (loading && pathname !== '/login') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
           <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
@@ -386,7 +357,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user && !isGuest, isGuest, login, logout, setupCredentials, continueAsGuest, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );
