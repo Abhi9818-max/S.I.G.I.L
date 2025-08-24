@@ -1,5 +1,3 @@
-// src/app/alliances/[allianceId]/page.tsx
-
 import React from 'react';
 import type { Alliance } from '@/types';
 import { calculateUserLevelInfo } from '@/lib/config';
@@ -13,8 +11,8 @@ import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownCh
 import { differenceInDays, parseISO } from 'date-fns';
 import Link from 'next/link';
 
-// Replace with your real data-fetching logic
 async function fetchAllAllianceIds(): Promise<string[]> {
+  // Your actual data fetching here
   return ['alliance1', 'alliance2', 'alliance3'];
 }
 
@@ -25,12 +23,16 @@ export async function generateStaticParams() {
 
 export default async function AlliancePage({
   params,
-}: {
+}: // Type for params is inherited by Next.js automatically for async component
+{
   params: { allianceId: string };
 }) {
   const { allianceId } = params;
 
-  // Dummy alliance data - replace with real fetch
+  // Fetch real alliance data asynchronously here
+  // For example:
+  // const alliance = await fetchAllianceById(allianceId);
+  // For demo, dummy data:
   const alliance: Alliance = {
     id: allianceId,
     name: `Alliance ${allianceId}`,
@@ -52,7 +54,7 @@ export default async function AlliancePage({
     createdAt: new Date().toISOString(),
   };
 
-  const totalExperience = 0; // replace with real calculation
+  const totalExperience = 0;
   const levelInfo = calculateUserLevelInfo(totalExperience);
   const pageTierClass = `page-tier-group-${levelInfo.tierGroup}`;
   const daysLeft = differenceInDays(parseISO(alliance.endDate), new Date());
@@ -72,22 +74,19 @@ export default async function AlliancePage({
           </div>
         </div>
 
-        <StatsPanel friendData={{
-          uid: alliance.id,
-          username: alliance.name,
-          records: [],
-          bonusPoints: 0,
-          taskDefinitions: []
-        }} />
+        <StatsPanel
+          friendData={{
+            uid: alliance.id,
+            username: alliance.name,
+            records: [],
+            bonusPoints: 0,
+            taskDefinitions: [],
+          }}
+        />
 
         <div>
           <h2 className="text-2xl font-semibold mb-4">Daily Time Breakdown</h2>
-          <DailyTimeBreakdownChart
-            date={new Date()}
-            records={[]}
-            taskDefinitions={[]}
-            hideFooter={true}
-          />
+          <DailyTimeBreakdownChart date={new Date()} records={[]} taskDefinitions={[]} hideFooter />
         </div>
 
         <div>
