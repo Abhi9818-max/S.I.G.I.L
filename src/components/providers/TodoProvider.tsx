@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { TodoItem } from '@/types';
@@ -21,7 +20,6 @@ import {
 import { INSULTS } from '@/lib/insults';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
 
 interface DareDialogInfo {
     isOpen: boolean;
@@ -50,7 +48,6 @@ const TodoContext = React.createContext<TodoContextType | undefined>(undefined);
 const LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY = 'sigil-shown-pact-notifications';
 const INSULT_CONFIRMATION_PHRASE = "I am worthless bastard";
 
-
 export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { updateUserDataInDb, userData, isUserDataLoaded } = useUserRecords();
   const { dashboardSettings } = useSettings();
@@ -64,7 +61,6 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return userData.todoItems;
   }, [isUserDataLoaded, userData?.todoItems]);
-
 
   // Effect for handling pact penalties
   React.useEffect(() => {
@@ -122,7 +118,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [isUserDataLoaded, dashboardSettings.dareCategory, userData?.todoItems, updateUserDataInDb]);
 
-  // Effect for handling notifications
+  // Effect for handling notifications - FIXED
   React.useEffect(() => {
     if (!isUserDataLoaded || !userData?.todoItems || typeof window === 'undefined' || !('Notification' in window)) {
       return;
@@ -135,7 +131,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const shownNotifications: string[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_SHOWN_NOTIFICATIONS_KEY) || '[]');
       
-      const todayPactsWithDueDate = userData.todoItems.filter(item => 
+      // FIXED: Using optional chaining and fallback to prevent "possibly undefined" error
+      const todayPactsWithDueDate = (userData.todoItems || []).filter(item => 
         !item.completed && item.dueDate && isToday(parseISO(item.dueDate)) && !shownNotifications.includes(item.id)
       );
 
@@ -154,9 +151,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     checkAndShowNotifications();
-
   }, [isUserDataLoaded, userData?.todoItems]);
-
 
   const addTodoItem = async (text: string, createdAtDate: string, dueDate?: string) => {
     if (text.trim() === '') return;
