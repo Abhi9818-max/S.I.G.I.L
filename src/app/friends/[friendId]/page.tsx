@@ -21,12 +21,13 @@ import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownCh
 import PactList from '@/components/todo/PactList';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -429,9 +430,6 @@ export default function FriendProfilePage() {
                     {isFriend && (
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                     )}
-                  </div>
-                  <div className="mt-1">
-                    
                   </div>
                 </div>
               </div>
