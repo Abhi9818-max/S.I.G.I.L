@@ -9,6 +9,7 @@ import Header from '@/components/layout/Header';
 import StatsPanel from '@/components/records/StatsPanel';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import LevelIndicator from '@/components/layout/LevelIndicator';
+import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import Link from 'next/link';
 
