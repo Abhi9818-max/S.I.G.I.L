@@ -112,13 +112,12 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
                         <ContributionGraph 
                             year={new Date().getFullYear()}
                             onDayClick={() => {}} 
-                            onDayDoubleClick={() => {}} // Add this missing prop
+                            onDayDoubleClick={() => {}}
                             selectedTaskFilterId={null}
-                            records={records}
-                            taskDefinitions={taskDefinitions}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
                             displayMode="full"
                         />
-
                     </div>
                   </TabsContent>
                 </Tabs>
