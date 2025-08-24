@@ -10,7 +10,7 @@ import StatsPanel from '@/components/records/StatsPanel';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import LevelIndicator from '@/components/layout/LevelIndicator';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
 import Link from 'next/link';
 
 // Replace with your real data-fetching logic
@@ -23,7 +23,7 @@ export async function generateStaticParams() {
   return ids.map(id => ({ allianceId: id }));
 }
 
-export default function AlliancePage({
+export default async function AlliancePage({
   params,
 }: {
   params: { allianceId: string };
