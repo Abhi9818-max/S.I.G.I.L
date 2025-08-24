@@ -62,12 +62,12 @@ const TaskFilterComponent: React.FC<TaskFilterProps> = ({
     );
 };
 
-interface PublicProfileClientPageProps {
+interface PublicProfileClientProps {
   initialUserData: UserData;
   userId: string;
 }
 
-const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initialUserData, userId }) => {
+const PublicProfileClient: React.FC<PublicProfileClientProps> = ({ initialUserData, userId }) => {
     const [friendData, setFriendData] = useState<UserData | null>(initialUserData);
     const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     
@@ -174,4 +174,4 @@ const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initi
     );
 };
 
-export default PublicProfileClientPage;
+export default PublicProfileClient;
