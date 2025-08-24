@@ -277,7 +277,7 @@ export interface UserData {
     aetherShards?: number;
     reputation?: Record<string, number>; // e.g., { 'scholars-guild': 1250, 'iron-legion': 500 }
     marketplaceListings?: MarketplaceListing[]; // User's own active listings
-    equippedTitleId?: string;
+    equippedTitleId?: string | null | undefined;
     privacySettings?: {
         pacts?: PrivacySetting;
         activity?: PrivacySetting;
