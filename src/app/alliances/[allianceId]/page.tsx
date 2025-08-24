@@ -22,11 +22,11 @@ export async function generateStaticParams() {
   return ids.map(id => ({ allianceId: id }));
 }
 
-interface PageProps {
+export default function AlliancePage({
+  params,
+}: {
   params: { allianceId: string };
-}
-
-export default function AlliancePage({ params }: PageProps) {
+}) {
   const { allianceId } = params;
 
   // Dummy alliance data - replace with real fetch
