@@ -1,17 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { BarChart2, Activity } from 'lucide-react';
-import type { UserData, UserLevelInfo, RecordEntry, TaskDefinition } from '@/types';
+import { User, BarChart2, Activity } from 'lucide-react';
+import type { UserData, UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import StatsPanel from '@/components/records/StatsPanel';
+import TaskComparisonChart from '@/components/friends/TaskComparisonChart';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import LevelIndicator from '@/components/layout/LevelIndicator';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 // Simple hash function to get a number from a string
@@ -20,31 +22,69 @@ const simpleHash = (s: string) => {
     for (let i = 0; i < s.length; i++) {
         const char = s.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+        hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash);
 };
 
-interface PublicProfilePageProps {
-  userData: UserData;
+// Inline TaskFilter Component
+interface TaskFilterProps {
+    tasks: any[];
+    selectedTaskId: string | null;
+    onSelectTask: (taskId: string | null) => void;
+}
+
+const TaskFilterComponent: React.FC<TaskFilterProps> = ({ 
+    tasks, 
+    selectedTaskId, 
+    onSelectTask 
+}) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value;
+        onSelectTask(value === '' ? null : value);
+    };
+
+    return (
+        <div className="mb-4">
+            <select 
+                value={selectedTaskId || ''} 
+                onChange={handleChange}
+                className="px-3 py-2 border rounded-md bg-background text-foreground"
+            >
+                <option value="">All Tasks</option>
+                {tasks.map(task => (
+                    <option key={task.id} value={task.id}>
+                        {task.name}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+};
+
+interface PublicProfileClientPageProps {
+  initialUserData: UserData;
   userId: string;
 }
 
-const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId }) => {
-    const friendLevelInfo: UserLevelInfo | null = React.useMemo(() => {
-        if (!userData) return null;
-        const totalRecordValue = userData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
-        const totalExperience = totalRecordValue + (userData.bonusPoints || 0);
-        return calculateUserLevelInfo(totalExperience);
-    }, [userData]);
+const PublicProfileClientPage: React.FC<PublicProfileClientPageProps> = ({ initialUserData, userId }) => {
+    const [friendData, setFriendData] = useState<UserData | null>(initialUserData);
+    const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
     
-    if (!userData) {
+    const friendLevelInfo: UserLevelInfo | null = React.useMemo(() => {
+        if (!friendData) return null;
+        const totalRecordValue = friendData.records?.reduce((sum, r) => sum + r.value, 0) || 0;
+        const totalExperience = totalRecordValue + (friendData.bonusPoints || 0);
+        return calculateUserLevelInfo(totalExperience);
+    }, [friendData]);
+    
+    if (!friendData) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center p-8">
                     <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
                     <p className="text-muted-foreground">This user profile could not be loaded or does not exist.</p>
-                    <Button asChild variant="outline" className="mt-8">
+                     <Button asChild variant="outline" className="mt-8">
                         <Link href="/">Return to Dashboard</Link>
                     </Button>
                 </div>
@@ -52,10 +92,10 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
         );
     }
     
-    const records: RecordEntry[] = userData.records || [];
-    const taskDefinitions: TaskDefinition[] = userData.taskDefinitions || [];
-    const userAvatar = userData.photoURL || `/avatars/avatar${(simpleHash(userId) % 12) + 1}.jpeg`;
-    const displayName = userData.username || 'Unknown User';
+    const friendRecords = friendData.records || [];
+    const friendTasks = friendData.taskDefinitions || [];
+    const friendAvatar = friendData.photoURL || `/avatars/avatar${(simpleHash(userId) % 12) + 1}.jpeg`;
+    const displayName = friendData.username || 'Unknown User';
     
     const pageTierClass = friendLevelInfo ? `page-tier-group-${friendLevelInfo.tierGroup}` : 'page-tier-group-1';
 
@@ -70,18 +110,14 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                 <div className="pt-6 md:p-0">
                     <div className="flex flex-col md:flex-row items-center gap-4">
                         <Avatar className="h-24 w-24">
-                            <AvatarImage src={userAvatar} />
+                            <AvatarImage src={friendAvatar} />
                             <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="w-full text-center md:text-left">
                            <h1 className="text-3xl font-bold">{displayName}</h1>
-                           {friendLevelInfo && (
-                             <div className="mt-2 flex justify-center md:justify-start">
-                               <LevelIndicator levelInfo={friendLevelInfo} />
-                             </div>
-                           )}
+                           {friendLevelInfo && <div className="mt-2 flex justify-center md:justify-start"><LevelIndicator levelInfo={friendLevelInfo} /></div>}
                             <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto md:mx-0">
-                                {userData.bio || "No bio available."}
+                                {friendData.bio || "No bio available."}
                             </p>
                         </div>
                     </div>
@@ -89,24 +125,18 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                 
                 <Tabs defaultValue="stats" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="stats">
-                      <BarChart2 className="mr-2 h-4 w-4" />
-                      Stats & Overview
-                    </TabsTrigger>
-                    <TabsTrigger value="activity">
-                      <Activity className="mr-2 h-4 w-4" />
-                      Full Activity
-                    </TabsTrigger>
+                    <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats & Overview</TabsTrigger>
+                    <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Full Activity</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="stats" className="mt-6">
-                    <StatsPanel friendData={userData} />
+                    <StatsPanel friendData={friendData} />
                     <div className="mt-8">
                         <h2 className="text-2xl font-semibold mb-4">Daily Time Breakdown</h2>
                          <DailyTimeBreakdownChart
                             date={new Date()}
-                            records={records}
-                            taskDefinitions={taskDefinitions}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
                             hideFooter={true}
                         />
                     </div>
@@ -115,13 +145,20 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
                   <TabsContent value="activity" className="mt-6">
                      <div>
                         <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                        
+                        <TaskFilterComponent
+                            tasks={friendTasks}
+                            selectedTaskId={selectedTaskFilterId}
+                            onSelectTask={setSelectedTaskFilterId}
+                        />
+                        
                         <ContributionGraph 
                             year={new Date().getFullYear()}
-                            onDayClick={() => {}} // Non-interactive on public page
-                            onDayDoubleClick={() => {}} // Added missing prop
-                            selectedTaskFilterId={null}
-                            records={records}
-                            taskDefinitions={taskDefinitions}
+                            onDayClick={() => {}} 
+                            onDayDoubleClick={() => {}}
+                            selectedTaskFilterId={selectedTaskFilterId}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
                             displayMode="full"
                         />
                     </div>
@@ -137,4 +174,4 @@ const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ userData, userId 
     );
 };
 
-export default PublicProfilePage;
+export default PublicProfileClientPage;
