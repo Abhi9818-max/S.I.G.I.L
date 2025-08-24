@@ -1,10 +1,8 @@
-// src/app/alliances/[allianceId]/page.tsx
-
 import React from 'react';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import Header from '@/components/layout/Header';
+import ClientHeader from '@/components/ClientHeader';  // Import the new ClientHeader
 import StatsPanel from '@/components/records/StatsPanel';
 import ContributionGraph from '@/components/records/ContributionGraph';
 import LevelIndicator from '@/components/layout/LevelIndicator';
@@ -16,13 +14,15 @@ async function fetchAllAllianceIds(): Promise<string[]> {
   return ['alliance1', 'alliance2', 'alliance3'];
 }
 
+type Params = Promise<{ allianceId: string }>;
+
 export async function generateStaticParams() {
   const ids = await fetchAllAllianceIds();
   return ids.map((id) => ({ allianceId: id }));
 }
 
-export default async function AlliancePage({ params }: any) {
-  const allianceId = params.allianceId;
+export default async function AlliancePage({ params }: { params: Params }) {
+  const { allianceId } = await params;
 
   const alliance = {
     id: allianceId,
@@ -52,7 +52,7 @@ export default async function AlliancePage({ params }: any) {
 
   return (
     <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
-      <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
+      <ClientHeader />  {/* Use ClientHeader instead of Header with event handlers */}
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
