@@ -216,7 +216,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
-        if (!db) return null;
+        if (!db) {
+          console.error("Firestore DB is not initialized");
+          return null;
+        }
         const usersRef = collection(db, 'users');
         const searchTerm = username.toLowerCase();
         const q = query(usersRef, where('username_lowercase', '==', searchTerm));
@@ -236,7 +239,11 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, []);
 
     const sendFriendRequest = useCallback(async (recipient: SearchedUser) => {
-        if (!user || !userData || !db) throw new Error("You must be logged in to send requests.");
+        if (!user || !userData) throw new Error("You must be logged in to send requests.");
+        if (!db) {
+          console.error("Firestore DB is not initialized");
+          return;
+        }
         if (user.uid === recipient.uid) throw new Error("You cannot send a request to yourself.");
 
         const requestId = `${user.uid}_${recipient.uid}`;
@@ -267,9 +274,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, fetchFriendsAndRequests]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
-        if (!user || !userData || !db) {
+        if (!user || !userData) {
             toast({ title: 'Error', description: 'You must be logged in.', variant: 'destructive' });
             return;
+        }
+        if (!db) {
+          console.error("Firestore DB is not initialized");
+          return;
         }
 
         const batch = writeBatch(db);
@@ -303,7 +314,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, toast, fetchFriendsAndRequests]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
-        if (!db) return;
+        if (!db) {
+          console.error("Firestore DB is not initialized");
+          return;
+        }
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
         await fetchFriendsAndRequests();
@@ -311,7 +325,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [toast, fetchFriendsAndRequests]);
     
     const cancelFriendRequest = useCallback(async (requestId: string) => {
-        if (!db) return;
+        if (!db) {
+          console.error("Firestore DB is not initialized");
+          return;
+        }
         const requestRef = doc(db, 'friend_requests', requestId);
         await deleteDoc(requestRef);
         await fetchFriendsAndRequests();
@@ -395,10 +412,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const proposalId = `${user.uid}_${friendId}`;
         const existingProposalRef = doc(db, 'relationship_proposals', proposalId);
-        const existingReverseProposalRef = doc(db, 'relationship_proposals', `${friendId}_${user.uid}`);
+        const reverseProposalRef = doc(db, 'relationship_proposals', `${friendId}_${user.uid}`);
         
         const existingSnap = await getDoc(existingProposalRef);
-        const existingReverseSnap = await getDoc(existingReverseProposalRef);
+        const existingReverseSnap = await getDoc(reverseProposalRef);
 
         if (existingSnap.exists() || existingReverseSnap.exists()) {
             throw new Error("A relationship proposal already exists with this user.");
@@ -889,8 +906,3 @@ export const useFriends = (): FriendContextType => {
     }
     return context;
 };
-
-
-    
-
-    

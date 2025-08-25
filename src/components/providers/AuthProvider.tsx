@@ -103,7 +103,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 localStorage.setItem('guest-userData', JSON.stringify(initialGuestData));
             }
             setIsUserDataLoaded(true);
-        } else if (user && db) {
+        } else if (user) {
+            if (!db) {
+              console.error("Firestore DB is not initialized");
+              return;
+            }
             setIsUserDataLoaded(false);
             const docRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(docRef);
@@ -233,7 +237,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return false;
     }
-  }, [auth, db, toast, router]);
+  }, [auth, toast, router]);
   
   const updateProfilePicture = useCallback(async (url: string): Promise<string | null> => {
     if (isGuest) {
@@ -245,9 +249,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return url;
     }
 
-    if (!user || !auth || !db) {
+    if (!user || !auth) {
         toast({ title: "Not Authenticated", description: "You must be logged in to update your avatar.", variant: "destructive" });
         return null;
+    }
+
+    if (!db) {
+      console.error("Firestore DB is not initialized");
+      toast({ title: "Update Failed", description: "Database not available.", variant: "destructive" });
+      return null;
     }
 
     try {
@@ -269,7 +279,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast({ title: "Update Failed", description: "Could not update your avatar.", variant: "destructive" });
         return null;
     }
-  }, [user, auth, toast, isGuest, db]);
+  }, [user, auth, toast, isGuest]);
 
   const updateBio = useCallback(async (newBio: string) => {
     if (isGuest) {
@@ -281,7 +291,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
     }
 
-    if (!user || !db) return;
+    if (!user || !db) {
+        console.error("Not authenticated or DB not initialized");
+        return;
+    }
     
     try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -292,7 +305,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error updating bio:', error);
         toast({ title: 'Error', description: 'Could not update your bio.', variant: 'destructive' });
     }
-  }, [user, db, toast, isGuest]);
+  }, [user, toast, isGuest]);
 
   const equipTitle = useCallback(async (titleId: string | null) => {
     const dataToUpdate = { equippedTitleId: titleId };
@@ -305,7 +318,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
     }
 
-    if (!user || !db) return;
+    if (!user || !db) {
+        console.error("Not authenticated or DB not initialized");
+        return;
+    }
 
     try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -316,7 +332,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error equipping title:', error);
         toast({ title: 'Error', description: 'Could not equip the title.', variant: 'destructive' });
     }
-  }, [user, db, toast, isGuest]);
+  }, [user, toast, isGuest]);
   
   const updatePrivacySetting = useCallback(async (setting: 'pacts' | 'activity', value: PrivacySetting) => {
     const dataToUpdate = { 
@@ -335,7 +351,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
     }
 
-    if (!user || !db) return;
+    if (!user || !db) {
+        console.error("Not authenticated or DB not initialized");
+        return;
+    }
 
     try {
         const userDocRef = doc(db, 'users', user.uid);
@@ -346,7 +365,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error updating privacy setting:', error);
         toast({ title: 'Error', description: 'Could not update privacy setting.', variant: 'destructive' });
     }
-  }, [user, db, toast, isGuest, userData]);
+  }, [user, toast, isGuest, userData]);
   
   if (loading && pathname !== '/login') {
     return (

@@ -1,8 +1,9 @@
+
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { doc, setDoc, getDoc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
@@ -175,7 +176,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const reputation = useMemo(() => userData?.reputation || {}, [userData]);
   const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
 
-  // ✅ FIXED FUNCTION - Added guard check for db
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     const getNewState = (prevData: UserData | null) => {
       const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
@@ -192,13 +192,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     
     if (user) {
-      // ✅ Add this guard check to fix the TypeScript error
       if (!db) {
         console.error("Firestore DB is not initialized");
         return;
       }
       
-      const userDocRef = doc(db, 'users', user.uid);  // ✅ Now TypeScript knows db is defined
+      const userDocRef = doc(db, 'users', user.uid);
       try {
         const sanitizedData = removeUndefinedValues(dataToUpdate);
         if (sanitizedData && Object.keys(sanitizedData).length > 0) {
