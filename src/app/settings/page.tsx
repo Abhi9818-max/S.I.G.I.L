@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon, BarChart2 } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon, BarChart2, HelpCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -58,6 +58,7 @@ import { ACHIEVEMENTS } from '@/lib/achievements';
 import TiersPage from '@/app/tiers/page';
 import ReputationPage from '@/app/reputation/page';
 import InsightsPage from '@/app/insights/page';
+import WelcomeTour from '@/components/layout/WelcomeTour';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -172,6 +173,7 @@ export default function SettingsPage() {
   const profileCardRef = useRef<HTMLDivElement>(null);
   const [showLoading, setShowLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [isTourOpen, setIsTourOpen] = useState(false);
   
   useEffect(() => {
     // This effect ensures the loading screen is only shown on the client
@@ -604,6 +606,10 @@ export default function SettingsPage() {
                         <CreditCard className="mr-2 h-4 w-4" />
                         Download Profile Card
                     </Button>
+                    <Button onClick={() => setIsTourOpen(true)} variant="outline" size="sm" className="w-full">
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                        How to Use (Feature Tour)
+                    </Button>
                 </div>
               )}
               
@@ -964,6 +970,7 @@ export default function SettingsPage() {
         isOpen={isManageTasksModalOpen}
         onOpenChange={setIsManageTasksModalOpen}
       />
+      <WelcomeTour isOpen={isTourOpen} onOpenChange={setIsTourOpen} />
     </>
   );
 }

@@ -44,17 +44,27 @@ const tourSteps = [
 
 const LOCAL_STORAGE_KEY_TOUR_SEEN = 'sigil-tour-seen';
 
-export default function WelcomeTour() {
-  const [isOpen, setIsOpen] = useState(false);
+interface WelcomeTourProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export default function WelcomeTour({ isOpen: isOpenProp, onOpenChange: onOpenChangeProp }: WelcomeTourProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [step, setStep] = useState(0);
 
+  const isOpen = isOpenProp !== undefined ? isOpenProp : internalIsOpen;
+  const setIsOpen = onOpenChangeProp !== undefined ? onOpenChangeProp : setInternalIsOpen;
+
   useEffect(() => {
-    // Only run on the client
-    const tourStatus = localStorage.getItem(LOCAL_STORAGE_KEY_TOUR_SEEN);
-    if (tourStatus === 'pending') {
-      setIsOpen(true);
+    // Only run the localStorage logic if the component is not being controlled externally
+    if (isOpenProp === undefined) {
+      const tourStatus = localStorage.getItem(LOCAL_STORAGE_KEY_TOUR_SEEN);
+      if (tourStatus === 'pending') {
+        setIsOpen(true);
+      }
     }
-  }, []);
+  }, [isOpenProp]);
 
   const handleNext = () => {
     if (step < tourSteps.length - 1) {
@@ -71,7 +81,11 @@ export default function WelcomeTour() {
   };
 
   const handleFinish = () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_TOUR_SEEN, 'true');
+    // Only update localStorage if the component is not being controlled externally
+    if (isOpenProp === undefined) {
+      localStorage.setItem(LOCAL_STORAGE_KEY_TOUR_SEEN, 'true');
+    }
+    setStep(0); // Reset step for next time
     setIsOpen(false);
   };
   
