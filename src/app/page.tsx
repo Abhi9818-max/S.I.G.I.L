@@ -28,6 +28,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
+import WelcomeTour from '@/components/layout/WelcomeTour';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -157,6 +158,7 @@ function HomePageContent() {
         onAddRecordClick={handleAddRecordClick}
         onManageTasksClick={handleManageTasksClick}
       />
+      <WelcomeTour />
       <QuoteCard quote={quote} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8 animate-fade-in-up">
         {showStatsPanel && <StatsPanel selectedTaskFilterId={selectedTaskFilterId} />}
