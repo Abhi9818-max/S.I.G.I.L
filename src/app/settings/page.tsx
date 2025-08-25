@@ -517,10 +517,15 @@ export default function SettingsPage() {
                       </div>
                     </button>
                     <div className="h-7 mt-2 flex items-center justify-center">
-                        {equippedTitle && (
+                        {equippedTitle ? (
                            <div className="flex items-center gap-1.5 text-sm text-yellow-400 whitespace-nowrap">
                                 <Award className="h-4 w-4" />
                                 <span className="font-semibold">{equippedTitle.name}</span>
+                           </div>
+                        ) : (
+                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+                               <Star className="h-4 w-4" />
+                               <span className="font-semibold">Worthless</span>
                            </div>
                         )}
                     </div>
