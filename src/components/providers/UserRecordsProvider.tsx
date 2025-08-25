@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
@@ -197,7 +198,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return;
       }
       
-      const userDocRef = doc(db, 'users', user.uid);
+      const userDocRef = doc(db!, 'users', user.uid);
       try {
         const sanitizedData = removeUndefinedValues(dataToUpdate);
         if (sanitizedData && Object.keys(sanitizedData).length > 0) {

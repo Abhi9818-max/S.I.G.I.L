@@ -57,7 +57,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (user) {
             const updateDb = async () => {
                 try {
-                    const userDocRef = doc(db, 'users', user.uid);
+                    const userDocRef = doc(db!, 'users', user.uid);
                     await setDoc(userDocRef, { dashboardSettings: newSettings }, { merge: true });
                 } catch (e) {
                     console.error("Failed to save dashboard settings to Firestore:", e);

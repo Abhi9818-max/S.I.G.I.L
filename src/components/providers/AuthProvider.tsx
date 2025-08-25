@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               return;
             }
             setIsUserDataLoaded(false);
-            const docRef = doc(db, 'users', user.uid);
-            const docSnap = await getDoc(docRef);
+            const userDocRef = doc(db!, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
             } else {
@@ -218,7 +218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             },
         };
 
-        const userDocRef = doc(db, 'users', newUser.uid);
+        const userDocRef = doc(db!, 'users', newUser.uid);
         await setDoc(userDocRef, initialUserData);
 
         setUser(newUser);
@@ -266,7 +266,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
            await updateProfile(auth.currentUser, { photoURL });
         }
         
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db!, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
 
         setUserData(prev => prev ? ({ ...prev, photoURL: url }) : null);
@@ -297,7 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     try {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db!, 'users', user.uid);
         await setDoc(userDocRef, { bio: newBio }, { merge: true });
         setUserData(prev => prev ? { ...prev, bio: newBio } : null);
         toast({ title: 'Bio Updated' });
@@ -324,7 +324,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db!, 'users', user.uid);
         await updateDoc(userDocRef, dataToUpdate);
         setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
         toast({ title: 'Title Equipped!' });
@@ -357,7 +357,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db!, 'users', user.uid);
         await updateDoc(userDocRef, dataToUpdate);
         setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
         toast({ title: 'Privacy Setting Updated' });
