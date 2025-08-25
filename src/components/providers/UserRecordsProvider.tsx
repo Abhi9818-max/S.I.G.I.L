@@ -175,12 +175,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const reputation = useMemo(() => userData?.reputation || {}, [userData]);
   const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
 
+  // ✅ FIXED FUNCTION - Added guard check for db
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
-      const getNewState = (prevData: UserData | null) => {
-        const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
-        return newState as UserData;
-      }
-      setUserData(getNewState);
+    const getNewState = (prevData: UserData | null) => {
+      const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
+      return newState as UserData;
+    }
+    setUserData(getNewState);
 
     if (isGuest) {
       const guestDataString = localStorage.getItem('guest-userData');
@@ -191,7 +192,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     
     if (user) {
-      const userDocRef = doc(db, 'users', user.uid);
+      // ✅ Add this guard check to fix the TypeScript error
+      if (!db) {
+        console.error("Firestore DB is not initialized");
+        return;
+      }
+      
+      const userDocRef = doc(db, 'users', user.uid);  // ✅ Now TypeScript knows db is defined
       try {
         const sanitizedData = removeUndefinedValues(dataToUpdate);
         if (sanitizedData && Object.keys(sanitizedData).length > 0) {
@@ -927,7 +934,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
   }, [userData, updateUserDataInDb]);
 
-
   const contextValue = useMemo(() => ({
     records,
     addRecord,
@@ -1027,7 +1033,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       getTaskMasteryInfo,
       convertXpToShards,
   ]);
-
 
   return (
     <UserRecordsContext.Provider value={contextValue}>

@@ -19,36 +19,44 @@ const firebaseConfig = {
 };
 
 // Check if Firebase config is populated
-export const isFirebaseConfigured = !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
+export const isFirebaseConfigured = !!(
+  firebaseConfig.apiKey && 
+  firebaseConfig.projectId &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.storageBucket &&
+  firebaseConfig.messagingSenderId &&
+  firebaseConfig.appId
+);
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let storage: FirebaseStorage;
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
+let storage: FirebaseStorage | undefined;
 let analytics: ReturnType<typeof getAnalytics> | null = null;
-let rtdb: Database;
+let rtdb: Database | undefined;
 
 if (isFirebaseConfigured) {
+    // Initialize Firebase app
     if (getApps().length === 0) {
         app = initializeApp(firebaseConfig);
     } else {
         app = getApps()[0];
     }
 
-    // Initialize services only in the browser
+    // Initialize Firebase services (works in both server and browser)
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    rtdb = getDatabase(app);
+    
+    // Analytics only in browser
     if (typeof window !== 'undefined') {
-        auth = getAuth(app);
-        db = getFirestore(app);
-        storage = getStorage(app);
-        rtdb = getDatabase(app);
-        
         isSupported().then((enabled) => {
-            if (enabled) {
+            if (enabled && app) {
                 analytics = getAnalytics(app);
             }
         });
     }
 }
-
 
 export { app, auth, db, storage, analytics, rtdb };
