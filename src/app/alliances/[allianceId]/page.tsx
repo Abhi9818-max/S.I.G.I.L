@@ -14,7 +14,7 @@ async function fetchAllAllianceIds(): Promise<string[]> {
   return ['alliance1', 'alliance2', 'alliance3'];
 }
 
-type Params = Promise<{ allianceId: string }>;
+type Params = { allianceId: string };
 
 export async function generateStaticParams() {
   const ids = await fetchAllAllianceIds();
@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 }
 
 export default async function AlliancePage({ params }: { params: Params }) {
-  const { allianceId } = await params;
+  const { allianceId } = params;
 
   const alliance = {
     id: allianceId,

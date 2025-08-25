@@ -1,6 +1,6 @@
 import ClientTierDetailPage from './ClientTierDetailPage';
 
-type Params = Promise<{ slug: string }>;
+type Params = { slug: string };
 
 export async function generateStaticParams() {
   // Replace with your actual tier slugs from TIER_INFO
@@ -17,6 +17,6 @@ export async function generateStaticParams() {
 }
 
 export default async function TierPage({ params }: { params: Params }) {
-  const { slug } = await params;
+  const { slug } = params;
   return <ClientTierDetailPage slug={slug} />;
 }
