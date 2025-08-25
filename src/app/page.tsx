@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import QuoteCard from '@/components/layout/QuoteCard';
 import ContributionGraph from '@/components/records/ContributionGraph';
@@ -28,10 +28,12 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
-import WelcomeTour from '@/components/layout/WelcomeTour';
+import InteractiveTour from '@/components/layout/InteractiveTour';
+import { useSearchParams } from 'next/navigation';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
+const LOCAL_STORAGE_KEY_TOUR_SEEN = 'sigil-tour-seen-interactive';
 
 function HomePageContent() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
@@ -50,6 +52,33 @@ function HomePageContent() {
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   const { checkMissedDares } = useTodos();
+  const searchParams = useSearchParams();
+
+  // Tour State
+  const [isTourActive, setIsTourActive] = useState(false);
+  const tourRefs = {
+    stats: useRef<HTMLDivElement>(null),
+    calendar: useRef<HTMLDivElement>(null),
+    pacts: useRef<HTMLDivElement>(null),
+    charts: useRef<HTMLDivElement>(null),
+    header: useRef<HTMLDivElement>(null),
+  };
+
+  useEffect(() => {
+    const tourStatus = localStorage.getItem(LOCAL_STORAGE_KEY_TOUR_SEEN);
+    if (tourStatus === 'pending') {
+      setIsTourActive(true);
+    }
+    
+    if (searchParams.get('tour') === 'true') {
+      setIsTourActive(true);
+    }
+  }, [searchParams]);
+
+  const handleTourComplete = () => {
+    localStorage.setItem(LOCAL_STORAGE_KEY_TOUR_SEEN, 'true');
+    setIsTourActive(false);
+  };
 
   const currentLevelInfo = getUserLevelInfo();
 
@@ -154,14 +183,20 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header
-        onAddRecordClick={handleAddRecordClick}
-        onManageTasksClick={handleManageTasksClick}
+      <div ref={tourRefs.header}>
+        <Header
+          onAddRecordClick={handleAddRecordClick}
+          onManageTasksClick={handleManageTasksClick}
+        />
+      </div>
+      <InteractiveTour
+        isActive={isTourActive}
+        onComplete={handleTourComplete}
+        refs={tourRefs}
       />
-      <WelcomeTour />
       <QuoteCard quote={quote} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8 animate-fade-in-up">
-        {showStatsPanel && <StatsPanel selectedTaskFilterId={selectedTaskFilterId} />}
+        {showStatsPanel && <div ref={tourRefs.stats}><StatsPanel selectedTaskFilterId={selectedTaskFilterId} /></div>}
 
         {dashboardSettings.showTaskFilterBar && (
           <TaskFilterBar
@@ -172,7 +207,7 @@ function HomePageContent() {
         )}
         
         {dashboardSettings.showContributionGraph && (
-            <>
+            <div ref={tourRefs.calendar}>
                 <ContributionGraph
                     onDayClick={handleDayClick}
                     onDayDoubleClick={handleDayClick}
@@ -187,16 +222,16 @@ function HomePageContent() {
                     </Link>
                     </Button>
                 </div>
-            </>
+            </div>
         )}
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {dashboardSettings.showTodoList && (
-                <div className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <div ref={tourRefs.pacts} className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                     <TodoListCard />
                 </div>
             )}
-            <div className={cn("space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
+            <div ref={tourRefs.charts} className={cn("space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
                 {dashboardSettings.showProgressChart && (
                   <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
                 )}

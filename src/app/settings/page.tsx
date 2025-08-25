@@ -58,7 +58,7 @@ import { ACHIEVEMENTS } from '@/lib/achievements';
 import TiersPage from '@/app/tiers/page';
 import ReputationPage from '@/app/reputation/page';
 import InsightsPage from '@/app/insights/page';
-import WelcomeTour from '@/components/layout/WelcomeTour';
+import { useRouter } from 'next/navigation';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -160,6 +160,7 @@ export default function SettingsPage() {
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout, equipTitle, updatePrivacySetting } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAlliances, setIsDeletingAlliances] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -173,7 +174,6 @@ export default function SettingsPage() {
   const profileCardRef = useRef<HTMLDivElement>(null);
   const [showLoading, setShowLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  const [isTourOpen, setIsTourOpen] = useState(false);
   
   useEffect(() => {
     // This effect ensures the loading screen is only shown on the client
@@ -446,6 +446,10 @@ export default function SettingsPage() {
     }
   };
 
+  const handleTakeTour = () => {
+    router.push('/?tour=true');
+  };
+
   if (showLoading) {
     return null;
   }
@@ -606,7 +610,7 @@ export default function SettingsPage() {
                         <CreditCard className="mr-2 h-4 w-4" />
                         Download Profile Card
                     </Button>
-                    <Button onClick={() => setIsTourOpen(true)} variant="outline" size="sm" className="w-full">
+                    <Button onClick={handleTakeTour} variant="outline" size="sm" className="w-full">
                         <HelpCircle className="mr-2 h-4 w-4" />
                         How to Use (Feature Tour)
                     </Button>
@@ -970,9 +974,6 @@ export default function SettingsPage() {
         isOpen={isManageTasksModalOpen}
         onOpenChange={setIsManageTasksModalOpen}
       />
-      <WelcomeTour isOpen={isTourOpen} onOpenChange={setIsTourOpen} />
     </>
   );
 }
-
-    

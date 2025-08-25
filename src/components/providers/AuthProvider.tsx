@@ -226,7 +226,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsUserDataLoaded(true);
 
         // Trigger the welcome tour
-        localStorage.setItem('sigil-tour-seen', 'pending');
+        localStorage.setItem('sigil-tour-seen-interactive', 'pending');
 
         toast({ title: 'Account Created!', description: 'Welcome to S.I.G.I.L.' });
         router.push('/');
