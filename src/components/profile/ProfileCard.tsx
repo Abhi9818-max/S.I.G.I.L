@@ -35,6 +35,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ levelInfo, userData, userAvat
           return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Icon className="h-4 w-4 text-yellow-400" /> {equippedTitle.name}</p>;
         }
         // Fallthrough to tier name if no title is equipped
+        return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400"/> Worthless</p>;
       case 'tierName':
         return <p className="text-sm text-white/70 mt-1 h-10 overflow-hidden text-ellipsis flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400"/> {levelInfo.tierName}</p>;
       case 'currentStreak':
