@@ -16,7 +16,8 @@ export async function generateStaticParams() {
   return tierSlugs.map(slug => ({ slug }));
 }
 
-export default async function TierPage({ params }: { params: Params }) {
+export default async function TierPage(props: { params: Promise<Params> }) {
+  const params = await props.params;
   const { slug } = params;
   return <ClientTierDetailPage slug={slug} />;
 }

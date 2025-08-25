@@ -21,7 +21,8 @@ export async function generateStaticParams() {
   return ids.map((id) => ({ allianceId: id }));
 }
 
-export default async function AlliancePage({ params }: { params: Params }) {
+export default async function AlliancePage(props: { params: Promise<Params> }) {
+  const params = await props.params;
   const { allianceId } = params;
 
   const alliance = {
