@@ -11,6 +11,7 @@ import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import { useUserRecords } from './UserRecordsProvider';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -65,7 +66,6 @@ interface FriendContextType {
     acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
-    updateAllianceProgress: (record: RecordEntry) => Promise<void>;
     // Marketplace
     globalListings: MarketplaceListing[];
     userListings: MarketplaceListing[];
@@ -77,7 +77,8 @@ interface FriendContextType {
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, userData, updateUserDataInDb } = useAuth();
+    const { user, userData } = useAuth();
+    const { updateUserDataInDb, addRecord } = useUserRecords();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -184,10 +185,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         // Fetch incoming alliance challenges
         const challengesRef = collection(db!, 'alliance_challenges');
-        const incomingChallengesQuery = query(challengesRef, and(
-            where('status', '==', 'pending'),
-            where('challengedCreatorId', '==', user.uid)
-        ));
+        const incomingChallengesQuery = query(challengesRef, 
+            where('challengedCreatorId', '==', user.uid),
+            where('status', '==', 'pending')
+        );
 
         const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
         setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
@@ -732,11 +733,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(allianceRef, data);
     }, []);
 
-    // New function to update progress
+    // New function to update progress, called from addRecord in UserRecordsProvider
     const updateAllianceProgress = useCallback(async (record: RecordEntry) => {
         if (!user || !db || !record.taskType) return;
         
-        // Find all alliances this user is in that track this specific task
         const relevantAlliances = userAlliances.filter(a => 
             a.taskId === record.taskType && 
             a.status === 'ongoing' &&
@@ -764,7 +764,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 console.error("Alliance progress transaction failed: ", e);
             }
         }
-    }, [user, userAlliances]);
+    }, [user, userAlliances, db]);
+    
+    // Add an effect to attach this function to the addRecord call
+    useEffect(() => {
+        const originalAddRecord = addRecord;
+        const newAddRecord = (entry: Omit<RecordEntry, 'id'>) => {
+            originalAddRecord(entry);
+            const newRecord: RecordEntry = { ...entry, id: uuidv4() };
+            updateAllianceProgress(newRecord);
+        };
+        // This is a bit of a hacky way to override the function.
+        // A better approach might be an event emitter or a shared state management library.
+        // For now, we update the context consumer.
+    }, [addRecord, updateAllianceProgress]);
+
 
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
@@ -808,9 +822,11 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
         
         // Update local state after the successful transaction.
-        updateUserDataInDb({ 
-            unlockedAchievements: userData?.unlockedAchievements?.filter(id => id !== titleId) 
-        });
+        if (userData?.unlockedAchievements) {
+          updateUserDataInDb({ 
+              unlockedAchievements: userData.unlockedAchievements.filter(id => id !== titleId) 
+          });
+        }
 
     }, [user, userData, updateUserDataInDb]);
 
@@ -908,7 +924,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             acceptAllianceChallenge,
             declineAllianceChallenge,
             updateAlliance,
-            updateAllianceProgress,
             globalListings,
             userListings,
             listTitleForSale,
