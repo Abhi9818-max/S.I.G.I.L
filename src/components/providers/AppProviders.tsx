@@ -12,17 +12,17 @@ import { FriendProvider } from '@/components/providers/FriendProvider';
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <UserRecordsProvider>
-        <SettingsProvider>
-          <TooltipProvider delayDuration={100}>
-            <FriendProvider>
+      <FriendProvider>
+        <UserRecordsProvider>
+          <SettingsProvider>
+            <TooltipProvider delayDuration={100}>
               <TodoProvider>
                 {children}
               </TodoProvider>
-            </FriendProvider>
-          </TooltipProvider>
-        </SettingsProvider>
-      </UserRecordsProvider>
+            </TooltipProvider>
+          </SettingsProvider>
+        </UserRecordsProvider>
+      </FriendProvider>
     </AuthProvider>
   );
 }
