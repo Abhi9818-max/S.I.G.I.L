@@ -36,6 +36,12 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 }
 
+const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) => {
+    if (alliance.photoURL) return alliance.photoURL;
+    const avatarNumber = (simpleHash(alliance.id) % 21) + 1;
+    return `/alliances/alliance${avatarNumber}.jpeg`;
+}
+
 const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: AllianceMember[] } }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +73,7 @@ const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: Alliance
                 <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
                     <div className="relative w-full h-full">
                         <Image 
-                            src={alliance.photoURL}
+                            src={getAllianceImage(alliance)}
                             alt={alliance.name} 
                             fill 
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
