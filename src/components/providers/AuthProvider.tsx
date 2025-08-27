@@ -109,7 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               return;
             }
             setIsUserDataLoaded(false);
-            const userDocRef = doc(db!, 'users', user.uid);
+            const userDocRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(userDocRef);
             if (docSnap.exists()) {
                 setUserData(docSnap.data() as UserData);
@@ -218,7 +218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             },
         };
 
-        const userDocRef = doc(db!, 'users', newUser.uid);
+        const userDocRef = doc(db, 'users', newUser.uid);
         await setDoc(userDocRef, initialUserData);
 
         setUser(newUser);
@@ -269,7 +269,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
            await updateProfile(auth.currentUser, { photoURL });
         }
         
-        const userDocRef = doc(db!, 'users', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { photoURL }, { merge: true });
 
         setUserData(prev => prev ? ({ ...prev, photoURL: url }) : null);
@@ -300,7 +300,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     try {
-        const userDocRef = doc(db!, 'users', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { bio: newBio }, { merge: true });
         setUserData(prev => prev ? { ...prev, bio: newBio } : null);
         toast({ title: 'Bio Updated' });
@@ -327,7 +327,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        const userDocRef = doc(db!, 'users', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, dataToUpdate);
         setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
         toast({ title: 'Title Equipped!' });
@@ -360,7 +360,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-        const userDocRef = doc(db!, 'users', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, dataToUpdate);
         setUserData(prev => prev ? { ...prev, ...dataToUpdate } : null);
         toast({ title: 'Privacy Setting Updated' });
@@ -370,17 +370,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, toast, isGuest, userData]);
   
-  if (loading && pathname !== '/login') {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-          <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
-      </div>
-    );
-  }
+  const showLoadingScreen = loading && pathname !== '/login';
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading, isUserDataLoaded }}>
-      {children}
+       {showLoadingScreen ? (
+         <div className="flex items-center justify-center min-h-screen bg-black">
+            <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
+         </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };
