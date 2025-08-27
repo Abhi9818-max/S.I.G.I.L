@@ -370,17 +370,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, toast, isGuest, userData]);
   
-  const showLoadingScreen = loading && pathname !== '/login';
+  const showLoadingScreen = loading || (pathname !== '/login' && !isUserDataLoaded && !isGuest);
+
+  if (showLoadingScreen) {
+    return (
+      <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading: showLoadingScreen, isUserDataLoaded }}>
+        <div className="flex items-center justify-center min-h-screen bg-black">
+          <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
+        </div>
+      </AuthContext.Provider>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading, isUserDataLoaded }}>
-       {showLoadingScreen ? (
-         <div className="flex items-center justify-center min-h-screen bg-black">
-            <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
-         </div>
-      ) : (
-        children
-      )}
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading: showLoadingScreen, isUserDataLoaded }}>
+      {children}
     </AuthContext.Provider>
   );
 };
@@ -392,3 +396,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    
