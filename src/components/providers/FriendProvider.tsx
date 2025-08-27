@@ -11,7 +11,6 @@ import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ACHIEVEMENTS } from '@/lib/achievements';
-import { useUserRecords } from './UserRecordsProvider';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -78,8 +77,7 @@ interface FriendContextType {
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, userData } = useAuth();
-    const { updateUserDataInDb } = useUserRecords();
+    const { user, userData, updateUserDataInDb } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
