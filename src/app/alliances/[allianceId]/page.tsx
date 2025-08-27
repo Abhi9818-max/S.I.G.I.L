@@ -13,30 +13,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Target, Users, Calendar, Shield } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 // This function now fetches real alliance data
 async function fetchAllianceData(allianceId: string): Promise<Alliance | null> {
     if (!db) return null;
     const allianceRef = doc(db, 'alliances', allianceId);
     const allianceSnap = await getDoc(allianceRef);
+
     if (allianceSnap.exists()) {
         const data = allianceSnap.data();
-        
-        // Fetch records for all members within the alliance's date range
-        const memberRecordsQuery = query(
-            collection(db, 'records'), 
-            where('ownerId', 'in', data.memberIds),
-            where('taskType', '==', data.taskId),
-            where('date', '>=', data.startDate.split('T')[0]),
-            where('date', '<=', data.endDate.split('T')[0])
-        );
-
-        const recordsSnapshot = await getDocs(memberRecordsQuery);
-        const memberRecords = recordsSnapshot.docs.map(doc => doc.data() as RecordEntry);
-        
-        const totalProgress = memberRecords.reduce((sum, record) => sum + record.value, 0);
-
-        return { id: allianceSnap.id, ...data, progress: totalProgress } as Alliance;
+        return { id: allianceSnap.id, ...data } as Alliance;
     }
     return null;
 }

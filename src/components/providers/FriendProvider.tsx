@@ -2,10 +2,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval, isPast } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -66,6 +66,7 @@ interface FriendContextType {
     acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
+    updateAllianceProgress: (record: RecordEntry) => Promise<void>;
     // Marketplace
     globalListings: MarketplaceListing[];
     userListings: MarketplaceListing[];
@@ -733,6 +734,40 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(allianceRef, data);
     }, []);
 
+    // New function to update progress
+    const updateAllianceProgress = useCallback(async (record: RecordEntry) => {
+        if (!user || !db || !record.taskType) return;
+        
+        // Find all alliances this user is in that track this specific task
+        const relevantAlliances = userAlliances.filter(a => 
+            a.taskId === record.taskType && 
+            a.status === 'ongoing' &&
+            isWithinInterval(new Date(record.date), {
+                start: parseISO(a.startDate),
+                end: parseISO(a.endDate)
+            })
+        );
+        
+        if (relevantAlliances.length === 0) return;
+
+        for (const alliance of relevantAlliances) {
+            const allianceRef = doc(db, "alliances", alliance.id);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(allianceRef);
+                    if (!sfDoc.exists()) {
+                        throw "Alliance does not exist!";
+                    }
+                    const currentProgress = sfDoc.data().progress || 0;
+                    const newProgress = currentProgress + record.value;
+                    transaction.update(allianceRef, { progress: newProgress });
+                });
+            } catch (e) {
+                console.error("Alliance progress transaction failed: ", e);
+            }
+        }
+    }, [user, userAlliances]);
+
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
         if (!user || !db) throw new Error("Authentication required.");
@@ -875,6 +910,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             acceptAllianceChallenge,
             declineAllianceChallenge,
             updateAlliance,
+            updateAllianceProgress,
             globalListings,
             userListings,
             listTitleForSale,

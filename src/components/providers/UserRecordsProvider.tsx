@@ -42,6 +42,7 @@ import {
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { useFriends } from './FriendProvider';
 
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
@@ -133,6 +134,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
+  const friendContext = useFriends();
 
   useEffect(() => {
     if (isUserDataLoaded && authUserData) {
@@ -361,7 +363,9 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     
     updateUserDataInDb(dataToUpdate);
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord]);
+    friendContext?.updateAllianceProgress(newRecord);
+
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, friendContext]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.
