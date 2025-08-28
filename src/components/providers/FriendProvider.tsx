@@ -185,13 +185,16 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         // Fetch incoming alliance challenges
         const challengesRef = collection(db!, 'alliance_challenges');
-        const incomingChallengesQuery = query(challengesRef, 
-            where('challengedCreatorId', '==', user.uid),
+        const incomingChallengesQuery = query(challengesRef,
+            or(
+                where('challengedCreatorId', '==', user.uid),
+                where('challengerCreatorId', '==', user.uid)
+            ),
             where('status', '==', 'pending')
         );
-
         const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
         setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
+
 
     }, [user]);
 
