@@ -78,7 +78,7 @@ const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user, userData } = useAuth();
-    const { updateUserDataInDb, addRecord: originalAddRecord } = useUserRecords();
+    const { addRecord } = useUserRecords();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -141,12 +141,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const challengesRef = collection(db, 'alliance_challenges');
         
-        // Listen for challenges where the user is the creator of the *challenged* alliance
         const q = query(challengesRef, where('challengedCreatorId', '==', user.uid), where('status', '==', 'pending'));
         
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const challenges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge));
-            // This listener only gets incoming challenges, so we can set state directly
             setIncomingAllianceChallenges(challenges);
         }, (error) => {
             console.error("Error listening to incoming alliance challenges:", error);
@@ -210,7 +208,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             
         } catch (error) {
             console.error("Error fetching friends and requests:", error);
-            // Don't toast here to avoid spamming on background fetches
         }
     }, [user]);
 
@@ -478,46 +475,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const incomingRelationshipProposalFromFriend = useCallback((friendId: string) => {
         return incomingRelationshipProposals.find(p => p.senderId === friendId);
     }, [incomingRelationshipProposals]);
-
-    const updateAllianceProgress = useCallback(async (record: RecordEntry) => {
-        if (!user || !db || !record.taskType) return;
-        
-        const relevantAlliances = userAlliances.filter(a => 
-            a.taskId === record.taskType && 
-            a.status === 'ongoing' &&
-            isWithinInterval(new Date(record.date), {
-                start: parseISO(a.startDate),
-                end: parseISO(a.endDate)
-            }) &&
-            !isPast(parseISO(a.endDate))
-        );
-        
-        if (relevantAlliances.length === 0) return;
-
-        for (const alliance of relevantAlliances) {
-            const allianceRef = doc(db, "alliances", alliance.id);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(allianceRef);
-                    if (!sfDoc.exists()) {
-                        throw "Alliance does not exist!";
-                    }
-                    const currentProgress = sfDoc.data().progress || 0;
-                    const newProgress = currentProgress + record.value;
-                    transaction.update(allianceRef, { progress: newProgress });
-                });
-            } catch (e) {
-                console.error("Alliance progress transaction failed: ", e);
-            }
-        }
-    }, [user, userAlliances, db]);
-
-    const addRecord = useCallback((entry: Omit<RecordEntry, 'id'>) => {
-        originalAddRecord(entry);
-        const newRecord: RecordEntry = { ...entry, id: uuidv4() };
-        updateAllianceProgress(newRecord);
-    }, [originalAddRecord, updateAllianceProgress]);
-
+    
     // Alliance Functions
     const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>): Promise<string> => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
@@ -577,8 +535,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             memberIds: arrayRemove(memberId)
         });
 
-        // The members array update is tricky with arrayRemove for objects.
-        // It's often better to read, modify, and write the whole array.
         const currentData = allianceSnap.data() as Alliance;
         const updatedMembers = currentData.members.filter(m => m.uid !== memberId);
         batch.update(allianceRef, { members: updatedMembers });
@@ -611,7 +567,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
 
         await batch.commit();
-        // The onSnapshot listener will update the local state automatically.
     }, [user, toast]);
 
     const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
@@ -731,7 +686,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(challengeRef, newChallenge);
-        // We can add listening logic for challenges later if needed
     }, [user]);
 
     const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
@@ -778,7 +732,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
-        if (!user || !db) throw new Error("Authentication required.");
+        if (!user || !userData || !db) throw new Error("Authentication required.");
 
         const title = ACHIEVEMENTS.find(a => a.id === titleId && a.isTitle);
         if (!title) throw new Error("Invalid title selected.");
@@ -796,12 +750,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 throw new Error("You do not own this title.");
             }
 
-            // Remove title from user's achievements
             transaction.update(userRef, {
                 unlockedAchievements: arrayRemove(titleId)
             });
 
-            // Create new listing
             const listingRef = doc(collection(db!, 'marketplace_listings'));
             const newListing: MarketplaceListing = {
                 id: listingRef.id,
@@ -816,15 +768,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             };
             transaction.set(listingRef, newListing);
         });
-        
-        // Update local state after the successful transaction.
-        if (userData?.unlockedAchievements) {
-          updateUserDataInDb({ 
-              unlockedAchievements: userData.unlockedAchievements.filter(id => id !== titleId) 
-          });
-        }
 
-    }, [user, userData, updateUserDataInDb]);
+    }, [user, userData]);
 
     const purchaseTitle = useCallback(async (listing: MarketplaceListing) => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
@@ -839,18 +784,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const sellerDoc = await transaction.get(sellerRef);
             if (!sellerDoc.exists()) throw new Error("Seller not found.");
             
-            // 1. Deduct shards from buyer and add achievement
             transaction.update(buyerRef, { 
                 aetherShards: (userData.aetherShards || 0) - listing.price,
                 unlockedAchievements: arrayUnion(listing.itemId)
             });
 
-            // 2. Add shards to seller
             transaction.update(sellerRef, {
                 aetherShards: (sellerDoc.data().aetherShards || 0) + listing.price
             });
 
-            // 3. Delete the listing
             transaction.delete(listingRef);
         });
 
@@ -870,11 +812,9 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         const batch = writeBatch(db!);
         
-        // Return item to user
         const userRef = doc(db!, 'users', user.uid);
         batch.update(userRef, { unlockedAchievements: arrayUnion(itemId) });
         
-        // Delete listing
         batch.delete(listingRef);
 
         await batch.commit();
