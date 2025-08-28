@@ -78,7 +78,7 @@ const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user, userData } = useAuth();
-    const { updateUserDataInDb, addRecord } = useUserRecords();
+    const { updateUserDataInDb, addRecord: originalAddRecord } = useUserRecords();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -115,6 +115,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => unsubscribe();
     }, [user]);
 
+    // Alliance data listener
     useEffect(() => {
         if (!user || !db) {
             setUserAlliances([]);
@@ -134,87 +135,107 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const fetchFriendsAndRequests = useCallback(async () => {
         if (!user || !db) return;
 
-        // Fetch incoming friend requests
-        const incomingQuery = query(collection(db!, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
-        const incomingSnapshot = await getDocs(incomingQuery);
-        setIncomingRequests(incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
+        try {
+            // Fetch incoming friend requests
+            const incomingQuery = query(collection(db!, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
+            const incomingSnapshot = await getDocs(incomingQuery);
+            setIncomingRequests(incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
 
-        // Fetch sent/pending friend requests
-        const pendingQuery = query(collection(db!, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
-        const pendingSnapshot = await getDocs(pendingQuery);
-        setPendingRequests(pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
-        
-        // Fetch friends list
-        const friendsQuery = collection(db!, `users/${user.uid}/friends`);
-        const friendsSnapshot = await getDocs(friendsQuery);
-        const friendsListPromises = friendsSnapshot.docs.map(async (friendDoc) => {
-            const friendId = friendDoc.id;
-            const friendDocData = friendDoc.data();
-            const userDocRef = doc(db!, 'users', friendId);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                const friendUserData = userDocSnap.data() as UserData;
-                return {
-                    uid: friendId,
-                    username: friendUserData.username,
-                    photoURL: friendUserData.photoURL,
-                    since: friendDocData.since,
-                    nickname: friendDocData.nickname,
-                    relationship: friendDocData.relationship,
-                    taskDefinitions: friendUserData.taskDefinitions, // Include tasks
-                };
-            }
-            return null;
-        });
-        setFriends((await Promise.all(friendsListPromises)).filter(Boolean) as Friend[]);
-        
-        // Fetch incoming relationship proposals
-        const incomingRelQuery = query(collection(db!, 'relationship_proposals'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
-        const incomingRelSnapshot = await getDocs(incomingRelQuery);
-        setIncomingRelationshipProposals(incomingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
+            // Fetch sent/pending friend requests
+            const pendingQuery = query(collection(db!, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
+            const pendingSnapshot = await getDocs(pendingQuery);
+            setPendingRequests(pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
+            
+            // Fetch friends list
+            const friendsQuery = collection(db!, `users/${user.uid}/friends`);
+            const friendsSnapshot = await getDocs(friendsQuery);
+            const friendsListPromises = friendsSnapshot.docs.map(async (friendDoc) => {
+                const friendId = friendDoc.id;
+                const friendDocData = friendDoc.data();
+                const userDocRef = doc(db!, 'users', friendId);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const friendUserData = userDocSnap.data() as UserData;
+                    return {
+                        uid: friendId,
+                        username: friendUserData.username,
+                        photoURL: friendUserData.photoURL,
+                        since: friendDocData.since,
+                        nickname: friendDocData.nickname,
+                        relationship: friendDocData.relationship,
+                        taskDefinitions: friendUserData.taskDefinitions, // Include tasks
+                    };
+                }
+                return null;
+            });
+            setFriends((await Promise.all(friendsListPromises)).filter(Boolean) as Friend[]);
+            
+            // Fetch incoming relationship proposals
+            const incomingRelQuery = query(collection(db!, 'relationship_proposals'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
+            const incomingRelSnapshot = await getDocs(incomingRelQuery);
+            setIncomingRelationshipProposals(incomingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
 
-        // Fetch sent/pending relationship proposals
-        const pendingRelQuery = query(collection(db!, 'relationship_proposals'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
-        const pendingRelSnapshot = await getDocs(pendingRelQuery);
-        setPendingRelationshipProposals(pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
-        
-        // Fetch incoming alliance invitations
-        const incomingAllianceQuery = query(collection(db!, 'alliance_invitations'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
-        const incomingAllianceSnapshot = await getDocs(incomingAllianceQuery);
-        setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
+            // Fetch sent/pending relationship proposals
+            const pendingRelQuery = query(collection(db!, 'relationship_proposals'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
+            const pendingRelSnapshot = await getDocs(pendingRelQuery);
+            setPendingRelationshipProposals(pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
+            
+            // Fetch incoming alliance invitations
+            const incomingAllianceQuery = query(collection(db!, 'alliance_invitations'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
+            const incomingAllianceSnapshot = await getDocs(incomingAllianceQuery);
+            setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
 
-        // Fetch incoming alliance challenges
-        const challengesRef = collection(db!, 'alliance_challenges');
-        const incomingChallengesQuery = query(challengesRef,
-            or(
-                where('challengedCreatorId', '==', user.uid),
-                where('challengerCreatorId', '==', user.uid)
-            ),
-            where('status', '==', 'pending')
-        );
-        const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
-        setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
+            // Fetch incoming alliance challenges
+            const challengesRef = collection(db!, 'alliance_challenges');
+            const incomingChallengesQuery = query(challengesRef,
+                and(
+                    where('status', '==', 'pending'),
+                    or(
+                        where('challengedCreatorId', '==', user.uid),
+                        where('challengerCreatorId', '==', user.uid)
+                    )
+                )
+            );
+            const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
+            setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
 
-
+        } catch (error) {
+            console.error("Error fetching friends and requests:", error);
+            // Don't toast here to avoid spamming on background fetches
+        }
     }, [user]);
 
+    // Listener for friends and requests
     useEffect(() => {
-        if (user && db) {
-            fetchFriendsAndRequests(); // Initial fetch
-            const friendsSubcollectionRef = collection(db!, 'users', user.uid, 'friends');
-            const unsubscribe = onSnapshot(friendsSubcollectionRef, () => {
-              fetchFriendsAndRequests();
-            });
-            return () => unsubscribe();
-        } else {
-             setIncomingRequests([]);
-             setPendingRequests([]);
-             setFriends([]);
-             setIncomingRelationshipProposals([]);
-             setPendingRelationshipProposals([]);
-             setIncomingAllianceInvitations([]);
-             setIncomingAllianceChallenges([]);
-        }
+        if (!user || !db) return;
+
+        const requestUnsubscribe = onSnapshot(query(collection(db, 'friend_requests'), or(where('recipientId', '==', user.uid), where('senderId', '==', user.uid))), () => {
+            fetchFriendsAndRequests();
+        });
+        
+        const friendsUnsubscribe = onSnapshot(collection(db, 'users', user.uid, 'friends'), () => {
+            fetchFriendsAndRequests();
+        });
+        
+        const proposalUnsubscribe = onSnapshot(query(collection(db, 'relationship_proposals'), or(where('recipientId', '==', user.uid), where('senderId', '==', user.uid))), () => {
+             fetchFriendsAndRequests();
+        });
+
+        const invitationUnsubscribe = onSnapshot(query(collection(db, 'alliance_invitations'), where('recipientId', '==', user.uid)), () => {
+            fetchFriendsAndRequests();
+        });
+        
+        const challengeUnsubscribe = onSnapshot(query(collection(db, 'alliance_challenges'), or(where('recipientId', '==', user.uid), where('senderId', '==', user.uid))), () => {
+            fetchFriendsAndRequests();
+        });
+
+        return () => {
+            requestUnsubscribe();
+            friendsUnsubscribe();
+            proposalUnsubscribe();
+            invitationUnsubscribe();
+            challengeUnsubscribe();
+        };
     }, [user, fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
@@ -265,8 +286,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(requestRef, newRequest);
-        await fetchFriendsAndRequests();
-    }, [user, userData, fetchFriendsAndRequests]);
+    }, [user, userData]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
         if (!user || !userData || !db) {
@@ -295,30 +315,27 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         try {
             await batch.commit();
-            await fetchFriendsAndRequests();
             toast({ title: 'Friend Added', description: `You are now friends with ${request.senderUsername}.` });
         } catch (error) {
             console.error("Failed to accept friend request:", error);
             toast({ title: 'Error', description: 'Could not accept the friend request.', variant: 'destructive' });
         }
 
-    }, [user, userData, toast, fetchFriendsAndRequests]);
+    }, [user, userData, toast]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         if (!db) return;
         const requestRef = doc(db!, 'friend_requests', requestId);
         await deleteDoc(requestRef);
-        await fetchFriendsAndRequests();
         toast({ title: 'Request Declined', variant: 'destructive' });
-    }, [toast, fetchFriendsAndRequests]);
+    }, [toast]);
     
     const cancelFriendRequest = useCallback(async (requestId: string) => {
         if (!db) return;
         const requestRef = doc(db!, 'friend_requests', requestId);
         await deleteDoc(requestRef);
-        await fetchFriendsAndRequests();
         toast({ title: 'Request Cancelled' });
-    }, [toast, fetchFriendsAndRequests]);
+    }, [toast]);
     
     const getFriendData = useCallback(async (friendId: string): Promise<UserData | null> => {
         if (!user || !db) return null;
@@ -354,8 +371,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (!user || !db) return;
         const friendRef = doc(db!, `users/${user.uid}/friends`, friendId);
         await updateDoc(friendRef, { nickname });
-        await fetchFriendsAndRequests();
-    }, [user, fetchFriendsAndRequests]);
+    }, [user]);
 
     const unfriend = useCallback(async (friendId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");
@@ -372,14 +388,13 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         try {
             await batch.commit();
-            await fetchFriendsAndRequests();
             toast({ title: "Friend Removed", description: "They are no longer on your friends list." });
             router.push('/friends');
         } catch (error) {
             console.error("Failed to unfriend:", error);
             toast({ title: 'Error', description: 'Could not remove friend.', variant: 'destructive' });
         }
-    }, [user, fetchFriendsAndRequests, toast, router]);
+    }, [user, toast, router]);
 
     const sendRelationshipProposal = useCallback(async (friendId: string, recipientUsername: string, recipientPhotoURL: string | null | undefined, relationship: string) => {
         if (!user || !userData || !db) throw new Error("You must be logged in.");
@@ -391,7 +406,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const friendUserRef = doc(db!, `users/${friendId}/friends`, user.uid);
             batch.update(friendUserRef, { relationship: '' });
             await batch.commit();
-            await fetchFriendsAndRequests();
             return;
         }
 
@@ -422,8 +436,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(existingProposalRef, proposalData);
-        await fetchFriendsAndRequests();
-    }, [user, userData, fetchFriendsAndRequests]);
+    }, [user, userData]);
     
     const acceptRelationshipProposal = useCallback(async (proposal: RelationshipProposal) => {
         if (!user || !db) return;
@@ -439,23 +452,20 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         batch.delete(proposalRef);
 
         await batch.commit();
-        await fetchFriendsAndRequests();
         toast({ title: "Relationship Updated!", description: `You are now ${proposal.correspondingRelationship} with ${proposal.senderUsername}.` });
-    }, [user, fetchFriendsAndRequests, toast]);
+    }, [user, toast]);
 
     const declineRelationshipProposal = useCallback(async (proposalId: string) => {
         if (!db) return;
         await deleteDoc(doc(db!, 'relationship_proposals', proposalId));
-        await fetchFriendsAndRequests();
         toast({ title: 'Proposal Declined', variant: 'destructive' });
-    }, [fetchFriendsAndRequests, toast]);
+    }, [toast]);
 
     const cancelRelationshipProposal = useCallback(async (proposalId: string) => {
         if (!db) return;
         await deleteDoc(doc(db!, 'relationship_proposals', proposalId));
-        await fetchFriendsAndRequests();
         toast({ title: 'Proposal Cancelled' });
-    }, [fetchFriendsAndRequests, toast]);
+    }, [toast]);
     
     const pendingRelationshipProposalForFriend = useCallback((friendId: string) => {
         return pendingRelationshipProposals.find(p => p.recipientId === friendId);
@@ -464,6 +474,45 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const incomingRelationshipProposalFromFriend = useCallback((friendId: string) => {
         return incomingRelationshipProposals.find(p => p.senderId === friendId);
     }, [incomingRelationshipProposals]);
+
+    const updateAllianceProgress = useCallback(async (record: RecordEntry) => {
+        if (!user || !db || !record.taskType) return;
+        
+        const relevantAlliances = userAlliances.filter(a => 
+            a.taskId === record.taskType && 
+            a.status === 'ongoing' &&
+            isWithinInterval(new Date(record.date), {
+                start: parseISO(a.startDate),
+                end: parseISO(a.endDate)
+            }) &&
+            !isPast(parseISO(a.endDate))
+        );
+        
+        if (relevantAlliances.length === 0) return;
+
+        for (const alliance of relevantAlliances) {
+            const allianceRef = doc(db, "alliances", alliance.id);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(allianceRef);
+                    if (!sfDoc.exists()) {
+                        throw "Alliance does not exist!";
+                    }
+                    const currentProgress = sfDoc.data().progress || 0;
+                    const newProgress = currentProgress + record.value;
+                    transaction.update(allianceRef, { progress: newProgress });
+                });
+            } catch (e) {
+                console.error("Alliance progress transaction failed: ", e);
+            }
+        }
+    }, [user, userAlliances, db]);
+
+    const addRecord = useCallback((entry: Omit<RecordEntry, 'id'>) => {
+        originalAddRecord(entry);
+        const newRecord: RecordEntry = { ...entry, id: uuidv4() };
+        updateAllianceProgress(newRecord);
+    }, [originalAddRecord, updateAllianceProgress]);
 
     // Alliance Functions
     const createAlliance = useCallback(async (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>): Promise<string> => {
@@ -572,12 +621,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             throw new Error("Invitation already sent.");
         }
 
-        // ✅ Fixed: Add guard check for line 746
-        if (!db) {
-            console.error("Firestore DB is not initialized");
-            return;
-        }
-
         const recipientDoc = await getDoc(doc(db!, 'users', recipientId));
         if (!recipientDoc.exists()) throw new Error("Recipient not found.");
         const recipientData = recipientDoc.data() as UserData;
@@ -594,9 +637,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(inviteRef, newInvite);
-        await fetchFriendsAndRequests();
 
-    }, [user, userData, fetchFriendsAndRequests]);
+    }, [user, userData]);
 
     const acceptAllianceInvitation = useCallback(async (invitation: AllianceInvitation) => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
@@ -619,17 +661,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
 
         await deleteDoc(doc(db!, 'alliance_invitations', invitation.id));
-        await fetchFriendsAndRequests();
         toast({ title: "Joined Alliance!", description: `You are now a member of ${invitation.allianceName}.` });
         router.push(`/alliances/${invitation.allianceId}`);
-    }, [user, userData, fetchFriendsAndRequests, toast, router]);
+    }, [user, userData, toast, router]);
     
     const declineAllianceInvitation = useCallback(async (invitationId: string) => {
         if (!db) return;
         await deleteDoc(doc(db!, 'alliance_invitations', invitationId));
-        await fetchFriendsAndRequests();
         toast({ title: 'Invitation Declined', variant: 'destructive' });
-    }, [fetchFriendsAndRequests, toast]);
+    }, [toast]);
 
     const getPendingAllianceInvitesFor = useCallback(async (allianceId: string): Promise<AllianceInvitation[]> => {
         if (!db) return [];
@@ -651,8 +691,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const searchAlliances = useCallback(async (name: string): Promise<Alliance[]> => {
         if (!db) return [];
         const alliancesRef = collection(db!, 'alliances');
-        // Firestore doesn't support case-insensitive or partial text search natively.
-        // A common workaround is to search for >= and <= a range.
         const q = query(alliancesRef, 
             where('name', '>=', name),
             where('name', '<=', name + '\uf8ff'),
@@ -718,70 +756,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
 
         await batch.commit();
-        await fetchFriendsAndRequests();
         toast({ title: "Challenge Accepted!", description: `The battle with ${challenge.challengerAllianceName} begins.` });
-    }, [toast, fetchFriendsAndRequests]);
+    }, [toast]);
 
     const declineAllianceChallenge = useCallback(async (challengeId: string) => {
         if (!db) return;
         const challengeRef = doc(db!, 'alliance_challenges', challengeId);
         await updateDoc(challengeRef, { status: 'declined' });
-        await fetchFriendsAndRequests();
         toast({ title: 'Challenge Declined', variant: 'destructive' });
-    }, [toast, fetchFriendsAndRequests]);
+    }, [toast]);
 
     const updateAlliance = useCallback(async (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => {
         if (!db) return;
         const allianceRef = doc(db!, 'alliances', allianceId);
         await updateDoc(allianceRef, data);
     }, []);
-
-    // New function to update progress, called from addRecord in UserRecordsProvider
-    const updateAllianceProgress = useCallback(async (record: RecordEntry) => {
-        if (!user || !db || !record.taskType) return;
-        
-        const relevantAlliances = userAlliances.filter(a => 
-            a.taskId === record.taskType && 
-            a.status === 'ongoing' &&
-            isWithinInterval(new Date(record.date), {
-                start: parseISO(a.startDate),
-                end: parseISO(a.endDate)
-            })
-        );
-        
-        if (relevantAlliances.length === 0) return;
-
-        for (const alliance of relevantAlliances) {
-            const allianceRef = doc(db, "alliances", alliance.id);
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(allianceRef);
-                    if (!sfDoc.exists()) {
-                        throw "Alliance does not exist!";
-                    }
-                    const currentProgress = sfDoc.data().progress || 0;
-                    const newProgress = currentProgress + record.value;
-                    transaction.update(allianceRef, { progress: newProgress });
-                });
-            } catch (e) {
-                console.error("Alliance progress transaction failed: ", e);
-            }
-        }
-    }, [user, userAlliances, db]);
-    
-    // Add an effect to attach this function to the addRecord call
-    useEffect(() => {
-        const originalAddRecord = addRecord;
-        const newAddRecord = (entry: Omit<RecordEntry, 'id'>) => {
-            originalAddRecord(entry);
-            const newRecord: RecordEntry = { ...entry, id: uuidv4() };
-            updateAllianceProgress(newRecord);
-        };
-        // This is a bit of a hacky way to override the function.
-        // A better approach might be an event emitter or a shared state management library.
-        // For now, we update the context consumer.
-    }, [addRecord, updateAllianceProgress]);
-
 
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
@@ -917,7 +906,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             deleteAllCreatedAlliances,
             sendAllianceInvitation,
             acceptAllianceInvitation,
-            declineAllianceInvitation,
+declineAllianceInvitation,
             getPendingAllianceInvitesFor,
             incomingAllianceInvitations,
             incomingAllianceChallenges,
@@ -945,3 +934,5 @@ export const useFriends = (): FriendContextType => {
     }
     return context;
 };
+
+    
