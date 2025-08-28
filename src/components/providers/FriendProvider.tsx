@@ -132,6 +132,29 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => unsubscribe();
     }, [user]);
 
+    // Listener for incoming alliance challenges
+    useEffect(() => {
+        if (!user || !db) {
+            setIncomingAllianceChallenges([]);
+            return;
+        }
+
+        const challengesRef = collection(db, 'alliance_challenges');
+        
+        // Listen for challenges where the user is the creator of the *challenged* alliance
+        const q = query(challengesRef, where('challengedCreatorId', '==', user.uid), where('status', '==', 'pending'));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const challenges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge));
+            // This listener only gets incoming challenges, so we can set state directly
+            setIncomingAllianceChallenges(challenges);
+        }, (error) => {
+            console.error("Error listening to incoming alliance challenges:", error);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
+
     const fetchFriendsAndRequests = useCallback(async () => {
         if (!user || !db) return;
 
@@ -184,21 +207,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const incomingAllianceQuery = query(collection(db!, 'alliance_invitations'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
             const incomingAllianceSnapshot = await getDocs(incomingAllianceQuery);
             setIncomingAllianceInvitations(incomingAllianceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceInvitation)));
-
-            // Fetch incoming alliance challenges
-            const challengesRef = collection(db!, 'alliance_challenges');
-            const incomingChallengesQuery = query(challengesRef,
-                and(
-                    where('status', '==', 'pending'),
-                    or(
-                        where('challengedCreatorId', '==', user.uid),
-                        where('challengerCreatorId', '==', user.uid)
-                    )
-                )
-            );
-            const incomingChallengesSnapshot = await getDocs(incomingChallengesQuery);
-            setIncomingAllianceChallenges(incomingChallengesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AllianceChallenge)));
-
+            
         } catch (error) {
             console.error("Error fetching friends and requests:", error);
             // Don't toast here to avoid spamming on background fetches
@@ -224,17 +233,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const invitationUnsubscribe = onSnapshot(query(collection(db, 'alliance_invitations'), where('recipientId', '==', user.uid)), () => {
             fetchFriendsAndRequests();
         });
-        
-        const challengeUnsubscribe = onSnapshot(query(collection(db, 'alliance_challenges'), or(where('recipientId', '==', user.uid), where('senderId', '==', user.uid))), () => {
-            fetchFriendsAndRequests();
-        });
 
         return () => {
             requestUnsubscribe();
             friendsUnsubscribe();
             proposalUnsubscribe();
             invitationUnsubscribe();
-            challengeUnsubscribe();
         };
     }, [user, fetchFriendsAndRequests]);
 
@@ -934,5 +938,3 @@ export const useFriends = (): FriendContextType => {
     }
     return context;
 };
-
-    
