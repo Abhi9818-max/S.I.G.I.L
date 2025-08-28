@@ -1,14 +1,14 @@
 import ClientFriendProfilePage from './ClientFriendProfilePage';
 
-type Params = Promise<{ friendId: string }>;
+type Params = { friendId: string };
 
 export async function generateStaticParams() {
-  // Replace with actual friend ID fetching logic
-  const friendIds = ['friend1', 'friend2', 'friend3'];
-  return friendIds.map(friendId => ({ friendId }));
+  // This page is dynamic, so we return an empty array.
+  // Next.js will then generate pages on-demand.
+  return [];
 }
 
 export default async function FriendPage({ params }: { params: Params }) {
-  const { friendId } = await params;
+  const { friendId } = params;
   return <ClientFriendProfilePage friendId={friendId} />;
 }
