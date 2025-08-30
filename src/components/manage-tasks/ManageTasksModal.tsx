@@ -332,7 +332,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                     <AccordionTrigger className="text-sm py-2 px-3 bg-muted/50 rounded-md hover:bg-muted/80 [&[data-state=open]]:rounded-b-none">
                       <div className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-muted-foreground" />Task Scheduling</div>
                     </AccordionTrigger>
-                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 bg-muted/20 rounded-b-md">
+                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 rounded-b-md">
                       <p className="text-xs text-muted-foreground">Set how often this task should be completed to affect streak and consistency calculations.</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -359,7 +359,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                   </AccordionItem>
                   <AccordionItem value="intensity" className="border-b-0">
                     <AccordionTrigger className="text-sm py-2 px-3 bg-muted/50 rounded-md hover:bg-muted/80 [&[data-state=open]]:rounded-b-none"><div className="flex items-center gap-2"><Timer className="h-4 w-4 text-muted-foreground" />Custom Intensity Phases (Optional)</div></AccordionTrigger>
-                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 bg-muted/20 rounded-b-md">
+                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 rounded-b-md">
                       <p className="text-xs text-muted-foreground">Define 4 values for different shades. Defaults: {VALUE_THRESHOLDS.join(', ')}.</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -401,7 +401,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                               )}
                           />
                       </div>
-                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 bg-muted/20 rounded-b-md">
+                    <AccordionContent className="pt-4 px-3 pb-3 space-y-3 rounded-b-md">
                       <p className="text-xs text-muted-foreground">Enable this for a high-stakes daily challenge. Missing a day incurs a heavy penalty and a dare.</p>
                     </AccordionContent>
                   </AccordionItem>
