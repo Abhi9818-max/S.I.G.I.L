@@ -10,17 +10,17 @@ import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns'
 import Link from 'next/link';
 import { doc, getDoc, collection, query, where, documentId, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Alliance, UserData } from '@/types';
+import type { Alliance, UserData, SearchedUser } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Target, Users, Calendar } from 'lucide-react';
+import { Target, Users, Calendar, UserPlus, Eye } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useFriends } from '@/components/providers/FriendProvider';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Simple hash function to get a number from a string
@@ -40,13 +40,23 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 };
 
+type MemberWithStatus = UserData & {
+    isFriend: boolean;
+    isPending: boolean;
+    isIncoming: boolean;
+};
+
 type Params = { allianceId: string };
 
 export default function AlliancePage({ params }: { params: Params }) {
   const { allianceId } = params;
   const [alliance, setAlliance] = useState<Alliance | null>(null);
-  const [memberAvatars, setMemberAvatars] = useState<Pick<UserData, 'uid' | 'photoURL' | 'username'>[]>([]);
+  const [members, setMembers] = useState<MemberWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { user } = useAuth();
+  const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchAllianceData() {
@@ -60,33 +70,30 @@ export default function AlliancePage({ params }: { params: Params }) {
           const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
           setAlliance(allianceData);
           
-          // Fetch member avatars
           const memberIds = allianceData.memberIds;
           if (memberIds && memberIds.length > 0) {
-            // Firestore 'in' query is limited to 30 items per query.
-            // We chunk the requests to handle more than 30 members.
             const chunks = [];
             for (let i = 0; i < memberIds.length; i += 30) {
               chunks.push(memberIds.slice(i, i + 30));
             }
 
-            const avatarPromises = chunks.map(chunk => {
+            const memberPromises = chunks.map(chunk => {
               const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
               return getDocs(usersQuery);
             });
             
-            const snapshots = await Promise.all(avatarPromises);
-            const avatars = snapshots.flatMap(snapshot => 
-              snapshot.docs.map(doc => {
-                  const data = doc.data();
-                  return {
-                      uid: doc.id,
-                      photoURL: data.photoURL,
-                      username: data.username
-                  };
-              })
+            const snapshots = await Promise.all(memberPromises);
+            const membersData = snapshots.flatMap(snapshot => 
+              snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData))
             );
-            setMemberAvatars(avatars);
+
+            const membersWithStatus = membersData.map(member => ({
+              ...member,
+              isFriend: friends.some(f => f.uid === member.uid),
+              isPending: pendingRequests.some(req => req.recipientId === member.uid),
+              isIncoming: incomingRequests.some(req => req.senderId === member.uid)
+            }));
+            setMembers(membersWithStatus);
           }
         } else {
           setAlliance(null);
@@ -100,7 +107,21 @@ export default function AlliancePage({ params }: { params: Params }) {
     }
 
     fetchAllianceData();
-  }, [allianceId]);
+  }, [allianceId, friends, pendingRequests, incomingRequests]);
+  
+  const handleAddFriend = async (member: UserData) => {
+    const recipient: SearchedUser = {
+        uid: member.uid!,
+        username: member.username,
+        photoURL: member.photoURL
+    };
+    try {
+        await sendFriendRequest(recipient);
+        toast({ title: "Friend Request Sent", description: `Your request has been sent to ${member.username}.` });
+    } catch (e) {
+        toast({ title: "Error", description: (e as Error).message, variant: "destructive" });
+    }
+  }
 
   if (loading) {
     return (
@@ -174,20 +195,40 @@ export default function AlliancePage({ params }: { params: Params }) {
                 <h2 className="text-xl font-semibold">Members ({alliance.memberIds.length})</h2>
             </div>
             <div className="flex flex-wrap gap-3">
-                {memberAvatars.map(member => (
-                    <TooltipProvider key={member.uid}>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <Avatar>
-                                    <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
+                {members.map(member => (
+                    <Popover key={member.uid}>
+                        <PopoverTrigger asChild>
+                            <button aria-label={`View options for ${member.username}`}>
+                                <Avatar className="cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+                                    <AvatarImage src={getAvatarForId(member.uid!, member.photoURL)} />
                                     <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{member.username}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2">
+                            <div className="flex flex-col gap-2 items-center text-center">
+                                <p className="font-semibold">{member.username}</p>
+                                {member.uid === user?.uid ? (
+                                    <Badge variant="secondary">This is you</Badge>
+                                ) : member.isFriend ? (
+                                    <Button asChild size="sm">
+                                      <Link href={`/friends/${member.uid}`}>
+                                        <Eye className="mr-2 h-4 w-4" /> View Profile
+                                      </Link>
+                                    </Button>
+                                ) : member.isPending ? (
+                                    <Badge variant="outline">Request Sent</Badge>
+                                ) : member.isIncoming ? (
+                                    <Badge variant="secondary">Check Requests</Badge>
+                                ) : (
+                                    <Button size="sm" variant="outline" onClick={() => handleAddFriend(member)}>
+                                        <UserPlus className="mr-2 h-4 w-4"/>
+                                        Add Friend
+                                    </Button>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 ))}
             </div>
         </div>
