@@ -73,11 +73,11 @@ export const getContributionLevel = (value: number | null | undefined, customThr
 
 export const TASK_DEFINITIONS: Omit<TaskDefinition, 'status'>[] = [
     { id: 'work', name: 'Work', color: 'hsl(210 80% 60%)', unit: 'hours', intensityThresholds: [0.5, 2, 4, 6.5] },
-    { id: 'exercise', name: 'Exercise', color: 'hsl(140 70% 55%)' },  // Vibrant Green
-    { id: 'learning', name: 'Learning', color: 'hsl(45 90% 55%)' },   // Sunny Yellow
-    { id: 'personal', name: 'Personal', color: 'hsl(290 80% 65%)' },  // Bright Purple
-    { id: 'reading', name: 'Reading', color: 'hsl(25 95% 60%)' },    // Energetic Orange
-    { id: 'other', name: 'Other', color: 'hsl(0 0% 80%)' },          // Neutral Light Grey
+    { id: 'exercise', name: 'Exercise', color: 'hsl(140 70% 55%)', unit: 'minutes', intensityThresholds: [20, 40, 70, 100] },
+    { id: 'learning', name: 'Learning', color: 'hsl(45 90% 55%)' },
+    { id: 'personal', name: 'Personal', color: 'hsl(290 80% 65%)' },
+    { id: 'reading', name: 'Reading', color: 'hsl(25 95% 60%)', unit: 'pages', intensityThresholds: [7, 15, 25, 45] },
+    { id: 'other', name: 'Other', color: 'hsl(0 0% 80%)' },
 ];
 
 
@@ -244,6 +244,7 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
 };
 
     
+
 
 
 
