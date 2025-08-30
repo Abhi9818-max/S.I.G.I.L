@@ -106,8 +106,12 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   }, [allianceId, friends, pendingRequests, incomingRequests]);
   
   const handleAddFriend = async (member: UserData) => {
+    if (!member.uid || !member.username) {
+        toast({ title: "Error", description: "Cannot add this user.", variant: "destructive" });
+        return;
+    }
     const recipient: SearchedUser = {
-        uid: member.uid!,
+        uid: member.uid,
         username: member.username,
         photoURL: member.photoURL
     };
@@ -186,7 +190,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         <div>
             <div className="flex items-center gap-2 mb-4">
                 <Users className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Members ({alliance.memberIds.length})</h2>
+                <h2 className="text-xl font-semibold">Members ({members.length})</h2>
             </div>
             <div className="flex flex-wrap gap-4">
                 {members.map(member => (
@@ -195,7 +199,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                             <button aria-label={`View options for ${member.username}`}>
                                 <Avatar className="h-12 w-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all hover:scale-105">
                                     <AvatarImage src={getAvatarForId(member.uid!, member.photoURL)} />
-                                    <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{member.username?.charAt(0) || '?'}</AvatarFallback>
                                 </Avatar>
                             </button>
                         </PopoverTrigger>
