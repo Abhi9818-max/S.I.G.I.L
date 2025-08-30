@@ -162,16 +162,17 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
   });
 
   const resetFormFields = (task: TaskDefinition | null = null) => {
+    const thresholds = task?.intensityThresholds;
     form.reset({
       name: task?.name ?? '',
       color: task?.color ?? `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
       priority: task?.priority ?? 'normal',
       unit: task?.unit ?? 'count',
       customUnitName: task?.customUnitName ?? '',
-      threshold1: task?.intensityThresholds?.[0],
-      threshold2: task?.intensityThresholds?.[1],
-      threshold3: task?.intensityThresholds?.[2],
-      threshold4: task?.intensityThresholds?.[3],
+      threshold1: thresholds?.[0],
+      threshold2: thresholds?.[1],
+      threshold3: thresholds?.[2],
+      threshold4: thresholds?.[3],
       darkStreakEnabled: task?.darkStreakEnabled ?? false,
       frequencyType: task?.frequencyType ?? 'daily',
       frequencyCount: task?.frequencyCount,
@@ -263,6 +264,10 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     return null;
   }
   
+  const filteredTaskDefinitions = taskDefinitions.filter(
+    (task) => task.id !== 'learning' && task.id !== 'personal'
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       onOpenChange(open);
@@ -411,14 +416,14 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
 
             <div>
               <h3 className="text-lg font-medium mb-4 text-primary">Existing Tasks</h3>
-              {taskDefinitions.length === 0 ? (
+              {filteredTaskDefinitions.length === 0 ? (
                 <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
                   <p className="text-sm text-center text-muted-foreground">No tasks defined yet.</p>
                 </div>
               ) : (
                 <TooltipProvider>
                   <div className="space-y-3">
-                    {taskDefinitions.map((task) => {
+                    {filteredTaskDefinitions.map((task) => {
                       const masteryInfo = getTaskMasteryInfo(task.id);
                       return (
                       <div key={task.id} className={cn("p-3 border rounded-lg transition-all", editingTask?.id === task.id ? 'bg-muted border-primary/50' : 'bg-card-foreground/5', task.status !== 'active' && 'opacity-60')}>
