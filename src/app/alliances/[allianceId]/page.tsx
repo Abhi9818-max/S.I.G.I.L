@@ -1,17 +1,18 @@
 
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ClientHeader from '@/components/ClientHeader';
-import LevelIndicator from '@/components/layout/LevelIndicator';
 import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns';
 import Link from 'next/link';
-import { collection, doc, getDoc, getDocs, query, where, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, documentId, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Alliance, UserData, RecordEntry } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Target, Users, Calendar, Shield } from 'lucide-react';
+import type { Alliance, UserData } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Target, Users, Calendar } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import {
@@ -20,43 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-
-// This function now fetches real alliance data
-async function fetchAllianceData(allianceId: string): Promise<Alliance | null> {
-    if (!db) return null;
-    const allianceRef = doc(db, 'alliances', allianceId);
-    const allianceSnap = await getDoc(allianceRef);
-
-    if (allianceSnap.exists()) {
-        const data = allianceSnap.data();
-        return { id: allianceSnap.id, ...data } as Alliance;
-    }
-    return null;
-}
-
-// Function to fetch minimal user data for member avatars
-async function fetchMemberAvatars(memberIds: string[]): Promise<Pick<UserData, 'uid' | 'photoURL' | 'username'>[]> {
-    if (!db || memberIds.length === 0) return [];
-    const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
-    const usersSnapshot = await getDocs(usersQuery);
-    return usersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            uid: doc.id,
-            photoURL: data.photoURL,
-            username: data.username
-        };
-    });
-}
-
-
-type Params = { allianceId: string };
-
-// Kept for dynamic routing, but doesn't pre-build pages
-export async function generateStaticParams() {
-  return [];
-}
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -73,17 +38,74 @@ const getAvatarForId = (id: string, url?: string | null) => {
     if (url) return url;
     const avatarNumber = (simpleHash(id) % 41) + 1;
     return `/avatars/avatar${avatarNumber}.jpeg`;
-}
+};
 
-export default async function AlliancePage({ params }: { params: Params }) {
+type Params = { allianceId: string };
+
+export default function AlliancePage({ params }: { params: Params }) {
   const { allianceId } = params;
-  const alliance = await fetchAllianceData(allianceId);
+  const [alliance, setAlliance] = useState<Alliance | null>(null);
+  const [memberAvatars, setMemberAvatars] = useState<Pick<UserData, 'uid' | 'photoURL' | 'username'>[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAllianceData() {
+      if (!db || !allianceId) return;
+      
+      try {
+        const allianceRef = doc(db, 'alliances', allianceId as string);
+        const allianceSnap = await getDoc(allianceRef);
+
+        if (allianceSnap.exists()) {
+          const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
+          setAlliance(allianceData);
+          
+          // Fetch member avatars
+          const memberIds = allianceData.memberIds;
+          if (memberIds && memberIds.length > 0) {
+            const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
+            const usersSnapshot = await getDocs(usersQuery);
+            const avatars = usersSnapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    uid: doc.id,
+                    photoURL: data.photoURL,
+                    username: data.username
+                };
+            });
+            setMemberAvatars(avatars);
+          }
+        } else {
+          setAlliance(null);
+        }
+      } catch (error) {
+        console.error("Error fetching alliance data:", error);
+        setAlliance(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAllianceData();
+  }, [allianceId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <ClientHeader />
+        <main className="text-center p-4">
+          <h1 className="text-2xl font-bold mb-4">Loading Alliance...</h1>
+          <Skeleton className="w-64 h-8 mx-auto" />
+        </main>
+      </div>
+    );
+  }
 
   if (!alliance) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <ClientHeader />
-        <main className="text-center">
+        <main className="text-center p-4">
           <h1 className="text-2xl font-bold mb-4">Alliance Not Found</h1>
           <p className="text-muted-foreground">The alliance you are looking for does not exist or could not be loaded.</p>
           <Link href="/alliances" className="mt-4 inline-block text-blue-500 hover:underline">
@@ -94,8 +116,6 @@ export default async function AlliancePage({ params }: { params: Params }) {
     );
   }
   
-  const memberAvatars = await fetchMemberAvatars(alliance.memberIds);
-
   const totalExperience = 0; // Alliances don't have XP, this is a placeholder
   const levelInfo = calculateUserLevelInfo(totalExperience);
   const pageTierClass = `page-tier-group-${levelInfo.tierGroup}`;
