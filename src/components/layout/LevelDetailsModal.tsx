@@ -97,11 +97,6 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
         <div className="space-y-4">
           <div className="relative">
-             <div className="absolute -top-6 right-1/2 translate-x-1/2">
-                <div className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: progressColor, color: '#0B0C0E' }}>
-                  {progressLabel} XP
-                </div>
-            </div>
             <Progress value={progressPercentage} indicatorClassName="transition-all duration-700 ease-out" style={{ backgroundColor: progressColor }}/>
             <TooltipProvider>
                 <Tooltip>
