@@ -156,13 +156,29 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [authUserData, isUserDataLoaded, user]);
 
   const records = useMemo(() => userData?.records || [], [userData]);
+  
   const taskDefinitions = useMemo(() => {
-    if (userData?.taskDefinitions && userData.taskDefinitions.length > 0) {
-      return userData.taskDefinitions;
-    }
-    // Ensure default tasks also have a status
-    return DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active' as TaskStatus}));
-  }, [userData]);
+    const userTasks = userData?.taskDefinitions || [];
+    const defaultTasks = DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active' as TaskStatus}));
+
+    const userTaskMap = new Map(userTasks.map(task => [task.id, task]));
+
+    // Merge default tasks with user tasks, user's overrides default
+    const mergedTasks = defaultTasks.map(defaultTask => 
+      userTaskMap.has(defaultTask.id) 
+        ? { ...defaultTask, ...userTaskMap.get(defaultTask.id) } 
+        : defaultTask
+    );
+
+    // Add any truly custom tasks (not in defaults)
+    userTasks.forEach(userTask => {
+      if (!defaultTasks.some(dt => dt.id === userTask.id)) {
+        mergedTasks.push(userTask);
+      }
+    });
+    
+    return mergedTasks;
+  }, [userData?.taskDefinitions]);
 
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
   const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);

@@ -163,11 +163,11 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
 
   const resetFormFields = (task: TaskDefinition | null = null) => {
     form.reset({
-      name: task?.name || '',
-      color: task?.color || `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
-      priority: task?.priority || 'normal',
+      name: task?.name ?? '',
+      color: task?.color ?? `hsl(${Math.floor(Math.random() * 360)} 80% 60%)`,
+      priority: task?.priority ?? 'normal',
       unit: task?.unit ?? 'count',
-      customUnitName: task?.customUnitName || '',
+      customUnitName: task?.customUnitName ?? '',
       threshold1: task?.intensityThresholds?.[0],
       threshold2: task?.intensityThresholds?.[1],
       threshold3: task?.intensityThresholds?.[2],
@@ -194,7 +194,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
       intensityThresholds = providedThresholds;
     }
 
-    const taskData = {
+    const taskData: Partial<TaskDefinition> = {
       name: data.name,
       color: data.color,
       priority: data.priority,
@@ -210,7 +210,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
       updateTaskDefinition({ ...editingTask, ...taskData });
       toast({ title: "Task Updated", description: `Task "${data.name}" updated.` });
     } else {
-      addTaskDefinition(taskData);
+      addTaskDefinition(taskData as Omit<TaskDefinition, 'id' | 'status'>);
       toast({ title: "Task Added", description: `Task "${data.name}" added.` });
     }
     resetFormFields(null);
