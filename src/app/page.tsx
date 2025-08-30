@@ -214,7 +214,7 @@ function HomePageContent() {
                     selectedTaskFilterId={selectedTaskFilterId}
                     displayMode="full"
                 />
-                <div className="text-center -mt-4">
+                <div className="text-center mt-4">
                     <Button asChild variant="outline" size="sm">
                     <Link href="/calendar">
                         <Calendar className="mr-2 h-4 w-4" />
