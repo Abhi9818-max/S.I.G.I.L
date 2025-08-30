@@ -5,10 +5,6 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -16,7 +12,7 @@ import type { UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, Star } from 'lucide-react';
+import { BookOpen, Star, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { TIER_INFO } from '@/lib/config';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,78 +30,93 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     currentLevel,
     levelName,
     tierName,
+    tierIcon,
     progressPercentage,
-    totalAccumulatedValue,
     valueTowardsNextLevel,
     pointsForNextLevel,
     isMaxLevel,
-    tierSlug,
     tierGroup,
   } = levelInfo;
-  
-  const tierIndex = TIER_INFO.findIndex(t => t.slug === tierSlug);
-  
-  const progressLabel = isMaxLevel 
-    ? "MAX LEVEL" 
-    : `${valueTowardsNextLevel.toLocaleString()} / ${pointsForNextLevel?.toLocaleString()} XP`;
 
-  const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
-  
-  const getProgressColorClass = (group: number): string => {
-    return `bg-progress-tier-group-${group}`;
+  const progressLabel = isMaxLevel
+    ? "MAX"
+    : `${valueTowardsNextLevel.toLocaleString()}/${pointsForNextLevel?.toLocaleString()}`;
+
+  const getProgressColor = (group: number): string => {
+    const colors: Record<number, string> = {
+      1: 'hsl(var(--progress-tier-group-1))',
+      2: 'hsl(var(--progress-tier-group-2))',
+      3: 'hsl(var(--progress-tier-group-3))',
+      4: 'hsl(var(--progress-tier-group-4))',
+      5: 'hsl(var(--progress-tier-group-5))',
+    };
+    return colors[group] || colors[1];
   };
 
-  const progressColorClass = getProgressColorClass(tierGroup);
+  const progressColor = getProgressColor(tierGroup);
+  const tierInfo = TIER_INFO.find(t => t.tierGroup === tierGroup);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6 bg-card/70 backdrop-blur-lg border-white/10 shadow-2xl">
-        <DialogHeader className="text-center items-center pt-8">
-          <DialogTitle className="text-3xl font-semibold tracking-tight text-white/95 text-shadow">
-            {levelName}
-          </DialogTitle>
-          <DialogDescription className="text-base text-white/70 text-shadow-sm pb-6">
-            Level {currentLevel} &middot; {tierName}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="p-8 sm:max-w-sm">
+        <div className="text-center space-y-3">
+          <h1 className="text-2xl font-semibold text-white">{levelName}</h1>
+          <p className="text-sm text-white/70 leading-relaxed">
+            This is the badge for reaching Level {currentLevel} in the {tierName} tier.
+          </p>
+        </div>
 
-        <div className="my-4 flex justify-center">
-          {tierIndex !== -1 && (
-              <div className="relative w-40 h-40 rounded-full overflow-hidden border-2 border-white/10 shadow-lg">
-                <Image
-                    src={`/tiers/tier-${tierIndex + 1}.png`}
-                    alt={`Image for ${tierName}`}
-                    width={200}
-                    height={200}
-                    className={cn(
-                        "h-full w-full object-cover drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]",
-                        customCropTiers.includes(tierSlug) && 'object-top'
-                    )}
+        <div className="relative my-8 flex flex-col items-center justify-center">
+            {/* Badge container with glow */}
+            <div className="relative h-40 w-36">
+              {/* SVG for glowing shield */}
+              <svg viewBox="0 0 144 160" className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_var(--glow-color)]" style={{ '--glow-color': progressColor } as React.CSSProperties}>
+                <defs>
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <path 
+                  d="M72 4 L140 40 L140 120 L72 156 L4 120 L4 40 Z" 
+                  fill="hsl(var(--card)/0.2)"
+                  stroke={progressColor}
+                  strokeWidth="3"
+                  filter="url(#glow)"
                 />
+                 <path 
+                  d="M72 4 L140 40 L140 120 L72 156 L4 120 L4 40 Z" 
+                  fill="transparent"
+                  stroke={progressColor}
+                  strokeWidth="2"
+                />
+              </svg>
+               {/* Tier Icon */}
+              <div className="absolute inset-0 flex items-center justify-center text-6xl">
+                {tierInfo?.icon}
               </div>
-          )}
+            </div>
         </div>
 
-        <div className="space-y-2 mt-6">
-            <div className="text-center">
-                <p className="text-xs font-bold uppercase tracking-wider" style={{color: `hsl(var(--progress-tier-group-${tierGroup}))`}}>{progressLabel}</p>
+        <div className="space-y-4">
+          <div className="relative">
+             <div className="absolute -top-6 right-1/2 translate-x-1/2">
+                <div className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: progressColor, color: '#0B0C0E' }}>
+                  {progressLabel} XP
+                </div>
             </div>
-            <div className="relative">
-                <Progress value={progressPercentage} className="h-2.5 bg-white/10" indicatorClassName={cn("transition-all duration-700 ease-out", progressColorClass)} />
+            <Progress value={progressPercentage} indicatorClassName="transition-all duration-700 ease-out" style={{ backgroundColor: progressColor }}/>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/80 bg-background/50">
+                <Lock className="h-5 w-5 text-white/80"/>
             </div>
-             <p className="text-center text-xs text-white/60 text-shadow">
-                Total XP Earned: {totalAccumulatedValue.toLocaleString()}
-            </p>
+          </div>
+          <p className="text-center text-xs text-white/60">
+            {isMaxLevel ? "You have reached the final form." : `Earn ${((pointsForNextLevel || 0) - valueTowardsNextLevel).toLocaleString()} more XP to unlock the next level.`}
+          </p>
         </div>
-
-        <DialogFooter className="mt-8">
-          <Button asChild className="w-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" variant="outline" onClick={() => onOpenChange(false)}>
-            <Link href="/tiers">
-                <Star className="mr-2 h-4 w-4" />
-                View All Tiers
-            </Link>
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
