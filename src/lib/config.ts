@@ -72,7 +72,7 @@ export const getContributionLevel = (value: number | null | undefined, customThr
 };
 
 export const TASK_DEFINITIONS: Omit<TaskDefinition, 'status'>[] = [
-    { id: 'work', name: 'Work', color: 'hsl(210 80% 60%)' },      // Bright Blue
+    { id: 'work', name: 'Work', color: 'hsl(210 80% 60%)', unit: 'hours', intensityThresholds: [0.5, 2, 4, 6.5] },
     { id: 'exercise', name: 'Exercise', color: 'hsl(140 70% 55%)' },  // Vibrant Green
     { id: 'learning', name: 'Learning', color: 'hsl(45 90% 55%)' },   // Sunny Yellow
     { id: 'personal', name: 'Personal', color: 'hsl(290 80% 65%)' },  // Bright Purple
@@ -244,4 +244,5 @@ export const calculateUserLevelInfo = (totalExperiencePoints: number): UserLevel
 };
 
     
+
 
