@@ -168,13 +168,13 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
       priority: task?.priority || 'normal',
       unit: task?.unit ?? 'count',
       customUnitName: task?.customUnitName || '',
-      threshold1: task?.intensityThresholds?.[0] ?? undefined,
-      threshold2: task?.intensityThresholds?.[1] ?? undefined,
-      threshold3: task?.intensityThresholds?.[2] ?? undefined,
-      threshold4: task?.intensityThresholds?.[3] ?? undefined,
+      threshold1: task?.intensityThresholds?.[0],
+      threshold2: task?.intensityThresholds?.[1],
+      threshold3: task?.intensityThresholds?.[2],
+      threshold4: task?.intensityThresholds?.[3],
       darkStreakEnabled: task?.darkStreakEnabled ?? false,
       frequencyType: task?.frequencyType ?? 'daily',
-      frequencyCount: task?.frequencyCount ?? undefined,
+      frequencyCount: task?.frequencyCount,
     });
     setEditingTask(task);
   };
