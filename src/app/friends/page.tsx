@@ -132,7 +132,7 @@ export default function FriendsPage() {
     const { toast } = useToast();
 
     const handleSearch = async () => {
-        if (!usernameQuery.trim() || usernameQuery.trim() === userData?.username) {
+        if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
             setSearchMessage("Please enter a valid username other than your own.");
             setSearchedUser(null);
             return;
