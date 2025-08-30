@@ -52,12 +52,12 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6 bg-card/70">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6 bg-card/70 backdrop-blur-lg border-white/10 shadow-2xl">
         <DialogHeader className="text-center items-center">
-          <DialogTitle className="text-3xl font-bold tracking-wider text-shadow-lg text-white">
+          <DialogTitle className="text-2xl font-semibold tracking-tight text-white/90 text-shadow">
             {levelName}
           </DialogTitle>
-          <DialogDescription className="text-white/70 text-shadow">
+          <DialogDescription className="text-sm text-white/70 text-shadow">
             Level {currentLevel} &middot; {tierName}
           </DialogDescription>
         </DialogHeader>
@@ -83,7 +83,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
             <div className="relative">
                 <Progress value={progressPercentage} className="h-4 bg-white/10" indicatorClassName="bg-cyan-400" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-black drop-shadow-sm text-shadow">{progressLabel}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-black drop-shadow-sm text-shadow">{progressLabel}</span>
                 </div>
             </div>
              <p className="text-center text-xs text-white/60 text-shadow">
