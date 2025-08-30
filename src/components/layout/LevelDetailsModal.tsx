@@ -7,15 +7,11 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import type { UserLevelInfo } from '@/types';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { BookOpen, Star, Lock } from 'lucide-react';
-import Image from 'next/image';
+import { Lock } from 'lucide-react';
 import { TIER_INFO } from '@/lib/config';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface LevelDetailsModalProps {
   isOpen: boolean;
@@ -34,6 +30,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     progressPercentage,
     valueTowardsNextLevel,
     pointsForNextLevel,
+    nextLevelValueTarget,
     isMaxLevel,
     tierGroup,
   } = levelInfo;
@@ -58,7 +55,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="p-8 sm:max-w-sm">
+      <DialogContent className="sm:max-w-sm p-8 bg-[rgba(21,23,25,0.5)] border-white/10 shadow-2xl backdrop-blur-lg sm:rounded-3xl">
         <div className="text-center space-y-3">
           <h1 className="text-2xl font-semibold text-white">{levelName}</h1>
           <p className="text-sm text-white/70 leading-relaxed">
@@ -67,9 +64,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
         </div>
 
         <div className="relative my-8 flex flex-col items-center justify-center">
-            {/* Badge container with glow */}
             <div className="relative h-40 w-36">
-              {/* SVG for glowing shield */}
               <svg viewBox="0 0 144 160" className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_var(--glow-color)]" style={{ '--glow-color': progressColor } as React.CSSProperties}>
                 <defs>
                     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -94,7 +89,6 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
                   strokeWidth="2"
                 />
               </svg>
-               {/* Tier Icon */}
               <div className="absolute inset-0 flex items-center justify-center text-6xl">
                 {tierInfo?.icon}
               </div>
@@ -109,9 +103,20 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
                 </div>
             </div>
             <Progress value={progressPercentage} indicatorClassName="transition-all duration-700 ease-out" style={{ backgroundColor: progressColor }}/>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/80 bg-background/50">
-                <Lock className="h-5 w-5 text-white/80"/>
-            </div>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-3 flex items-center justify-center w-10 h-10 rounded-full border-2 border-white/80 bg-background/50 cursor-help">
+                            <Lock className="h-5 w-5 text-white/80"/>
+                        </div>
+                    </TooltipTrigger>
+                    {!isMaxLevel && nextLevelValueTarget && (
+                        <TooltipContent>
+                            <p>{nextLevelValueTarget.toLocaleString()} XP to Unlock</p>
+                        </TooltipContent>
+                    )}
+                </Tooltip>
+            </TooltipProvider>
           </div>
           <p className="text-center text-xs text-white/60">
             {isMaxLevel ? "You have reached the final form." : `Earn ${((pointsForNextLevel || 0) - valueTowardsNextLevel).toLocaleString()} more XP to unlock the next level.`}
