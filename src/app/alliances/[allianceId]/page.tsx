@@ -168,33 +168,29 @@ export default function AlliancePage({ params }: { params: Params }) {
             </CardContent>
         </Card>
         
-        <Card>
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <CardTitle>Members ({alliance.memberIds.length})</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-wrap gap-3">
-                    {memberAvatars.map(member => (
-                        <TooltipProvider key={member.uid}>
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <Avatar>
-                                        <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
-                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{member.username}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+        <div>
+            <div className="flex items-center gap-2 mb-4">
+                <Users className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Members ({alliance.memberIds.length})</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+                {memberAvatars.map(member => (
+                    <TooltipProvider key={member.uid}>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Avatar>
+                                    <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
+                                    <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{member.username}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ))}
+            </div>
+        </div>
 
         <div className="text-center">
           <Link href="/alliances" className="text-blue-500 hover:underline">
