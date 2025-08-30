@@ -284,7 +284,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
         <div className="flex-1 overflow-y-auto px-6 pb-4">
           <div className="flex flex-col gap-6">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="p-4 rounded-lg bg-muted/30 border space-y-4">
+              <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium text-primary">
                         {editingTask ? 'Edit Task' : 'Add New Task'}
