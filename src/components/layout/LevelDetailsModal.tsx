@@ -40,24 +40,31 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     pointsForNextLevel,
     isMaxLevel,
     tierSlug,
+    tierGroup,
   } = levelInfo;
   
   const tierIndex = TIER_INFO.findIndex(t => t.slug === tierSlug);
   
   const progressLabel = isMaxLevel 
-    ? "Max Level" 
+    ? "MAX LEVEL" 
     : `${valueTowardsNextLevel.toLocaleString()} / ${pointsForNextLevel?.toLocaleString()} XP`;
 
   const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
+  
+  const getProgressColorClass = (group: number): string => {
+    return `bg-progress-tier-group-${group}`;
+  };
+
+  const progressColorClass = getProgressColorClass(tierGroup);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto text-white p-6 bg-card/70 backdrop-blur-lg border-white/10 shadow-2xl">
-        <DialogHeader className="text-center items-center">
-          <DialogTitle className="text-2xl font-semibold tracking-tight text-white/90 text-shadow">
+        <DialogHeader className="text-center items-center pt-8">
+          <DialogTitle className="text-3xl font-semibold tracking-tight text-white/95 text-shadow">
             {levelName}
           </DialogTitle>
-          <DialogDescription className="text-sm text-white/70 text-shadow">
+          <DialogDescription className="text-base text-white/70 text-shadow-sm pb-6">
             Level {currentLevel} &middot; {tierName}
           </DialogDescription>
         </DialogHeader>
@@ -79,19 +86,19 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2 mt-6">
+            <div className="text-center">
+                <p className="text-xs font-bold uppercase tracking-wider" style={{color: `hsl(var(--progress-tier-group-${tierGroup}))`}}>{progressLabel}</p>
+            </div>
             <div className="relative">
-                <Progress value={progressPercentage} className="h-4 bg-white/10" indicatorClassName="bg-cyan-400" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-black drop-shadow-sm text-shadow">{progressLabel}</span>
-                </div>
+                <Progress value={progressPercentage} className="h-2.5 bg-white/10" indicatorClassName={cn("transition-all duration-700 ease-out", progressColorClass)} />
             </div>
              <p className="text-center text-xs text-white/60 text-shadow">
                 Total XP Earned: {totalAccumulatedValue.toLocaleString()}
             </p>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter className="mt-8">
           <Button asChild className="w-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-sm" variant="outline" onClick={() => onOpenChange(false)}>
             <Link href="/tiers">
                 <Star className="mr-2 h-4 w-4" />
