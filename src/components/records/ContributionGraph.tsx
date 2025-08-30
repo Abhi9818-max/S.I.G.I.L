@@ -89,8 +89,8 @@ const ContributionGraph: React.FC<ContributionGraphProps> = ({
   return (
     <div className="flex gap-x-5 sm:gap-x-8">
       
-      <ScrollArea className="w-full whitespace-nowrap" ref={scrollAreaRef}>
-        <div className="flex gap-x-5 sm:gap-x-8">
+      <ScrollArea className="w-full whitespace-nowrap" ref={scrollAreaRef} style={{ height: '240px' }}>
+        <div className="flex gap-x-5 sm:gap-x-8 h-full">
           {monthlyGraphData.map((monthCol) => {
             const monthKey = `${monthCol.year}-${monthCol.month}`;
             return (
