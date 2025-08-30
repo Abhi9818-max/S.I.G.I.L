@@ -63,16 +63,29 @@ export default function AlliancePage({ params }: { params: Params }) {
           // Fetch member avatars
           const memberIds = allianceData.memberIds;
           if (memberIds && memberIds.length > 0) {
-            const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', memberIds));
-            const usersSnapshot = await getDocs(usersQuery);
-            const avatars = usersSnapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    uid: doc.id,
-                    photoURL: data.photoURL,
-                    username: data.username
-                };
+            // Firestore 'in' query is limited to 30 items per query.
+            // We chunk the requests to handle more than 30 members.
+            const chunks = [];
+            for (let i = 0; i < memberIds.length; i += 30) {
+              chunks.push(memberIds.slice(i, i + 30));
+            }
+
+            const avatarPromises = chunks.map(chunk => {
+              const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
+              return getDocs(usersQuery);
             });
+            
+            const snapshots = await Promise.all(avatarPromises);
+            const avatars = snapshots.flatMap(snapshot => 
+              snapshot.docs.map(doc => {
+                  const data = doc.data();
+                  return {
+                      uid: doc.id,
+                      photoURL: data.photoURL,
+                      username: data.username
+                  };
+              })
+            );
             setMemberAvatars(avatars);
           }
         } else {
