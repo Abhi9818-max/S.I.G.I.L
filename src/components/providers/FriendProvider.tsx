@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { useUserRecords } from './UserRecordsProvider';
-import { findUserByUsername } from '@/lib/server/actions/user';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -28,7 +27,6 @@ const RELATIONSHIP_MAP: Record<string, string> = {
 };
 
 interface FriendContextType {
-    searchUser: (username: string) => Promise<SearchedUser | null>;
     sendFriendRequest: (recipient: SearchedUser) => Promise<void>;
     acceptFriendRequest: (request: FriendRequest) => Promise<void>;
     declineFriendRequest: (requestId: string) => Promise<void>;
@@ -239,10 +237,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             invitationUnsubscribe();
         };
     }, [user, fetchFriendsAndRequests]);
-
-    const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
-        return await findUserByUsername(username);
-    }, []);
 
     const sendFriendRequest = useCallback(async (recipient: SearchedUser) => {
         if (!user || !userData || !db) throw new Error("You must be logged in to send requests.");
@@ -807,7 +801,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     return (
         <FriendContext.Provider value={{ 
-            searchUser, 
             sendFriendRequest,
             acceptFriendRequest,
             declineFriendRequest,

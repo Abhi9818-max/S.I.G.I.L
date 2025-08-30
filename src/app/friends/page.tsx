@@ -28,6 +28,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { findUserByUsername } from '@/lib/server/actions/user';
 
 
 // Simple hash function to get a number from a string
@@ -104,7 +105,6 @@ export default function FriendsPage() {
     const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
     const {
-        searchUser,
         sendFriendRequest,
         incomingRequests,
         pendingRequests,
@@ -141,7 +141,7 @@ export default function FriendsPage() {
         setSearchMessage(null);
         setSearchedUser(null);
         try {
-            const foundUser = await searchUser(usernameQuery);
+            const foundUser = await findUserByUsername(usernameQuery);
             if (foundUser) {
                 setSearchedUser(foundUser);
             } else {
