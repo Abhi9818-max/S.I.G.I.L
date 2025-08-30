@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry } from '@/types';
@@ -243,7 +243,15 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (!db) return null;
         const usersRef = collection(db!, 'users');
         const searchTerm = username.toLowerCase();
-        const q = query(usersRef, where('username_lowercase', '==', searchTerm));
+        
+        // This is the corrected query structure
+        const q = query(
+            usersRef,
+            where('username_lowercase', '==', searchTerm),
+            orderBy('username_lowercase'),
+            limit(1)
+        );
+
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
