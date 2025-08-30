@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { useUserRecords } from './UserRecordsProvider';
+import { findUserByUsername } from '@/lib/server/actions/user';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -240,31 +241,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, fetchFriendsAndRequests]);
 
     const searchUser = useCallback(async (username: string): Promise<SearchedUser | null> => {
-        if (!db) return null;
-        const usersRef = collection(db!, 'users');
-        const searchTerm = username.toLowerCase();
-        
-        // This is the corrected query structure
-        const q = query(
-            usersRef,
-            where('username_lowercase', '==', searchTerm),
-            orderBy('username_lowercase'),
-            limit(1)
-        );
-
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            return null;
-        }
-
-        const userDoc = querySnapshot.docs[0];
-        const foundUserData = userDoc.data();
-        return {
-            uid: userDoc.id,
-            username: foundUserData.username,
-            photoURL: foundUserData.photoURL,
-        };
+        return await findUserByUsername(username);
     }, []);
 
     const sendFriendRequest = useCallback(async (recipient: SearchedUser) => {
