@@ -318,9 +318,9 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                     <h2 className="text-xl font-semibold">Members ({members.length})</h2>
                 </div>
                 {isCreator && (
-                    <Button variant="outline" size="sm" onClick={handleOpenInviteDialog}>
-                        <ShieldPlus className="mr-2 h-4 w-4" />
-                        Invite Friends
+                    <Button variant="ghost" size="icon" onClick={handleOpenInviteDialog}>
+                        <ShieldPlus className="h-6 w-6" />
+                        <span className="sr-only">Invite Friends</span>
                     </Button>
                 )}
             </div>
