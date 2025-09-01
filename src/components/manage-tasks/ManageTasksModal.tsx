@@ -264,10 +264,6 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
     return null;
   }
   
-  const filteredTaskDefinitions = taskDefinitions.filter(
-    (task) => task.id !== 'learning' && task.id !== 'personal'
-  );
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       onOpenChange(open);
@@ -416,14 +412,14 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
 
             <div>
               <h3 className="text-lg font-medium mb-4 text-primary">Existing Tasks</h3>
-              {filteredTaskDefinitions.length === 0 ? (
+              {taskDefinitions.length === 0 ? (
                 <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
                   <p className="text-sm text-center text-muted-foreground">No tasks defined yet.</p>
                 </div>
               ) : (
                 <TooltipProvider>
                   <div className="space-y-3">
-                    {filteredTaskDefinitions.map((task) => {
+                    {taskDefinitions.map((task) => {
                       const masteryInfo = getTaskMasteryInfo(task.id);
                       return (
                       <div key={task.id} className={cn("p-3 border rounded-lg transition-all", editingTask?.id === task.id ? 'bg-muted border-primary/50' : 'bg-card-foreground/5', task.status !== 'active' && 'opacity-60')}>

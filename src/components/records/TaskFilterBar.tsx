@@ -16,10 +16,6 @@ interface TaskFilterBarProps {
 const TaskFilterBar: React.FC<TaskFilterBarProps> = ({ taskDefinitions, selectedTaskId, onSelectTask }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const filteredTaskDefinitions = taskDefinitions.filter(
-    (task) => task.id !== 'learning' && task.id !== 'personal'
-  );
-
   return (
     <div className="mb-4 p-3 rounded-lg shadow-md bg-card">
       <button 
@@ -45,7 +41,7 @@ const TaskFilterBar: React.FC<TaskFilterBarProps> = ({ taskDefinitions, selected
           >
             All Tasks
           </Button>
-          {filteredTaskDefinitions.map((task) => (
+          {taskDefinitions.map((task) => (
             <Button
               key={task.id}
               variant={selectedTaskId === task.id ? 'default' : 'outline'}

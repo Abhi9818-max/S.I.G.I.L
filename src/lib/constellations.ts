@@ -5,7 +5,6 @@ import { TASK_DEFINITIONS } from './config';
 // Find default task definitions to link constellations
 const workTask = TASK_DEFINITIONS.find(t => t.id === 'work')!;
 const exerciseTask = TASK_DEFINITIONS.find(t => t.id === 'exercise')!;
-const learningTask = TASK_DEFINITIONS.find(t => t.id === 'learning')!;
 
 export const CONSTELLATIONS: Constellation[] = [
   {
@@ -30,18 +29,6 @@ export const CONSTELLATIONS: Constellation[] = [
       { id: 'exercise-3', name: 'Strength I', description: 'The foundation of physical power.', cost: 300 },
       { id: 'exercise-4', name: 'Endurance II', description: 'Pushing past previous limits of stamina.', cost: 500 },
       { id: 'exercise-5', name: 'Peak Physique', description: 'Mastery over one\'s own physical form.', cost: 1000 },
-    ]
-  },
-    {
-    taskId: learningTask.id,
-    taskName: learningTask.name,
-    taskColor: learningTask.color,
-    nodes: [
-      { id: 'learning-1', name: 'Open Mind', description: 'The first step to knowledge is admitting you know nothing.', cost: 50 },
-      { id: 'learning-2', name: 'Curious Mind', description: 'Actively seeking new information and perspectives.', cost: 150 },
-      { id: 'learning-3', name: 'Studious Habit', description: 'Building the discipline of regular learning.', cost: 300 },
-      { id: 'learning-4', name: 'Knowledge Synthesis', description: 'Connecting disparate ideas into a coherent whole.', cost: 500 },
-      { id: 'learning-5', name: 'Sage-like Wisdom', description: 'A deep and profound understanding.', cost: 1000 },
     ]
   },
 ];
