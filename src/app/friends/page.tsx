@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useTransition } from 'react';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,7 +127,7 @@ export default function FriendsPage() {
 
     const [usernameQuery, setUsernameQuery] = useState('');
     const [searchedUser, setSearchedUser] = useState<SearchedUser | null>(null);
-    const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [searchMessage, setSearchMessage] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -137,22 +137,21 @@ export default function FriendsPage() {
             setSearchedUser(null);
             return;
         }
-        setIsLoadingSearch(true);
         setSearchMessage(null);
         setSearchedUser(null);
-        try {
-            const foundUser = await findUserByUsername(usernameQuery);
-            if (foundUser) {
-                setSearchedUser(foundUser);
-            } else {
-                setSearchMessage("User not found.");
+        startTransition(async () => {
+            try {
+                const foundUser = await findUserByUsername(usernameQuery);
+                if (foundUser) {
+                    setSearchedUser(foundUser);
+                } else {
+                    setSearchMessage("User not found.");
+                }
+            } catch (error) {
+                console.error("Error searching user:", error);
+                setSearchMessage("An error occurred while searching.");
             }
-        } catch (error) {
-            console.error("Error searching user:", error);
-            setSearchMessage("An error occurred while searching.");
-        } finally {
-            setIsLoadingSearch(false);
-        }
+        });
     };
 
     const handleSendRequest = async (recipient: SearchedUser) => {
@@ -198,13 +197,14 @@ export default function FriendsPage() {
                                     />
                                     <button 
                                       onClick={handleSearch} 
-                                      disabled={isLoadingSearch}
+                                      disabled={isPending}
                                       className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
                                     >
                                       <Search className="h-5 w-5" />
                                     </button>
                                 </div>
 
+                                {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
                                 {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                                 {searchedUser && (
                                     <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
