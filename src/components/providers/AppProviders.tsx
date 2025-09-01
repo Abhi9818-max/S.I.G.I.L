@@ -13,9 +13,9 @@ import { AllianceProvider } from './AllianceProvider';
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <UserRecordsProvider>
-        <FriendProvider>
-          <AllianceProvider>
+      <FriendProvider>
+        <AllianceProvider>
+          <UserRecordsProvider>
             <SettingsProvider>
               <TooltipProvider delayDuration={100}>
                 <TodoProvider>
@@ -23,9 +23,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 </TodoProvider>
               </TooltipProvider>
             </SettingsProvider>
-          </AllianceProvider>
-        </FriendProvider>
-      </UserRecordsProvider>
+          </UserRecordsProvider>
+        </AllianceProvider>
+      </FriendProvider>
     </AuthProvider>
   );
 }
