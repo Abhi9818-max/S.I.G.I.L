@@ -30,6 +30,7 @@ interface AllianceContextType {
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
     updateAllianceProgress: (allianceId: string, value: number) => Promise<void>;
+    updateMemberContribution: (allianceId: string, memberId: string, value: number) => Promise<void>;
 }
 
 const AllianceContext = createContext<AllianceContextType | undefined>(undefined);
@@ -346,6 +347,30 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             console.error("Error updating alliance progress:", error);
         }
     }, [user]);
+
+    const updateMemberContribution = useCallback(async (allianceId: string, memberId: string, value: number) => {
+        if (!db) return;
+        const allianceRef = doc(db, 'alliances', allianceId);
+        
+        try {
+            await runTransaction(db, async (transaction) => {
+                const allianceDoc = await transaction.get(allianceRef);
+                if (!allianceDoc.exists()) {
+                    throw new Error("Alliance does not exist!");
+                }
+                const allianceData = allianceDoc.data() as Alliance;
+                const updatedMembers = allianceData.members.map(member => {
+                    if (member.uid === memberId) {
+                        return { ...member, contribution: (member.contribution || 0) + value };
+                    }
+                    return member;
+                });
+                transaction.update(allianceRef, { members: updatedMembers });
+            });
+        } catch (error) {
+            console.error("Error updating member contribution:", error);
+        }
+    }, []);
     
     return (
         <AllianceContext.Provider value={{
@@ -368,6 +393,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             declineAllianceChallenge,
             updateAlliance,
             updateAllianceProgress,
+            updateMemberContribution,
         }}>
             {children}
         </AllianceContext.Provider>

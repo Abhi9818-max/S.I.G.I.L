@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,8 +10,8 @@ import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns'
 import Link from 'next/link';
 import { doc, getDoc, collection, query, where, documentId, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus } from 'lucide-react';
+import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -41,10 +42,11 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 };
 
-type MemberWithStatus = UserData & {
+type MemberWithStatus = AllianceMember & {
     isFriend: boolean;
     isPending: boolean;
     isIncoming: boolean;
+    isTopContributor: boolean;
 };
 
 const InviteFriendsDialog = ({
@@ -142,6 +144,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
 
   const { user } = useAuth();
   const { friends, pendingRequests, incomingRequests, sendFriendRequest, sendAllianceInvitation, getPendingAllianceInvitesFor } = useFriends();
+  const { getAllianceWithMembers } = useAlliance();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -149,38 +152,28 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
       if (!db || !allianceId) return;
       
       try {
-        const allianceRef = doc(db, 'alliances', allianceId as string);
-        const allianceSnap = await getDoc(allianceRef);
+        const result = await getAllianceWithMembers(allianceId);
 
-        if (allianceSnap.exists()) {
-          const allianceData = { id: allianceSnap.id, ...allianceSnap.data() } as Alliance;
+        if (result) {
+          const { allianceData, membersData } = result;
           setAlliance(allianceData);
           
-          const memberIds = allianceData.memberIds;
-          if (memberIds && memberIds.length > 0) {
-            const chunks = [];
-            for (let i = 0; i < memberIds.length; i += 30) {
-              chunks.push(memberIds.slice(i, i + 30));
-            }
-
-            const memberPromises = chunks.map(chunk => {
-              const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', chunk));
-              return getDocs(usersQuery);
-            });
-            
-            const snapshots = await Promise.all(memberPromises);
-            const membersData = snapshots.flatMap(snapshot => 
-              snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserData))
-            );
-
-            const membersWithStatus = membersData.map(member => ({
-              ...member,
-              isFriend: friends.some(f => f.uid === member.uid),
-              isPending: pendingRequests.some(req => req.recipientId === member.uid),
-              isIncoming: incomingRequests.some(req => req.senderId === member.uid)
-            }));
-            setMembers(membersWithStatus);
+          let topContributorId = '';
+          if (membersData.length > 0) {
+            topContributorId = membersData.reduce((prev, current) => 
+              (prev.contribution > current.contribution) ? prev : current
+            ).uid;
           }
+
+          const membersWithStatus = membersData.map(member => ({
+            ...member,
+            isFriend: friends.some(f => f.uid === member.uid),
+            isPending: pendingRequests.some(req => req.recipientId === member.uid),
+            isIncoming: incomingRequests.some(req => req.senderId === member.uid),
+            isTopContributor: member.uid === topContributorId && member.contribution > 0
+          }));
+          setMembers(membersWithStatus);
+
         } else {
           setAlliance(null);
         }
@@ -193,7 +186,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
 
     fetchAllianceData();
-  }, [allianceId]);
+  }, [allianceId, friends, pendingRequests, incomingRequests, getAllianceWithMembers]);
   
   const handleAddFriend = async (member: UserData) => {
     if (!member.uid || !member.username) {
@@ -329,15 +322,23 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                     <Popover key={member.uid}>
                         <PopoverTrigger asChild>
                             <button aria-label={`View options for ${member.username}`}>
-                                <Avatar className="h-12 w-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all hover:scale-105">
-                                    <AvatarImage src={getAvatarForId(member.uid!, member.photoURL)} />
-                                    <AvatarFallback>{member.username?.charAt(0) || '?'}</AvatarFallback>
-                                </Avatar>
+                                <div className="relative">
+                                    <Avatar className="h-12 w-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all hover:scale-105">
+                                        <AvatarImage src={getAvatarForId(member.uid!, member.photoURL)} />
+                                        <AvatarFallback>{member.username?.charAt(0) || '?'}</AvatarFallback>
+                                    </Avatar>
+                                    {member.isTopContributor && (
+                                        <div className="absolute -top-2 -right-2 bg-yellow-400 p-1 rounded-full border-2 border-background">
+                                            <Crown className="h-3 w-3 text-black" />
+                                        </div>
+                                    )}
+                                </div>
                             </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-2">
                             <div className="flex flex-col gap-2 items-center text-center">
                                 <p className="font-semibold">{member.username}</p>
+                                {member.isTopContributor && <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-300 hover:bg-yellow-400/30">KING</Badge>}
                                 {member.uid === user?.uid ? (
                                     <Badge variant="secondary">This is you</Badge>
                                 ) : member.isFriend ? (

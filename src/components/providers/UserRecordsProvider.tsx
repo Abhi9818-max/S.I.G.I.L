@@ -135,7 +135,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
-  const { userAlliances, updateAllianceProgress } = useAlliance();
+  const { userAlliances, updateAllianceProgress, updateMemberContribution } = useAlliance();
 
   useEffect(() => {
     if (isUserDataLoaded && authUserData) {
@@ -354,7 +354,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // Base data to update
     const dataToUpdate: Partial<UserData> = { records: updatedRecords };
     
-    if (newRecord.taskType) {
+    if (newRecord.taskType && user) {
         const task = getTaskDefinitionById(newRecord.taskType);
         const currentUserLevel = getUserLevelInfo()?.currentLevel || 1;
         const recordXp = calculateXpForRecord(newRecord.value, task, currentUserLevel);
@@ -388,13 +388,14 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
             if (relevantAlliance && updateAllianceProgress) {
                 updateAllianceProgress(relevantAlliance.id, newRecord.value);
+                updateMemberContribution(relevantAlliance.id, user.uid, newRecord.value);
             }
         }
     }
     
     updateUserDataInDb(dataToUpdate);
 
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress, updateMemberContribution, user]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.
