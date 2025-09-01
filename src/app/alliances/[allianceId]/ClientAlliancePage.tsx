@@ -10,8 +10,8 @@ import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns'
 import Link from 'next/link';
 import { doc, getDoc, collection, query, where, documentId, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Alliance, UserData, SearchedUser } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye } from 'lucide-react';
+import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend } from '@/types';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -21,6 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -45,13 +47,101 @@ type MemberWithStatus = UserData & {
     isIncoming: boolean;
 };
 
+const InviteFriendsDialog = ({
+    isOpen,
+    onOpenChange,
+    alliance,
+    friends,
+    pendingInvites,
+    onInvite,
+}: {
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    alliance: Alliance;
+    friends: Friend[];
+    pendingInvites: AllianceInvitation[];
+    onInvite: (friend: Friend) => Promise<void>;
+}) => {
+    const eligibleFriends = friends.filter(
+        (f) => !alliance.memberIds.includes(f.uid)
+    );
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Invite Friends to {alliance.name}</DialogTitle>
+                    <DialogDescription>
+                        Select friends to invite to join your alliance.
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] pr-4">
+                    <div className="space-y-3">
+                        {eligibleFriends.length > 0 ? (
+                            eligibleFriends.map((friend) => {
+                                const isInvitePending = pendingInvites.some(
+                                    (invite) => invite.recipientId === friend.uid
+                                );
+                                return (
+                                    <div
+                                        key={friend.uid}
+                                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage
+                                                    src={getAvatarForId(friend.uid, friend.photoURL)}
+                                                />
+                                                <AvatarFallback>
+                                                    {friend.username.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span>{friend.nickname || friend.username}</span>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => onInvite(friend)}
+                                            disabled={isInvitePending}
+                                        >
+                                            {isInvitePending ? (
+                                                <>
+                                                    <UserCheck className="mr-2 h-4 w-4" /> Invited
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="mr-2 h-4 w-4" /> Invite
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <p className="text-center text-muted-foreground p-4">
+                                All of your friends are already in this alliance.
+                            </p>
+                        )}
+                    </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Done
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export default function ClientAlliancePage({ allianceId }: { allianceId: string }) {
   const [alliance, setAlliance] = useState<Alliance | null>(null);
   const [members, setMembers] = useState<MemberWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<AllianceInvitation[]>([]);
 
   const { user } = useAuth();
-  const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
+  const { friends, pendingRequests, incomingRequests, sendFriendRequest, sendAllianceInvitation, getPendingAllianceInvitesFor } = useFriends();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -123,6 +213,41 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
   }
 
+  const handleOpenInviteDialog = async () => {
+    if (!alliance) return;
+    try {
+        const invites = await getPendingAllianceInvitesFor(alliance.id);
+        setPendingInvites(invites);
+        setIsInviteDialogOpen(true);
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: 'Could not fetch pending invitations.',
+            variant: 'destructive',
+        });
+    }
+  };
+  
+  const handleInviteFriend = async (friend: Friend) => {
+    if (!alliance) return;
+    try {
+        await sendAllianceInvitation(alliance.id, alliance.name, friend.uid);
+        toast({
+            title: 'Invitation Sent',
+            description: `Invitation sent to ${friend.nickname || friend.username}.`,
+        });
+        // Refresh pending invites list
+        const invites = await getPendingAllianceInvitesFor(alliance.id);
+        setPendingInvites(invites);
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: (error as Error).message,
+            variant: 'destructive',
+        });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
@@ -155,8 +280,10 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const pageTierClass = `page-tier-group-${levelInfo.tierGroup}`;
   const daysLeft = differenceInDays(parseISO(alliance.endDate), new Date());
   const progressPercentage = Math.min(100, (alliance.progress / alliance.target) * 100);
+  const isCreator = user?.uid === alliance.creatorId;
 
   return (
+    <>
     <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
       <ClientHeader />
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
@@ -188,9 +315,17 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         </div>
         
         <div>
-            <div className="flex items-center gap-2 mb-4">
-                <Users className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Members ({members.length})</h2>
+            <div className="flex items-center justify-between gap-2 mb-4">
+                 <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <h2 className="text-xl font-semibold">Members ({members.length})</h2>
+                </div>
+                {isCreator && (
+                    <Button variant="outline" size="sm" onClick={handleOpenInviteDialog}>
+                        <ShieldPlus className="mr-2 h-4 w-4" />
+                        Invite Friends
+                    </Button>
+                )}
             </div>
             <div className="flex flex-wrap gap-4">
                 {members.map(member => (
@@ -238,5 +373,16 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         </div>
       </main>
     </div>
+    {alliance && (
+        <InviteFriendsDialog
+            isOpen={isInviteDialogOpen}
+            onOpenChange={setIsInviteDialogOpen}
+            alliance={alliance}
+            friends={friends}
+            pendingInvites={pendingInvites}
+            onInvite={handleInviteFriend}
+        />
+    )}
+    </>
   );
 }
