@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useTransition } from 'react';
@@ -170,6 +171,8 @@ export default function FriendsPage() {
     const requestAlreadySent = searchedUser && pendingRequests.some(req => req.recipientId === searchedUser.uid);
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
+    
+    const allRequestsCount = incomingRequests.length + pendingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -264,16 +267,91 @@ export default function FriendsPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
-
-                        {/* Requests & Invitations */}
-                        {/* ... (rest of your popovers and accordions for requests/invitations/challenges) ... */}
-
                     </div>
 
                     {/* Sidebar with alliances link */}
                     <div className="space-y-8">
                         <Accordion type="single" collapsible className="w-full" defaultValue="requests-list">
-                            {/* ... requests accordion ... */}
+                            <AccordionItem value="requests-list">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Mail className="h-6 w-6 text-primary" />
+                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Requests</h2>
+                                        {allRequestsCount > 0 && <Badge>{allRequestsCount}</Badge>}
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Accordion type="multiple" className="w-full space-y-2">
+                                       <AccordionItem value="item-1">
+                                          <AccordionTrigger>Incoming Friend Requests</AccordionTrigger>
+                                          <AccordionContent className="space-y-2">
+                                            {incomingRequests.length > 0 ? incomingRequests.map(req => (
+                                                <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                    <div className="flex items-center gap-2">
+                                                        <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)}/><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar>
+                                                        <span className="text-sm font-medium">{req.senderUsername}</span>
+                                                    </div>
+                                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
+                                                </div>
+                                            )) : <p className="text-xs text-center text-muted-foreground p-2">No incoming friend requests.</p>}
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                       <AccordionItem value="item-2">
+                                            <AccordionTrigger>Sent Friend Requests</AccordionTrigger>
+                                            <AccordionContent className="space-y-2">
+                                                {pendingRequests.length > 0 ? pendingRequests.map(req => (
+                                                    <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                        <div className="flex items-center gap-2">
+                                                            <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)}/><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar>
+                                                            <span className="text-sm font-medium">{req.recipientUsername}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1"><Hourglass className="h-4 w-4 text-amber-400"/><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => cancelFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
+                                                    </div>
+                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No pending friend requests.</p>}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                        <AccordionItem value="item-3">
+                                          <AccordionTrigger>Relationship Proposals</AccordionTrigger>
+                                          <AccordionContent className="space-y-2">
+                                            {incomingRelationshipProposals.length > 0 ? incomingRelationshipProposals.map(prop => (
+                                                <div key={prop.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                    <div className="flex items-center gap-2">
+                                                        <Heart className="h-4 w-4 text-pink-400"/><span className="text-sm font-medium">{prop.senderUsername} wants to be your {prop.correspondingRelationship}.</span>
+                                                    </div>
+                                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptRelationshipProposal(prop)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineRelationshipProposal(prop.id)}><X className="h-4 w-4"/></Button></div>
+                                                </div>
+                                            )) : <p className="text-xs text-center text-muted-foreground p-2">No relationship proposals.</p>}
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                        <AccordionItem value="item-4">
+                                            <AccordionTrigger>Alliance Invitations</AccordionTrigger>
+                                            <AccordionContent className="space-y-2">
+                                                {incomingAllianceInvitations.length > 0 ? incomingAllianceInvitations.map(invite => (
+                                                    <div key={invite.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                        <div className="flex items-center gap-2">
+                                                            <Shield className="h-4 w-4 text-cyan-400"/><span className="text-sm font-medium">Invite to {invite.allianceName} from {invite.senderUsername}</span>
+                                                        </div>
+                                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptAllianceInvitation(invite)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(invite.id)}><X className="h-4 w-4"/></Button></div>
+                                                    </div>
+                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No alliance invitations.</p>}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                        <AccordionItem value="item-5">
+                                            <AccordionTrigger>Alliance Challenges</AccordionTrigger>
+                                            <AccordionContent className="space-y-2">
+                                                {incomingAllianceChallenges.length > 0 ? incomingAllianceChallenges.map(challenge => (
+                                                    <div key={challenge.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                                                        <div className="flex items-center gap-2">
+                                                            <Swords className="h-4 w-4 text-red-500"/><span className="text-sm font-medium">{challenge.challengerAllianceName} challenges you!</span>
+                                                        </div>
+                                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptAllianceChallenge(challenge)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(challenge.id)}><X className="h-4 w-4"/></Button></div>
+                                                    </div>
+                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No incoming alliance challenges.</p>}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                </AccordionContent>
+                            </AccordionItem>
                         </Accordion>
 
                         <div className="space-y-4">
