@@ -29,7 +29,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
 // Updated import to use client-side search helper
-import { findUserByUsername } from '@/lib/user';
+import { findUserByUsername } from '@/lib/server/actions/user';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
