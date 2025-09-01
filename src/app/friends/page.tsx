@@ -189,7 +189,11 @@ export default function FriendsPage() {
                                         placeholder="Enter username..."
                                         value={usernameQuery}
                                         onChange={(e) => setUsernameQuery(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleSearch();
+                                            }
+                                        }}
                                         className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
                                     />
                                     <button 
