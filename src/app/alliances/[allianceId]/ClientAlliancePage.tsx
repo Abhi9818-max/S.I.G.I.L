@@ -267,9 +267,6 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         <main className="text-center p-4">
           <h1 className="text-2xl font-bold mb-4">Alliance Not Found</h1>
           <p className="text-muted-foreground">The alliance you are looking for does not exist or could not be loaded.</p>
-          <Link href="/alliances" className="mt-4 inline-block text-blue-500 hover:underline">
-            &larr; Back to Alliances
-          </Link>
         </main>
       </div>
     );
@@ -366,11 +363,6 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             </div>
         </div>
 
-        <div className="text-center">
-          <Link href="/alliances" className="text-blue-500 hover:underline">
-            &larr; Back to Alliances
-          </Link>
-        </div>
       </main>
     </div>
     {alliance && (
