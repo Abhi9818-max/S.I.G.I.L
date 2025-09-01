@@ -42,7 +42,7 @@ import {
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
-import { useFriends } from './FriendProvider';
+import { useAlliance } from './AllianceProvider';
 
 
 // Helper function to recursively remove undefined values from an object
@@ -135,10 +135,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
-  // This is a temporary solution to a circular dependency. A proper fix would involve a more robust state manager like Redux or Zustand.
-  const friendsContext = useContext(FriendContext);
-  const userAlliances = friendsContext?.userAlliances || [];
-  const updateAllianceProgress = friendsContext?.updateAllianceProgress || (async () => {});
+  const { userAlliances, updateAllianceProgress } = useAlliance();
 
   useEffect(() => {
     if (isUserDataLoaded && authUserData) {
@@ -732,7 +729,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const taskDef = record.taskType ? getTaskDefinitionById(record.taskType) : undefined;
       const effectiveTaskId = taskDef?.id || 'unassigned';
       const taskName = taskDef?.name || 'Unassigned';
-      const taskColor = taskDef?.color || 'hsl(0 0% 50%)';
+      const taskColor = taskDef?.color || DEFAULT_TASK_COLOR;
 
       const current = distribution.get(effectiveTaskId) || { value: 0, color: taskColor, name: taskName };
       current.value += record.value;

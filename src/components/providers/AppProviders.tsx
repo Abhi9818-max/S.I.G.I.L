@@ -8,19 +8,22 @@ import { TodoProvider } from '@/components/providers/TodoProvider';
 import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { FriendProvider } from '@/components/providers/FriendProvider';
+import { AllianceProvider } from './AllianceProvider';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <UserRecordsProvider>
         <FriendProvider>
-          <SettingsProvider>
-            <TooltipProvider delayDuration={100}>
-              <TodoProvider>
-                {children}
-              </TodoProvider>
-            </TooltipProvider>
-          </SettingsProvider>
+          <AllianceProvider>
+            <SettingsProvider>
+              <TooltipProvider delayDuration={100}>
+                <TodoProvider>
+                  {children}
+                </TodoProvider>
+              </TooltipProvider>
+            </SettingsProvider>
+          </AllianceProvider>
         </FriendProvider>
       </UserRecordsProvider>
     </AuthProvider>
