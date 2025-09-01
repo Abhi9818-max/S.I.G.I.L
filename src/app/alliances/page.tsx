@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Header from '@/components/layout/Header';
-import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,7 +104,7 @@ const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: Alliance
 
 export default function AlliancesPage() {
   const { user } = useAuth();
-  const { userAlliances, searchAlliances, sendAllianceChallenge, incomingAllianceChallenges, acceptAllianceChallenge, declineAllianceChallenge } = useFriends();
+  const { userAlliances, searchAlliances, sendAllianceChallenge, incomingAllianceChallenges, acceptAllianceChallenge, declineAllianceChallenge } = useAlliance();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
