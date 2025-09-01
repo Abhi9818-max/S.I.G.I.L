@@ -386,7 +386,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 isWithinInterval(now, { start: parseISO(a.startDate), end: parseISO(a.endDate) })
             );
 
-            if (relevantAlliance && updateAllianceProgress) {
+            if (relevantAlliance) {
                 updateAllianceProgress(relevantAlliance.id, newRecord.value);
                 updateMemberContribution(relevantAlliance.id, user.uid, newRecord.value);
             }
