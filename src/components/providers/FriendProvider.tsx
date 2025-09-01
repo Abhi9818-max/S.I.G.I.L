@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry } from '@/types';
@@ -65,6 +65,7 @@ interface FriendContextType {
     acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
+    updateAllianceProgress: (allianceId: string, value: number) => Promise<void>;
     // Marketplace
     globalListings: MarketplaceListing[];
     userListings: MarketplaceListing[];
@@ -709,6 +710,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await updateDoc(allianceRef, data);
     }, []);
 
+    const updateAllianceProgress = useCallback(async (allianceId: string, value: number) => {
+        if (!user || !db) throw new Error("Authentication required.");
+        
+        const allianceRef = doc(db, 'alliances', allianceId);
+        
+        try {
+            await updateDoc(allianceRef, {
+                progress: increment(value)
+            });
+        } catch (error) {
+            console.error("Error updating alliance progress:", error);
+            // Optionally, handle the error (e.g., show a toast)
+        }
+    }, [user]);
+
     // Marketplace Logic
     const listTitleForSale = useCallback(async (titleId: string, price: number) => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
@@ -838,6 +854,7 @@ declineAllianceInvitation,
             acceptAllianceChallenge,
             declineAllianceChallenge,
             updateAlliance,
+            updateAllianceProgress,
             globalListings,
             userListings,
             listTitleForSale,

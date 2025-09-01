@@ -3,7 +3,7 @@
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
@@ -42,6 +42,8 @@ import {
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { useFriends } from './FriendProvider';
+
 
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
@@ -133,6 +135,10 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
+  // This is a temporary solution to a circular dependency. A proper fix would involve a more robust state manager like Redux or Zustand.
+  const friendsContext = useContext(FriendContext);
+  const userAlliances = friendsContext?.userAlliances || [];
+  const updateAllianceProgress = friendsContext?.updateAllianceProgress || (async () => {});
 
   useEffect(() => {
     if (isUserDataLoaded && authUserData) {
@@ -374,11 +380,24 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
           const updatedReputation = { ...reputation, [faction.id]: newRep };
           dataToUpdate.reputation = updatedReputation;
         }
+
+        // Check for alliance progress
+        if(userAlliances && userAlliances.length > 0) {
+            const now = new Date();
+            const relevantAlliance = userAlliances.find(a => 
+                a.taskId === newRecord.taskType &&
+                isWithinInterval(now, { start: parseISO(a.startDate), end: parseISO(a.endDate) })
+            );
+
+            if (relevantAlliance && updateAllianceProgress) {
+                updateAllianceProgress(relevantAlliance.id, newRecord.value);
+            }
+        }
     }
     
     updateUserDataInDb(dataToUpdate);
 
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.
