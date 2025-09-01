@@ -193,7 +193,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
 
     fetchAllianceData();
-  }, [allianceId, friends, pendingRequests, incomingRequests]);
+  }, [allianceId]);
   
   const handleAddFriend = async (member: UserData) => {
     if (!member.uid || !member.username) {
