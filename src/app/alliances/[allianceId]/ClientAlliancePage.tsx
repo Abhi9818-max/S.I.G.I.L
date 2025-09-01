@@ -143,8 +143,8 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const [pendingInvites, setPendingInvites] = useState<AllianceInvitation[]>([]);
 
   const { user } = useAuth();
-  const { friends, pendingRequests, incomingRequests, sendFriendRequest, sendAllianceInvitation, getPendingAllianceInvitesFor } = useFriends();
-  const { getAllianceWithMembers } = useAlliance();
+  const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
+  const { getAllianceWithMembers, sendAllianceInvitation, getPendingAllianceInvitesFor } = useAlliance();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -186,7 +186,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
 
     fetchAllianceData();
-  }, [allianceId, friends, pendingRequests, incomingRequests, getAllianceWithMembers]);
+  }, [allianceId, getAllianceWithMembers, friends, pendingRequests, incomingRequests]);
   
   const handleAddFriend = async (member: UserData) => {
     if (!member.uid || !member.username) {
