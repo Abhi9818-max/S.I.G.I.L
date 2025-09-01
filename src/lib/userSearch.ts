@@ -1,4 +1,4 @@
-// Remove 'use server' - this is now client-side code
+// Remove 'use server' - this is client-side code
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { SearchedUser } from '@/types';
