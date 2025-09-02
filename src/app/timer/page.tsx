@@ -13,12 +13,11 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useTodos } from '@/components/providers/TodoProvider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle, ListChecks } from 'lucide-react';
+import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle, ListChecks, Repeat } from 'lucide-react';
 import type { TaskDefinition, TodoItem } from '@/types';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -50,7 +49,7 @@ type SelectableItem = {
     type: 'task' | 'pact';
 };
 
-const TimerComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void }) => {
+const TimerComponent = ({ items, onLogTime, onDoubleClick }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void }) => {
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(25);
     const [seconds, setSeconds] = useState(0);
@@ -121,7 +120,7 @@ const TimerComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTi
 
     return (
         <div className="flex flex-col items-center gap-6">
-            <div className="text-6xl font-mono tracking-tighter">
+            <div className="text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             {(!isActive && time === initialTime) && (
@@ -162,7 +161,7 @@ const TimerComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTi
     );
 };
 
-const StopwatchComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void }) => {
+const StopwatchComponent = ({ items, onLogTime, onDoubleClick }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void }) => {
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -208,7 +207,7 @@ const StopwatchComponent = ({ items, onLogTime }: { items: SelectableItem[], onL
 
     return (
         <div className="flex flex-col items-center gap-6">
-            <div className="text-6xl font-mono tracking-tighter">
+            <div className="text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             <div className="w-full max-w-sm">
@@ -245,6 +244,7 @@ export default function TimerPage() {
     const { taskDefinitions, addRecord, getUserLevelInfo, getTaskDefinitionById } = useUserRecords();
     const { todoItems, toggleTodoItem } = useTodos();
     const { toast } = useToast();
+    const [mode, setMode] = useState<'stopwatch' | 'timer'>('stopwatch');
 
     const timeBasedTasks: SelectableItem[] = taskDefinitions
         .filter(task => task.unit === 'minutes' || task.unit === 'hours')
@@ -258,7 +258,6 @@ export default function TimerPage() {
 
     const findAssociatedTask = (pactText: string): TaskDefinition | null => {
         const lowerPactText = pactText.toLowerCase();
-        // Prioritize specific keywords
         const keywordMap: { [key: string]: string[] } = {
             'exercise': ['exercise', 'workout', 'gym', 'run', 'yoga', 'cardio', 'lift'],
             'work': ['work', 'project', 'meeting', 'code', 'develop'],
@@ -275,7 +274,6 @@ export default function TimerPage() {
                 }
             }
         }
-        // Fallback to the generic "Other" task if it's time-based
         const otherTask = getTaskDefinitionById('other');
         if(otherTask && (otherTask.unit === 'minutes' || otherTask.unit === 'hours')) return otherTask;
         
@@ -340,25 +338,26 @@ export default function TimerPage() {
     const levelInfo = getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
 
+    const toggleMode = () => {
+        setMode(current => current === 'stopwatch' ? 'timer' : 'stopwatch');
+    };
+
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="max-w-2xl mx-auto mt-8">
-                    <Tabs defaultValue="stopwatch" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="stopwatch"><TimerIcon className="mr-2 h-4 w-4" />Stopwatch</TabsTrigger>
-                            <TabsTrigger value="timer"><Hourglass className="mr-2 h-4 w-4"/>Timer</TabsTrigger>
-                        </TabsList>
-                        <div className="pt-8">
-                            <TabsContent value="stopwatch">
-                                <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} />
-                            </TabsContent>
-                            <TabsContent value="timer">
-                                <TimerComponent items={selectableItems} onLogTime={handleLogTime} />
-                            </TabsContent>
-                        </div>
-                    </Tabs>
+                <div className="max-w-2xl mx-auto mt-8 relative">
+                     <div className="absolute top-0 right-0">
+                        <Button variant="ghost" size="icon" onClick={toggleMode} aria-label={`Switch to ${mode === 'stopwatch' ? 'Timer' : 'Stopwatch'}`}>
+                            <Repeat className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </div>
+                    {mode === 'stopwatch' ? (
+                         <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} />
+                    ) : (
+                        <TimerComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} />
+                    )}
+                   
                      {timeBasedTasks.length === 0 && (
                         <div className="text-center p-4 border-t mt-4">
                             <p className="text-muted-foreground">No time-based tasks found.</p>
