@@ -160,6 +160,19 @@
       box-shadow: 0 0 18px 5px hsl(var(--destructive) / 0.4);
     }
   }
+  
+  .animate-crown-glow {
+    animation: crown-glow 2s infinite ease-in-out;
+  }
+
+  @keyframes crown-glow {
+    0%, 100% {
+      box-shadow: 0 0 8px 2px hsla(50, 100%, 60%, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 16px 4px hsla(50, 100%, 60%, 0.5);
+    }
+  }
 
   .click-glow-animation {
     animation: click-glow 0.5s ease-out forwards;

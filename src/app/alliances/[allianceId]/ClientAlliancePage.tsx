@@ -360,7 +360,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                                         <AvatarFallback>{member.username?.charAt(0) || '?'}</AvatarFallback>
                                     </Avatar>
                                     {member.isTopContributor && (
-                                        <div className="absolute -top-2 -right-2 bg-yellow-400 p-1 rounded-full border-2 border-background">
+                                        <div className="absolute -top-1.5 -right-1.5 bg-yellow-400 p-1 rounded-full border-2 border-background animate-crown-glow">
                                             <Crown className="h-3 w-3 text-black" />
                                         </div>
                                     )}
