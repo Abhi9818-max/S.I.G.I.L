@@ -17,7 +17,7 @@ import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useTodos } from '@/components/providers/TodoProvider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle, ListChecks, Repeat } from 'lucide-react';
+import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle, ListChecks, Repeat, Maximize, Minimize } from 'lucide-react';
 import type { TaskDefinition, TodoItem } from '@/types';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -49,7 +49,7 @@ type SelectableItem = {
     type: 'task' | 'pact';
 };
 
-const TimerComponent = ({ items, onLogTime, onDoubleClick }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void }) => {
+const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void }) => {
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(25);
     const [seconds, setSeconds] = useState(0);
@@ -156,12 +156,13 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick }: { items: Selectable
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
                 <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset</Button>
+                <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
             </div>
         </div>
     );
 };
 
-const StopwatchComponent = ({ items, onLogTime, onDoubleClick }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void }) => {
+const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void }) => {
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -234,6 +235,7 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick }: { items: Select
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
                 <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset & Log</Button>
+                 <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
             </div>
         </div>
     );
@@ -245,6 +247,23 @@ export default function TimerPage() {
     const { todoItems, toggleTodoItem } = useTodos();
     const { toast } = useToast();
     const [mode, setMode] = useState<'stopwatch' | 'timer'>('stopwatch');
+    const [isFullScreen, setIsFullScreen] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsFullScreen(false);
+            }
+        };
+
+        if (isFullScreen) {
+            document.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFullScreen]);
 
     const timeBasedTasks: SelectableItem[] = taskDefinitions
         .filter(task => task.unit === 'minutes' || task.unit === 'hours')
@@ -342,6 +361,28 @@ export default function TimerPage() {
         setMode(current => current === 'stopwatch' ? 'timer' : 'stopwatch');
     };
 
+    const FullScreenDisplay = () => {
+         const dummyRef = useRef<HTMLDivElement>(null);
+         const [time, setTime] = useState(0); // Dummy state for re-render if needed
+         return (
+            <div 
+                className="fixed inset-0 bg-background z-[100] flex flex-col items-center justify-center cursor-pointer"
+                onClick={() => setIsFullScreen(false)}
+            >
+                <div className="text-8xl md:text-9xl font-mono tracking-tighter" ref={dummyRef}>
+                     {mode === 'stopwatch' ? 
+                        <StopwatchComponent items={[]} onLogTime={() => {}} onDoubleClick={() => {}} onToggleFullScreen={() => {}} /> 
+                        : <TimerComponent items={[]} onLogTime={() => {}} onDoubleClick={() => {}} onToggleFullScreen={() => {}} />}
+                </div>
+                <p className="text-muted-foreground mt-4 animate-pulse">Press 'Esc' or click anywhere to exit</p>
+            </div>
+         );
+    }
+    
+    if (isFullScreen) {
+        return <FullScreenDisplay />;
+    }
+
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
@@ -353,9 +394,9 @@ export default function TimerPage() {
                         </Button>
                     </div>
                     {mode === 'stopwatch' ? (
-                         <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} />
+                         <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} onToggleFullScreen={() => setIsFullScreen(true)} />
                     ) : (
-                        <TimerComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} />
+                        <TimerComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} onToggleFullScreen={() => setIsFullScreen(true)} />
                     )}
                    
                      {timeBasedTasks.length === 0 && (
