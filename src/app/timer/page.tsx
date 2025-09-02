@@ -36,7 +36,7 @@ const TimeInput = ({ value, onChange, label }: { value: number, onChange: (value
             type="number" 
             value={value} 
             onChange={(e) => onChange(Number(e.target.value))} 
-            className="w-20 text-center text-2xl h-12"
+            className="w-16 text-center text-xl h-10 sm:w-20 sm:text-2xl sm:h-12"
             min="0"
         />
         <label className="text-xs text-muted-foreground mt-1">{label}</label>
@@ -126,7 +126,7 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
 
     return (
         <div className="flex flex-col items-center gap-6">
-            <div className="text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+            <div className="text-5xl sm:text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             {(!isActive && time === initialTime) && (
@@ -158,7 +158,7 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
                 </Select>
             </div>
             <div className="flex gap-4">
-                <Button onClick={handleStartPause} size="lg" className="w-32">
+                <Button onClick={handleStartPause} size="lg" className="w-28 sm:w-32">
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
                 <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset</Button>
@@ -218,7 +218,7 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScree
 
     return (
         <div className="flex flex-col items-center gap-6">
-            <div className="text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+            <div className="text-5xl sm:text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             <div className="w-full max-w-sm">
@@ -241,7 +241,7 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScree
                 </Select>
             </div>
             <div className="flex gap-4">
-                <Button onClick={handleStartPause} size="lg" className="w-32">
+                <Button onClick={handleStartPause} size="lg" className="w-28 sm:w-32">
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
                 <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset & Log</Button>

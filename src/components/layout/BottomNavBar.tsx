@@ -10,8 +10,7 @@ const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/friends', label: 'Friends', icon: Users },
   { href: '/alliances', label: 'Alliances', icon: ShieldCheck },
-  { href: '/timer', label: 'Timer', icon: Timer },
-  { href: '/notes', label: 'Notes', icon: StickyNote },
+  { href: '/todo', label: 'Pacts', icon: ListChecks },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
