@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
-import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +60,7 @@ const allianceImages = Array.from({ length: 21 }, (_, i) => `/alliances/alliance
 export default function CreateAlliancePage() {
   const { user } = useAuth();
   const { taskDefinitions, getTaskDefinitionById } = useUserRecords();
-  const { createAlliance } = useFriends();
+  const { createAlliance } = useAlliance();
   const { toast } = useToast();
   const router = useRouter();
 
