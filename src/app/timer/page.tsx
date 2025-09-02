@@ -125,8 +125,8 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
     const pacts = items.filter(i => i.type === 'pact');
 
     return (
-        <div className="flex flex-col items-center gap-6">
-            <div className="text-5xl sm:text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+        <div className="flex flex-col items-center gap-6 w-full">
+            <div className="text-6xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             {(!isActive && time === initialTime) && (
@@ -217,8 +217,8 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScree
     const pacts = items.filter(i => i.type === 'pact');
 
     return (
-        <div className="flex flex-col items-center gap-6">
-            <div className="text-5xl sm:text-6xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+        <div className="flex flex-col items-center gap-6 w-full">
+            <div className="text-6xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             <div className="w-full max-w-sm">
@@ -390,8 +390,8 @@ export default function TimerPage() {
             {isFullScreen && <FullScreenDisplay />}
             <div className={cn(isFullScreen && 'hidden')}>
                 <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-                <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                    <div className="max-w-2xl mx-auto mt-8 relative">
+                <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center animate-fade-in-up">
+                    <div className="w-full max-w-2xl relative">
                         <div className="absolute top-0 right-0">
                             <Button variant="ghost" size="icon" onClick={toggleMode} aria-label={`Switch to ${mode === 'stopwatch' ? 'Timer' : 'Stopwatch'}`}>
                                 <Repeat className="h-5 w-5 text-muted-foreground" />
