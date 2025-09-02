@@ -157,15 +157,13 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             const allianceData = { id: docSnap.id, ...docSnap.data() } as Alliance;
             setAlliance(allianceData);
             
-            const membersData = allianceData.members || [];
+            const membersData = [...(allianceData.members || [])].sort((a, b) => b.contribution - a.contribution);
+            
             let topContributorId = '';
             
-            // Only determine top contributor if the alliance hasn't ended
             const allianceHasEnded = isPast(parseISO(allianceData.endDate));
             if (!allianceHasEnded && membersData.length > 0) {
-              topContributorId = membersData.reduce((prev, current) => 
-                (prev.contribution > current.contribution) ? prev : current
-              ).uid;
+              topContributorId = membersData[0].uid; // The first member is the top contributor after sorting
             }
 
             const membersWithStatus = membersData.map(member => ({
@@ -355,7 +353,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                         <PopoverTrigger asChild>
                             <button aria-label={`View options for ${member.username}`}>
                                 <div className="relative">
-                                    <Avatar className="h-12 w-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all hover:scale-105">
+                                    <Avatar className={cn("h-12 w-12 cursor-pointer hover:ring-2 hover:ring-primary transition-all hover:scale-105", member.isTopContributor && "animate-crown-glow")}>
                                         <AvatarImage src={getAvatarForId(member.uid!, member.photoURL)} />
                                         <AvatarFallback>{member.username?.charAt(0) || '?'}</AvatarFallback>
                                     </Avatar>
@@ -411,3 +409,5 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     </>
   );
 }
+
+    
