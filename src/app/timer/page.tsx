@@ -157,14 +157,12 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Button onClick={handleStartPause} size="lg" className="w-40 sm:w-32">
+            <div className="flex flex-wrap justify-center items-center gap-4">
+                <Button onClick={handleStartPause} size="lg" className="w-32">
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
-                <div className="flex sm:flex-row gap-2">
-                    <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset</Button>
-                    <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
-                </div>
+                <Button onClick={handleReset} size="lg" variant="outline" className="w-32"><RotateCcw className="mr-2 h-5 w-5" /> Reset</Button>
+                <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
             </div>
         </div>
     );
@@ -242,14 +240,12 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScree
                     </SelectContent>
                 </Select>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Button onClick={handleStartPause} size="lg" className="w-40 sm:w-32">
+            <div className="flex flex-wrap justify-center items-center gap-4">
+                <Button onClick={handleStartPause} size="lg" className="w-32">
                     {isActive ? <><Pause className="mr-2 h-5 w-5" /> Pause</> : <><Play className="mr-2 h-5 w-5" /> Start</>}
                 </Button>
-                 <div className="flex sm:flex-row gap-2">
-                    <Button onClick={handleReset} size="lg" variant="outline"><RotateCcw className="mr-2 h-5 w-5" /> Reset & Log</Button>
-                    <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
-                </div>
+                <Button onClick={handleReset} size="lg" variant="outline" className="w-32"><RotateCcw className="mr-2 h-5 w-5" /> Reset & Log</Button>
+                <Button onClick={onToggleFullScreen} size="lg" variant="ghost"><Maximize className="h-5 w-5" /></Button>
             </div>
         </div>
     );
