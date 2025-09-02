@@ -344,10 +344,6 @@ export default function TimerPage() {
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="max-w-2xl mx-auto text-center">
-                    <h1 className="text-2xl font-semibold">Time Tracker</h1>
-                    <p className="text-muted-foreground mt-1">Use the stopwatch to track active work or the timer for focused sessions.</p>
-                </div>
                 <div className="max-w-2xl mx-auto mt-8">
                     <Tabs defaultValue="stopwatch" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
