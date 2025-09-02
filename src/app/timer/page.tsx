@@ -382,7 +382,6 @@ export default function TimerPage() {
             <div className="text-8xl md:text-9xl font-mono tracking-tighter">
                 {formatTime(currentTime)}
             </div>
-            <p className="text-muted-foreground mt-4 animate-pulse">Press 'Esc' or click anywhere to exit</p>
         </div>
     );
     
