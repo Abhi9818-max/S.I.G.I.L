@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
@@ -449,9 +450,9 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {getRelationshipContent()}
-                  <Button onClick={handleDownloadProfileCard} variant="outline" size="sm">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Download Card
+                  <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="md:w-auto w-9 md:p-2 p-0">
+                    <CreditCard className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Download Card</span>
                   </Button>
 
                   {isFriend && (
