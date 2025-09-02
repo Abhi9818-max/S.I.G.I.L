@@ -62,9 +62,6 @@ const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => vo
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete note</span>
         </Button>
-        <Button variant="ghost" size="icon">
-            <ChevronUp className="h-5 w-5" />
-        </Button>
       </div>
     </div>
   );
