@@ -49,7 +49,7 @@ type SelectableItem = {
     type: 'task' | 'pact';
 };
 
-const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void }) => {
+const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, onTimeUpdate }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void, onTimeUpdate: (time: number) => void }) => {
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(25);
     const [seconds, setSeconds] = useState(0);
@@ -65,6 +65,10 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }:
         setInitialTime(totalSeconds);
         setTime(totalSeconds);
     }, [hours, minutes, seconds]);
+
+    useEffect(() => {
+        onTimeUpdate(time);
+    }, [time, onTimeUpdate]);
 
     const logTime = useCallback(() => {
         const item = items.find(i => i.id === selectedItemId);
@@ -162,12 +166,16 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }:
     );
 };
 
-const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void }) => {
+const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, onTimeUpdate }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void, onDoubleClick: () => void, onToggleFullScreen: () => void, onTimeUpdate: (time: number) => void }) => {
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const { toast } = useToast();
+
+    useEffect(() => {
+        onTimeUpdate(time);
+    }, [time, onTimeUpdate]);
 
     useEffect(() => {
         if (isActive) {
@@ -248,6 +256,7 @@ export default function TimerPage() {
     const { toast } = useToast();
     const [mode, setMode] = useState<'stopwatch' | 'timer'>('stopwatch');
     const [isFullScreen, setIsFullScreen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -361,23 +370,17 @@ export default function TimerPage() {
         setMode(current => current === 'stopwatch' ? 'timer' : 'stopwatch');
     };
 
-    const FullScreenDisplay = () => {
-         const dummyRef = useRef<HTMLDivElement>(null);
-         const [time, setTime] = useState(0); // Dummy state for re-render if needed
-         return (
-            <div 
-                className="fixed inset-0 bg-background z-[100] flex flex-col items-center justify-center cursor-pointer"
-                onClick={() => setIsFullScreen(false)}
-            >
-                <div className="text-8xl md:text-9xl font-mono tracking-tighter" ref={dummyRef}>
-                     {mode === 'stopwatch' ? 
-                        <StopwatchComponent items={[]} onLogTime={() => {}} onDoubleClick={() => {}} onToggleFullScreen={() => {}} /> 
-                        : <TimerComponent items={[]} onLogTime={() => {}} onDoubleClick={() => {}} onToggleFullScreen={() => {}} />}
-                </div>
-                <p className="text-muted-foreground mt-4 animate-pulse">Press 'Esc' or click anywhere to exit</p>
+    const FullScreenDisplay = () => (
+        <div 
+            className="fixed inset-0 bg-background z-[100] flex flex-col items-center justify-center cursor-pointer"
+            onClick={() => setIsFullScreen(false)}
+        >
+            <div className="text-8xl md:text-9xl font-mono tracking-tighter">
+                {formatTime(currentTime)}
             </div>
-         );
-    }
+            <p className="text-muted-foreground mt-4 animate-pulse">Press 'Esc' or click anywhere to exit</p>
+        </div>
+    );
     
     if (isFullScreen) {
         return <FullScreenDisplay />;
@@ -394,9 +397,21 @@ export default function TimerPage() {
                         </Button>
                     </div>
                     {mode === 'stopwatch' ? (
-                         <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} onToggleFullScreen={() => setIsFullScreen(true)} />
+                         <StopwatchComponent 
+                            items={selectableItems} 
+                            onLogTime={handleLogTime} 
+                            onDoubleClick={toggleMode} 
+                            onToggleFullScreen={() => setIsFullScreen(true)}
+                            onTimeUpdate={setCurrentTime}
+                         />
                     ) : (
-                        <TimerComponent items={selectableItems} onLogTime={handleLogTime} onDoubleClick={toggleMode} onToggleFullScreen={() => setIsFullScreen(true)} />
+                        <TimerComponent 
+                            items={selectableItems} 
+                            onLogTime={handleLogTime} 
+                            onDoubleClick={toggleMode} 
+                            onToggleFullScreen={() => setIsFullScreen(true)}
+                            onTimeUpdate={setCurrentTime}
+                        />
                     )}
                    
                      {timeBasedTasks.length === 0 && (
