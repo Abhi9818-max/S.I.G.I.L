@@ -356,16 +356,6 @@ export default function FriendsPage() {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
-
-                        <div className="space-y-4">
-                            <Link href="/alliances">
-                                <div className="flex items-center gap-2 hover:text-primary transition-colors">
-                                    <Shield className="h-6 w-6 text-primary" />
-                                    <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Alliances</h2>
-                                    <ArrowRight className="h-5 w-5" />
-                                </div>
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </main>
