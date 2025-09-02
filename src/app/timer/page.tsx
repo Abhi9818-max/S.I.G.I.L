@@ -126,11 +126,11 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
 
     return (
         <div className="flex flex-col items-center gap-6 w-full">
-            <div className="text-6xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+            <div className="text-5xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             {(!isActive && time === initialTime) && (
-                 <div className="flex items-center gap-2">
+                 <div className="flex flex-wrap justify-center items-center gap-2">
                     <TimeInput value={hours} onChange={setHours} label="Hours"/>
                     <span className="text-2xl -mt-4">:</span>
                     <TimeInput value={minutes} onChange={setMinutes} label="Minutes"/>
@@ -218,7 +218,7 @@ const StopwatchComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScree
 
     return (
         <div className="flex flex-col items-center gap-6 w-full">
-            <div className="text-6xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
+            <div className="text-5xl sm:text-7xl font-mono tracking-tighter cursor-pointer" onDoubleClick={onDoubleClick}>
                 {formatTime(time)}
             </div>
             <div className="w-full max-w-sm">
@@ -379,7 +379,7 @@ export default function TimerPage() {
             className="fixed inset-0 bg-background z-[100] flex flex-col items-center justify-center cursor-pointer"
             onClick={toggleFullScreen}
         >
-            <div className="text-8xl md:text-9xl font-mono tracking-tighter">
+            <div className="text-6xl sm:text-8xl md:text-9xl font-mono tracking-tighter">
                 {formatTime(currentTime)}
             </div>
         </div>
@@ -388,7 +388,7 @@ export default function TimerPage() {
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             {isFullScreen && <FullScreenDisplay />}
-            <div className={cn(isFullScreen && 'hidden')}>
+            <div className={cn(isFullScreen && 'hidden', "flex flex-col flex-grow")}>
                 <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
                 <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center animate-fade-in-up">
                     <div className="w-full max-w-2xl relative">
