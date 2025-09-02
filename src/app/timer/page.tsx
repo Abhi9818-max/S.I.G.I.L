@@ -234,40 +234,35 @@ export default function TimerPage() {
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="max-w-2xl mx-auto">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Time Tracker</CardTitle>
-                            <CardDescription>Use the stopwatch to track active work or the timer for focused sessions.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Tabs defaultValue="stopwatch" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="stopwatch"><TimerIcon className="mr-2 h-4 w-4" />Stopwatch</TabsTrigger>
-                                    <TabsTrigger value="timer"><Hourglass className="mr-2 h-4 w-4"/>Timer</TabsTrigger>
-                                </TabsList>
-                                <div className="pt-8">
-                                    <TabsContent value="stopwatch">
-                                        <StopwatchComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
-                                    </TabsContent>
-                                    <TabsContent value="timer">
-                                        <TimerComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
-                                    </TabsContent>
-                                </div>
-                            </Tabs>
-                             {timeBasedTasks.length === 0 && (
-                                <div className="text-center p-4 border-t mt-4">
-                                    <p className="text-muted-foreground">No time-based tasks found.</p>
-                                    <Button asChild variant="link">
-                                        <Link href="/settings"><PlusCircle className="mr-2 h-4 w-4"/>Create a time-based task</Link>
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                <div className="max-w-2xl mx-auto text-center">
+                    <h1 className="text-2xl font-semibold">Time Tracker</h1>
+                    <p className="text-muted-foreground mt-1">Use the stopwatch to track active work or the timer for focused sessions.</p>
+                </div>
+                <div className="max-w-2xl mx-auto mt-8">
+                    <Tabs defaultValue="stopwatch" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="stopwatch"><TimerIcon className="mr-2 h-4 w-4" />Stopwatch</TabsTrigger>
+                            <TabsTrigger value="timer"><Hourglass className="mr-2 h-4 w-4"/>Timer</TabsTrigger>
+                        </TabsList>
+                        <div className="pt-8">
+                            <TabsContent value="stopwatch">
+                                <StopwatchComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
+                            </TabsContent>
+                            <TabsContent value="timer">
+                                <TimerComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
+                            </TabsContent>
+                        </div>
+                    </Tabs>
+                     {timeBasedTasks.length === 0 && (
+                        <div className="text-center p-4 border-t mt-4">
+                            <p className="text-muted-foreground">No time-based tasks found.</p>
+                            <Button asChild variant="link">
+                                <Link href="/settings"><PlusCircle className="mr-2 h-4 w-4"/>Create a time-based task</Link>
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
     );
 }
-
