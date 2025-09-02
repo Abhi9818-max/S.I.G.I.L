@@ -274,4 +274,18 @@
   .friends-scroller-container [data-radix-scroll-area-viewport]::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
   }
+  
+  .progress-glow {
+    filter: drop-shadow(0 0 5px var(--progress-color, hsl(var(--primary))));
+    animation: progress-pulse 2s infinite ease-in-out;
+  }
+
+  @keyframes progress-pulse {
+    0%, 100% {
+      filter: drop-shadow(0 0 5px var(--progress-color, hsl(var(--primary))));
+    }
+    50% {
+      filter: drop-shadow(0 0 10px var(--progress-color, hsl(var(--primary))));
+    }
+  }
 }

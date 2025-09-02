@@ -190,9 +190,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({
             <Card
             className={cn(
                 "shadow-lg animate-fade-in-up transition-all relative",
-                isDarkStreakSelected && "bg-orange-950/70 border-orange-400/50"
+                isDarkStreakSelected && "progress-glow border-orange-400/50"
             )}
-            style={{ animationDelay: `100ms` }}
+            style={{ 
+              animationDelay: `100ms`,
+              '--progress-color': 'hsl(30 90% 55%)' 
+            } as React.CSSProperties}
             >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">

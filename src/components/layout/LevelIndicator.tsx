@@ -52,6 +52,8 @@ const LevelIndicator: React.FC<LevelIndicatorProps> = ({ levelInfo, className })
     }
     return `${valueTowardsNextLevel.toLocaleString()} / ${pointsForNextLevel ? pointsForNextLevel.toLocaleString() : 'MAX'} XP`;
   }, [isMaxLevel, totalAccumulatedValue, valueTowardsNextLevel, pointsForNextLevel]);
+  
+  const progressColorVar = useMemo(() => `hsl(var(--progress-tier-group-${tierGroup}))`, [tierGroup]);
 
   return (
     <div className={cn("flex flex-col items-start", className)}>
@@ -65,7 +67,12 @@ const LevelIndicator: React.FC<LevelIndicatorProps> = ({ levelInfo, className })
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="w-32 md:w-40">
-              <Progress value={progressPercentage} className="h-2.5" indicatorClassName={progressColorClass} />
+              <Progress 
+                value={progressPercentage} 
+                className="h-2.5 progress-glow" 
+                indicatorClassName={progressColorClass}
+                style={{ '--progress-color': progressColorVar } as React.CSSProperties}
+              />
             </div>
           </TooltipTrigger>
           <TooltipContent>
