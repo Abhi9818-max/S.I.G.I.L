@@ -32,6 +32,7 @@ import { Label } from '@/components/ui/label';
 
 // Updated import to use client-side search helper
 import { findUserByUsername } from '@/lib/server/actions/user';
+import { Separator } from '@/components/ui/separator';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -103,6 +104,117 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
     );
 };
 
+const RequestsPopover = ({
+    incomingRequests,
+    incomingRelationshipProposals,
+    incomingAllianceInvitations,
+    incomingAllianceChallenges,
+    onAcceptFriend,
+    onDeclineFriend,
+    onAcceptRelationship,
+    onDeclineRelationship,
+    onAcceptAllianceInvite,
+    onDeclineAllianceInvite,
+    onAcceptAllianceChallenge,
+    onDeclineAllianceChallenge,
+}: any) => (
+    <PopoverContent className="w-80">
+        <ScrollArea className="h-96">
+        <div className="p-4 space-y-4">
+            <h4 className="font-medium leading-none">Incoming Requests</h4>
+            <Separator />
+             {incomingRequests.length > 0 && (
+                <div className="space-y-2">
+                    <h5 className="text-sm font-semibold">Friend Requests</h5>
+                    {incomingRequests.map((req: FriendRequest) => (
+                         <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                             <div className="flex items-center gap-2">
+                                 <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)}/><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar>
+                                 <span className="text-sm font-medium">{req.senderUsername}</span>
+                             </div>
+                             <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptFriend(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineFriend(req.id)}><X className="h-4 w-4"/></Button></div>
+                         </div>
+                    ))}
+                </div>
+             )}
+              {incomingRelationshipProposals.length > 0 && (
+                <div className="space-y-2">
+                    <h5 className="text-sm font-semibold">Relationship Proposals</h5>
+                    {incomingRelationshipProposals.map((prop: RelationshipProposal) => (
+                         <div key={prop.id} className="flex flex-col p-2 rounded-md bg-muted/50">
+                             <div className="flex items-center gap-2">
+                                 <Heart className="h-4 w-4 text-pink-400"/><span className="text-sm font-medium">{prop.senderUsername} wants to be your {prop.correspondingRelationship}.</span>
+                             </div>
+                             <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptRelationship(prop)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineRelationship(prop.id)}><X className="h-4 w-4"/></Button></div>
+                         </div>
+                    ))}
+                </div>
+              )}
+              {incomingAllianceInvitations.length > 0 && (
+                 <div className="space-y-2">
+                    <h5 className="text-sm font-semibold">Alliance Invitations</h5>
+                     {incomingAllianceInvitations.map((invite: AllianceInvitation) => (
+                         <div key={invite.id} className="flex flex-col p-2 rounded-md bg-muted/50">
+                            <div className="flex items-center gap-2">
+                                 <Shield className="h-4 w-4 text-cyan-400"/><span className="text-sm font-medium">Invite to {invite.allianceName} from {invite.senderUsername}</span>
+                            </div>
+                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceInvite(invite)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceInvite(invite.id)}><X className="h-4 w-4"/></Button></div>
+                         </div>
+                    ))}
+                </div>
+              )}
+              {incomingAllianceChallenges.length > 0 && (
+                <div className="space-y-2">
+                    <h5 className="text-sm font-semibold">Alliance Challenges</h5>
+                    {incomingAllianceChallenges.map((challenge: AllianceChallenge) => (
+                         <div key={challenge.id} className="flex flex-col p-2 rounded-md bg-muted/50">
+                            <div className="flex items-center gap-2">
+                                <Swords className="h-4 w-4 text-red-500"/><span className="text-sm font-medium">{challenge.challengerAllianceName} challenges you!</span>
+                            </div>
+                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceChallenge(challenge)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceChallenge(challenge.id)}><X className="h-4 w-4"/></Button></div>
+                         </div>
+                    ))}
+                </div>
+              )}
+              {incomingRequests.length === 0 && incomingRelationshipProposals.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && (
+                <p className="text-xs text-center text-muted-foreground p-2">No incoming requests.</p>
+              )}
+        </div>
+        </ScrollArea>
+    </PopoverContent>
+);
+
+const PendingPopover = ({
+    pendingRequests,
+    onCancelFriend,
+}: any) => (
+    <PopoverContent className="w-80">
+        <ScrollArea className="h-96">
+        <div className="p-4 space-y-4">
+            <h4 className="font-medium leading-none">Sent Requests</h4>
+            <Separator />
+            {pendingRequests.length > 0 ? (
+                <div className="space-y-2">
+                    <h5 className="text-sm font-semibold">Friend Requests</h5>
+                     {pendingRequests.map((req: FriendRequest) => (
+                         <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                             <div className="flex items-center gap-2">
+                                 <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)}/><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar>
+                                 <span className="text-sm font-medium">{req.recipientUsername}</span>
+                             </div>
+                             <div className="flex items-center gap-1"><Hourglass className="h-4 w-4 text-amber-400"/><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onCancelFriend(req.id)}><X className="h-4 w-4"/></Button></div>
+                         </div>
+                     ))}
+                </div>
+            ) : (
+                <p className="text-xs text-center text-muted-foreground p-2">No pending friend requests.</p>
+            )}
+        </div>
+        </ScrollArea>
+    </PopoverContent>
+);
+
+
 export default function FriendsPage() {
     const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
@@ -114,11 +226,8 @@ export default function FriendsPage() {
         acceptFriendRequest,
         declineFriendRequest,
         cancelFriendRequest,
-        incomingRelationshipProposals,
-        pendingRelationshipProposals,
         acceptRelationshipProposal,
         declineRelationshipProposal,
-        cancelRelationshipProposal,
     } = useFriends();
     const {
         incomingAllianceInvitations,
@@ -175,7 +284,7 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
-    const allRequestsCount = incomingRequests.length + pendingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
+    const allRequestsCount = incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -183,68 +292,104 @@ export default function FriendsPage() {
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="space-y-4">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <UserSearch className="h-6 w-6 text-primary" />
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
                             </div>
-                            <div className="space-y-3">
-                                <div className="relative w-full max-w-sm">
-                                    <Input
-                                        placeholder="Enter username..."
-                                        value={usernameQuery}
-                                        onChange={(e) => setUsernameQuery(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                handleSearch();
-                                            }
-                                        }}
-                                        className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
+                             <div className="flex items-center gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="relative">
+                                            <Mail className="h-6 w-6"/>
+                                            {allRequestsCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{allRequestsCount}</Badge>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <RequestsPopover 
+                                        incomingRequests={incomingRequests}
+                                        incomingRelationshipProposals={incomingRelationshipProposals}
+                                        incomingAllianceInvitations={incomingAllianceInvitations}
+                                        incomingAllianceChallenges={incomingAllianceChallenges}
+                                        onAcceptFriend={acceptFriendRequest}
+                                        onDeclineFriend={declineFriendRequest}
+                                        onAcceptRelationship={acceptRelationshipProposal}
+                                        onDeclineRelationship={declineRelationshipProposal}
+                                        onAcceptAllianceInvite={acceptAllianceInvitation}
+                                        onDeclineAllianceInvite={declineAllianceInvitation}
+                                        onAcceptAllianceChallenge={acceptAllianceChallenge}
+                                        onDeclineAllianceChallenge={declineAllianceChallenge}
                                     />
-                                    <button 
-                                        onClick={handleSearch} 
-                                        disabled={isPending}
-                                        className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        <Search className="h-5 w-5" />
-                                    </button>
-                                </div>
-
-                                {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
-                                {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
-                                {searchedUser && (
-                                    <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
-                                                <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{searchedUser.username}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button asChild variant="outline" size="sm">
-                                                <Link href={`/friends/${searchedUser.uid}`}>
-                                                    <Eye className="h-4 w-4 mr-2" />
-                                                    View Profile
-                                                </Link>
-                                            </Button>
-                                            {isAlreadyFriend ? (
-                                                <Badge variant="secondary">Already Friends</Badge>
-                                            ) : hasIncomingRequest ? (
-                                                <Badge variant="outline">Check incoming</Badge>
-                                            ) : requestAlreadySent ? (
-                                                <Badge variant="outline">Request Sent</Badge>
-                                            ) : (
-                                                <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
-                                                    <UserPlus className="h-4 w-4 mr-2" /> Add Friend
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                </Popover>
+                                 <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="relative">
+                                            <Hourglass className="h-6 w-6"/>
+                                            {pendingRequests.length > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{pendingRequests.length}</Badge>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PendingPopover
+                                        pendingRequests={pendingRequests}
+                                        onCancelFriend={cancelFriendRequest}
+                                    />
+                                </Popover>
                             </div>
                         </div>
+                        <div className="space-y-3">
+                            <div className="relative w-full max-w-sm">
+                                <Input
+                                    placeholder="Enter username..."
+                                    value={usernameQuery}
+                                    onChange={(e) => setUsernameQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch();
+                                        }
+                                    }}
+                                    className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
+                                />
+                                <button 
+                                    onClick={handleSearch} 
+                                    disabled={isPending}
+                                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                    <Search className="h-5 w-5" />
+                                </button>
+                            </div>
 
+                            {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
+                            {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
+                            {searchedUser && (
+                                <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar>
+                                            <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
+                                            <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium">{searchedUser.username}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/friends/${searchedUser.uid}`}>
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                View Profile
+                                            </Link>
+                                        </Button>
+                                        {isAlreadyFriend ? (
+                                            <Badge variant="secondary">Already Friends</Badge>
+                                        ) : hasIncomingRequest ? (
+                                            <Badge variant="outline">Check incoming</Badge>
+                                        ) : requestAlreadySent ? (
+                                            <Badge variant="outline">Request Sent</Badge>
+                                        ) : (
+                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
+                                                <UserPlus className="h-4 w-4 mr-2" /> Add Friend
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
                         {/* Friends Carousel */}
                         <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
                             <AccordionItem value="friends-list">
@@ -271,91 +416,21 @@ export default function FriendsPage() {
                             </AccordionItem>
                         </Accordion>
                     </div>
-
-                    {/* Sidebar with alliances link */}
-                    <div className="space-y-8">
-                        <Accordion type="single" collapsible className="w-full" defaultValue="requests-list">
-                            <AccordionItem value="requests-list">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-6 w-6 text-primary" />
-                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Requests</h2>
-                                        {allRequestsCount > 0 && <Badge>{allRequestsCount}</Badge>}
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <Accordion type="multiple" className="w-full space-y-2">
-                                       <AccordionItem value="item-1">
-                                          <AccordionTrigger>Incoming Friend Requests</AccordionTrigger>
-                                          <AccordionContent className="space-y-2">
-                                            {incomingRequests.length > 0 ? incomingRequests.map(req => (
-                                                <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                    <div className="flex items-center gap-2">
-                                                        <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)}/><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar>
-                                                        <span className="text-sm font-medium">{req.senderUsername}</span>
-                                                    </div>
-                                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
-                                                </div>
-                                            )) : <p className="text-xs text-center text-muted-foreground p-2">No incoming friend requests.</p>}
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                       <AccordionItem value="item-2">
-                                            <AccordionTrigger>Sent Friend Requests</AccordionTrigger>
-                                            <AccordionContent className="space-y-2">
-                                                {pendingRequests.length > 0 ? pendingRequests.map(req => (
-                                                    <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                        <div className="flex items-center gap-2">
-                                                            <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)}/><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar>
-                                                            <span className="text-sm font-medium">{req.recipientUsername}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1"><Hourglass className="h-4 w-4 text-amber-400"/><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => cancelFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
-                                                    </div>
-                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No pending friend requests.</p>}
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                        <AccordionItem value="item-3">
-                                          <AccordionTrigger>Relationship Proposals</AccordionTrigger>
-                                          <AccordionContent className="space-y-2">
-                                            {incomingRelationshipProposals.length > 0 ? incomingRelationshipProposals.map(prop => (
-                                                <div key={prop.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                    <div className="flex items-center gap-2">
-                                                        <Heart className="h-4 w-4 text-pink-400"/><span className="text-sm font-medium">{prop.senderUsername} wants to be your {prop.correspondingRelationship}.</span>
-                                                    </div>
-                                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptRelationshipProposal(prop)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineRelationshipProposal(prop.id)}><X className="h-4 w-4"/></Button></div>
-                                                </div>
-                                            )) : <p className="text-xs text-center text-muted-foreground p-2">No relationship proposals.</p>}
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                        <AccordionItem value="item-4">
-                                            <AccordionTrigger>Alliance Invitations</AccordionTrigger>
-                                            <AccordionContent className="space-y-2">
-                                                {incomingAllianceInvitations.length > 0 ? incomingAllianceInvitations.map(invite => (
-                                                    <div key={invite.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                        <div className="flex items-center gap-2">
-                                                            <Shield className="h-4 w-4 text-cyan-400"/><span className="text-sm font-medium">Invite to {invite.allianceName} from {invite.senderUsername}</span>
-                                                        </div>
-                                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptAllianceInvitation(invite)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(invite.id)}><X className="h-4 w-4"/></Button></div>
-                                                    </div>
-                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No alliance invitations.</p>}
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                        <AccordionItem value="item-5">
-                                            <AccordionTrigger>Alliance Challenges</AccordionTrigger>
-                                            <AccordionContent className="space-y-2">
-                                                {incomingAllianceChallenges.length > 0 ? incomingAllianceChallenges.map(challenge => (
-                                                    <div key={challenge.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                                                        <div className="flex items-center gap-2">
-                                                            <Swords className="h-4 w-4 text-red-500"/><span className="text-sm font-medium">{challenge.challengerAllianceName} challenges you!</span>
-                                                        </div>
-                                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => acceptAllianceChallenge(challenge)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(challenge.id)}><X className="h-4 w-4"/></Button></div>
-                                                    </div>
-                                                )) : <p className="text-xs text-center text-muted-foreground p-2">No incoming alliance challenges.</p>}
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
+                    
+                     <div className="space-y-4">
+                         <Card className="hover:shadow-xl transition-shadow">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary"/>Alliances</CardTitle>
+                                <CardDescription>Team up with friends to achieve greatness.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild className="w-full">
+                                    <Link href="/alliances">
+                                        View Alliances <ArrowRight className="ml-2 h-4 w-4"/>
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                         </Card>
                     </div>
                 </div>
             </main>
