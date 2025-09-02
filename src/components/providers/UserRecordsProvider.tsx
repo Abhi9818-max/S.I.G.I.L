@@ -1105,5 +1105,3 @@ export const useUserRecords = (): UserRecordsContextType => {
   }
   return context;
 };
-
-
