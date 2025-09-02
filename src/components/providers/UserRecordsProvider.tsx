@@ -388,7 +388,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
             if (relevantAlliance) {
                 updateAllianceProgress(relevantAlliance.id, newRecord.value);
-                updateMemberContribution(relevantAlliance.id, user.uid, newRecord.value);
+                updateMemberContribution(relevantAlliance.id, user.uid, recordXp);
             }
         }
     }
@@ -1082,3 +1082,4 @@ export const useUserRecords = (): UserRecordsContextType => {
   }
   return context;
 };
+
