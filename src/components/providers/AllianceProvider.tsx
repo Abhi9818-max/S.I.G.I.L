@@ -30,13 +30,14 @@ interface AllianceContextType {
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
     updateAllianceProgress: (allianceId: string, value: number) => Promise<void>;
-    updateMemberContribution: (allianceId: string, memberId: string, value: number) => Promise<void>;
+    updateMemberContribution: (allianceId: string, memberId: string, xpValue: number) => Promise<void>;
+    togglePinAlliance: (allianceId: string) => Promise<void>;
 }
 
 const AllianceContext = createContext<AllianceContextType | undefined>(undefined);
 
 export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, userData } = useAuth();
+    const { user, userData, updateUserDataInDb } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -367,7 +368,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [user]);
 
-    const updateMemberContribution = useCallback(async (allianceId: string, memberId: string, value: number) => {
+    const updateMemberContribution = useCallback(async (allianceId: string, memberId: string, xpValue: number) => {
         if (!db) return;
         const allianceRef = doc(db, 'alliances', allianceId);
         
@@ -380,7 +381,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
                 const allianceData = allianceDoc.data() as Alliance;
                 const updatedMembers = allianceData.members.map(member => {
                     if (member.uid === memberId) {
-                        return { ...member, contribution: (member.contribution || 0) + value };
+                        return { ...member, contribution: (member.contribution || 0) + xpValue };
                     }
                     return member;
                 });
@@ -390,6 +391,21 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             console.error("Error updating member contribution:", error);
         }
     }, []);
+
+    const togglePinAlliance = useCallback(async (allianceId: string) => {
+        if (!user || !userData) return;
+        const currentPins = userData.pinnedAllianceIds || [];
+        const isPinned = currentPins.includes(allianceId);
+        const newPins = isPinned
+            ? currentPins.filter(id => id !== allianceId)
+            : [...currentPins, allianceId];
+        
+        await updateUserDataInDb({ pinnedAllianceIds: newPins });
+        toast({
+            title: isPinned ? 'Alliance Unpinned' : 'Alliance Pinned',
+            description: `The alliance has been ${isPinned ? 'unpinned' : 'pinned'}.`,
+        });
+    }, [user, userData, updateUserDataInDb, toast]);
     
     return (
         <AllianceContext.Provider value={{
@@ -413,6 +429,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             updateAlliance,
             updateAllianceProgress,
             updateMemberContribution,
+            togglePinAlliance,
         }}>
             {children}
         </AllianceContext.Provider>

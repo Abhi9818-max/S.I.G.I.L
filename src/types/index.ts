@@ -278,6 +278,7 @@ export interface UserData {
     reputation?: Record<string, number>; // e.g., { 'scholars-guild': 1250, 'iron-legion': 500 }
     marketplaceListings?: MarketplaceListing[]; // User's own active listings
     equippedTitleId?: string | null | undefined;
+    pinnedAllianceIds?: string[];
     privacySettings?: {
         pacts?: PrivacySetting;
         activity?: PrivacySetting;

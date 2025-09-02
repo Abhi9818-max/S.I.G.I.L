@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge, AllianceMember, UserData } from '@/types';
 import Link from 'next/link';
@@ -42,7 +42,7 @@ const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) =>
     return `/alliances/alliance${avatarNumber}.jpeg`;
 }
 
-const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: AllianceMember[] } }) => {
+const AllianceCard3D = ({ alliance, isPinned, onPinToggle }: { alliance: Alliance & { members: AllianceMember[] }, isPinned: boolean, onPinToggle: (e: React.MouseEvent, allianceId: string) => void }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -63,59 +63,82 @@ const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: Alliance
     };
 
     return (
-        <Link href={`/alliances/${alliance.id}`} className="flex-shrink-0">
-             <div 
-                ref={cardRef} 
-                className="card-3d w-[261px] h-[348px]"
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            >
-                <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
-                    <div className="relative w-full h-full">
-                        <Image 
-                            src={getAllianceImage(alliance)}
-                            alt={alliance.name} 
-                            fill 
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
-                        <div className="absolute bottom-0 left-0 p-4 text-white">
-                             <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
-                             <div className="flex items-center mt-2 -space-x-2">
-                                {alliance.members.slice(0, 4).map(member => (
-                                    <Avatar key={member.uid} className="h-6 w-6 border-2 border-background">
-                                        <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
-                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                ))}
-                                {alliance.members.length > 4 && (
-                                    <Avatar className="h-6 w-6 border-2 border-background">
-                                        <AvatarFallback className="text-xs">+{alliance.members.length - 4}</AvatarFallback>
-                                    </Avatar>
-                                )}
+        <div 
+            ref={cardRef} 
+            className="card-3d w-[261px] h-[348px] flex-shrink-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
+            <div className="relative w-full h-full">
+                <Link href={`/alliances/${alliance.id}`} className="block w-full h-full">
+                    <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
+                        <div className="relative w-full h-full">
+                            <Image 
+                                src={getAllianceImage(alliance)}
+                                alt={alliance.name} 
+                                fill 
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
+                            <div className="absolute bottom-0 left-0 p-4 text-white">
+                                 <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
+                                 <div className="flex items-center mt-2 -space-x-2">
+                                    {alliance.members.slice(0, 4).map(member => (
+                                        <Avatar key={member.uid} className="h-6 w-6 border-2 border-background">
+                                            <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
+                                            <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    ))}
+                                    {alliance.members.length > 4 && (
+                                        <Avatar className="h-6 w-6 border-2 border-background">
+                                            <AvatarFallback className="text-xs">+{alliance.members.length - 4}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </Card>
-             </div>
-        </Link>
+                    </Card>
+                </Link>
+                <Button 
+                    size="icon" 
+                    variant="secondary"
+                    className={cn("absolute top-2 right-2 z-10 h-8 w-8 transition-opacity opacity-60 group-hover:opacity-100", isPinned && "bg-primary text-primary-foreground opacity-100")}
+                    onClick={(e) => onPinToggle(e, alliance.id)}
+                    aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
+                >
+                    {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                </Button>
+            </div>
+         </div>
     );
 };
 
 export default function AlliancesPage() {
-  const { user } = useAuth();
-  const { userAlliances, searchAlliances, sendAllianceChallenge, incomingAllianceChallenges, acceptAllianceChallenge, declineAllianceChallenge } = useAlliance();
+  const { user, userData } = useAuth();
+  const { userAlliances, searchAlliances, sendAllianceChallenge, togglePinAlliance } = useAlliance();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
-  const alliancesWithMemberData = useMemo(() => {
-    return userAlliances.map(alliance => {
-      const members = alliance.members || [];
-      return { ...alliance, members };
-    });
-  }, [userAlliances]);
+  const handlePinToggle = (e: React.MouseEvent, allianceId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    togglePinAlliance(allianceId);
+  }
+
+  const { pinned, unpinned } = useMemo(() => {
+    const pinnedIds = new Set(userData?.pinnedAllianceIds || []);
+    const alliancesWithMemberData = userAlliances.map(alliance => ({
+      ...alliance,
+      members: alliance.members || [],
+    }));
+    
+    const pinned = alliancesWithMemberData.filter(a => pinnedIds.has(a.id));
+    const unpinned = alliancesWithMemberData.filter(a => !pinnedIds.has(a.id));
+    
+    return { pinned, unpinned };
+  }, [userAlliances, userData?.pinnedAllianceIds]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -145,6 +168,25 @@ export default function AlliancesPage() {
       toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
+
+  const renderAllianceSection = (alliances: (Alliance & { members: AllianceMember[] })[], title?: string) => (
+    <div className="space-y-4">
+        {title && <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>}
+        <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex space-x-4 pb-4">
+                {alliances.map((alliance) => (
+                    <AllianceCard3D
+                        key={alliance.id}
+                        alliance={alliance}
+                        isPinned={(userData?.pinnedAllianceIds || []).includes(alliance.id)}
+                        onPinToggle={handlePinToggle}
+                    />
+                ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+    </div>
+  );
   
   return (
     <div className={cn("min-h-screen flex flex-col")}>
@@ -214,17 +256,14 @@ export default function AlliancesPage() {
                   </Link>
                 </Button>
               </div>
-                {alliancesWithMemberData.length === 0 ? (
+                {userAlliances.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">You are not part of any alliance.</p>
                 ) : (
-                    <ScrollArea className="w-full whitespace-nowrap">
-                        <div className="flex space-x-4 pb-4">
-                            {alliancesWithMemberData.map((alliance) => (
-                                <AllianceCard3D key={alliance.id} alliance={alliance} />
-                            ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                    <div className="space-y-6">
+                        {pinned.length > 0 && renderAllianceSection(pinned, "Pinned")}
+                        {pinned.length > 0 && unpinned.length > 0 && <Separator />}
+                        {unpinned.length > 0 && renderAllianceSection(unpinned)}
+                    </div>
                 )}
             </div>
         </div>
@@ -232,3 +271,4 @@ export default function AlliancesPage() {
     </div>
   );
 }
+

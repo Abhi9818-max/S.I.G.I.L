@@ -35,6 +35,7 @@ interface AuthContextType {
   updateBio: (newBio: string) => Promise<void>;
   equipTitle: (titleId: string | null) => Promise<void>;
   updatePrivacySetting: (setting: 'pacts' | 'activity', value: PrivacySetting) => Promise<void>;
+  updateUserDataInDb: (dataToUpdate: Partial<UserData>) => Promise<void>;
   userData: UserData | null;
   loading: boolean;
   isUserDataLoaded: boolean;
@@ -143,6 +144,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   }, [user, loading, pathname, router]);
 
+  const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
+    const getNewState = (prevData: UserData | null) => {
+      const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
+      return newState as UserData;
+    }
+    setUserData(getNewState);
+
+    if (isGuest) {
+      // Not implemented for guest
+      return;
+    }
+    
+    if (user && db) {
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, dataToUpdate, { merge: true });
+    }
+  }, [user, isGuest]);
+
+
   const login = useCallback(async (username: string, password: string): Promise<boolean> => {
     if (!auth) return false;
     try {
@@ -216,6 +236,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               pacts: 'everyone',
               activity: 'everyone'
             },
+            pinnedAllianceIds: [],
         };
 
         const userDocRef = doc(db, 'users', newUser.uid);
@@ -374,7 +395,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   if (showLoadingScreen) {
     return (
-      <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading: showLoadingScreen, isUserDataLoaded }}>
+      <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, updateUserDataInDb, userData, loading: showLoadingScreen, isUserDataLoaded }}>
         <div className="flex items-center justify-center min-h-screen bg-black">
           <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
         </div>
@@ -383,7 +404,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, userData, loading: showLoadingScreen, isUserDataLoaded }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, updateUserDataInDb, userData, loading: showLoadingScreen, isUserDataLoaded }}>
       {children}
     </AuthContext.Provider>
   );
