@@ -226,6 +226,7 @@ export default function FriendsPage() {
         acceptFriendRequest,
         declineFriendRequest,
         cancelFriendRequest,
+        incomingRelationshipProposals,
         acceptRelationshipProposal,
         declineRelationshipProposal,
     } = useFriends();
