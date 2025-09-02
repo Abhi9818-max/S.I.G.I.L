@@ -77,11 +77,10 @@ export default function NotesPage() {
         </Card>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {notes.map((note, index) => (
+          {notes.map((note) => (
             <div
               key={note.id}
               className="animate-fade-in-up"
-              style={{ animationDelay: `${index * 50}ms` }}
             >
               <NoteCard note={note} onDelete={deleteNote} />
             </div>
