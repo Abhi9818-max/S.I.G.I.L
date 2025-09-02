@@ -8,7 +8,7 @@ export async function generateStaticParams() {
   return [];
 }
 
-export default async function FriendPage({ params }: { params: Params }) {
-  const { friendId } = params;
+export default async function FriendPage({ params }: { params: Promise<Params> }) {
+  const { friendId } = await params;
   return <ClientFriendProfilePage friendId={friendId} />;
 }
