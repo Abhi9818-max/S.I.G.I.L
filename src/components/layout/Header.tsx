@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer } from 'lucide-react';
+import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LevelIndicator from './LevelIndicator'; 
 import { useUserRecords } from '@/components/providers/UserRecordsProvider'; 
@@ -80,6 +80,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/alliances", label: "Alliances", icon: ShieldCheck },
     { href: "/todo", label: "Pacts", icon: ListChecks },
     { href: "/timer", label: "Timer", icon: Timer },
+    { href: "/notes", label: "Notes", icon: StickyNote },
     { href: "/reputation", label: "Reputation", icon: Users },
     { href: "/insights", label: "Insights", icon: BarChart2 },
     { href: "/achievements", label: "Achievements", icon: Trophy },

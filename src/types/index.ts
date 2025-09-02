@@ -117,6 +117,14 @@ export interface TodoItem {
   insultApplied?: boolean; // Optional: whether the insult for a missed dare has been shown
 }
 
+// For Notes
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string; // ISO date string
+}
+
 // For Constellations
 export interface SkillNode {
   id: string;
@@ -271,6 +279,7 @@ export interface UserData {
     awardedStreakMilestones?: Record<string, number[]>;
     highGoals?: HighGoal[];
     todoItems?: TodoItem[];
+    notes?: Note[];
     dashboardSettings?: DashboardSettings;
     masterBonusAwarded?: boolean;
     taskMastery?: Record<string, TaskMastery>;

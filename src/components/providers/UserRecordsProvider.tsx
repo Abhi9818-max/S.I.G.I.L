@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -127,6 +127,9 @@ interface UserRecordsContextType {
   getTaskMasteryInfo: (taskId: string) => TaskMasteryInfo | null;
   // Economy
   convertXpToShards: (xpAmount: number) => void;
+  // Notes
+  addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
+  deleteNote: (noteId: string) => void;
 }
 
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
@@ -195,6 +198,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const taskMastery = useMemo(() => userData?.taskMastery || {}, [userData]);
   const reputation = useMemo(() => userData?.reputation || {}, [userData]);
   const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
+  const notes = useMemo(() => userData?.notes || [], [userData]);
 
   const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
     const getNewState = (prevData: UserData | null) => {
@@ -968,6 +972,21 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
   }, [userData, updateUserDataInDb]);
 
+  const addNote = useCallback((noteData: Omit<Note, 'id' | 'createdAt'>) => {
+    const newNote: Note = {
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      ...noteData,
+    };
+    const updatedNotes = [...notes, newNote].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    updateUserDataInDb({ notes: updatedNotes });
+  }, [notes, updateUserDataInDb]);
+
+  const deleteNote = useCallback((noteId: string) => {
+    const updatedNotes = notes.filter(n => n.id !== noteId);
+    updateUserDataInDb({ notes: updatedNotes });
+  }, [notes, updateUserDataInDb]);
+
   const contextValue = useMemo(() => ({
     records,
     addRecord,
@@ -1017,6 +1036,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     masterBonusAwarded,
     getTaskMasteryInfo,
     convertXpToShards,
+    addNote,
+    deleteNote,
   }), [
       records,
       addRecord,
@@ -1066,6 +1087,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       masterBonusAwarded,
       getTaskMasteryInfo,
       convertXpToShards,
+      addNote,
+      deleteNote,
   ]);
 
   return (
@@ -1082,4 +1105,5 @@ export const useUserRecords = (): UserRecordsContextType => {
   }
   return context;
 };
+
 

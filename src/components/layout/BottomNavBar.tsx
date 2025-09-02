@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, ShieldCheck, ListChecks, Settings, Timer } from 'lucide-react';
+import { Home, Users, ShieldCheck, ListChecks, Settings, Timer, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/friends', label: 'Friends', icon: Users },
   { href: '/alliances', label: 'Alliances', icon: ShieldCheck },
   { href: '/timer', label: 'Timer', icon: Timer },
+  { href: '/notes', label: 'Notes', icon: StickyNote },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
