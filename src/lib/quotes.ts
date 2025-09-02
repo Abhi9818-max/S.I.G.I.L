@@ -152,6 +152,21 @@ export const QUOTES: Quote[] = [
     author: "Henry David Thoreau",
     category: "Motivation",
   },
+  {
+    text: "The harder the conflict, the more glorious the triumph.",
+    author: "Thomas Paine",
+    category: "Motivation",
+  },
+  {
+    text: "I am not a product of my circumstances. I am a product of my decisions.",
+    author: "Stephen Covey",
+    category: "Motivation",
+  },
+  {
+    text: "Start where you are. Use what you have. Do what you can.",
+    author: "Arthur Ashe",
+    category: "Motivation",
+  },
 
   // Inspiration
   {
@@ -277,7 +292,7 @@ export const QUOTES: Quote[] = [
   {
     text: "You can't use up creativity. The more you use, the more you have.",
     author: "Maya Angelou",
-    category: "Inspiration",
+    category: "Inspiration"
   },
   {
     text: "What lies behind us and what lies before us are tiny matters compared to what lies within us.",
@@ -287,6 +302,21 @@ export const QUOTES: Quote[] = [
   {
     text: "Not all who wander are lost.",
     author: "J.R.R. Tolkien",
+    category: "Inspiration",
+  },
+  {
+    text: "You do not find the happy life. You make it.",
+    author: "Camilla Eyring Kimball",
+    category: "Inspiration",
+  },
+  {
+    text: "The most wasted of all days is one without laughter.",
+    author: "e. e. cummings",
+    category: "Inspiration",
+  },
+  {
+    text: "The power of imagination makes us infinite.",
+    author: "John Muir",
     category: "Inspiration",
   },
 
@@ -369,6 +399,21 @@ export const QUOTES: Quote[] = [
   {
     text: "The only thing that is constant is change.",
     author: "Heraclitus",
+    category: "Fighting",
+  },
+  {
+    text: "The strong man is the one who is able to intercept at will the communication between the senses and the mind.",
+    author: "Napoleon Bonaparte",
+    category: "Fighting",
+  },
+  {
+    text: "No man is free who is not master of himself.",
+    author: "Epictetus",
+    category: "Fighting",
+  },
+  {
+    text: "To be overcome by the fragrance of flowers is a delectable defeat.",
+    author: "Beverly Nichols",
     category: "Fighting",
   },
 
@@ -513,6 +558,21 @@ export const QUOTES: Quote[] = [
     author: "Terry Pratchett, Diggers",
     category: "Wisdom",
   },
+  {
+    text: "The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.",
+    author: "Stephen Hawking",
+    category: "Wisdom",
+  },
+  {
+    text: "The only source of knowledge is experience.",
+    author: "Albert Einstein",
+    category: "Wisdom",
+  },
+  {
+    text: "Knowing others is intelligence; knowing yourself is true wisdom. Mastering others is strength; mastering yourself is true power.",
+    author: "Lao Tzu",
+    category: "Wisdom",
+  },
 
   // Perseverance
   {
@@ -588,6 +648,21 @@ export const QUOTES: Quote[] = [
   {
     text: "Persistence is the twin sister of excellence. One is a matter of quality; the other, a matter of time.",
     author: "Marabel Morgan",
+    category: "Perseverance",
+  },
+  {
+    text: "Grit is that 'extra something' that separates the most successful people from the rest.",
+    author: "Angela Duckworth",
+    category: "Perseverance",
+  },
+  {
+    text: "It does not matter how slowly you go as long as you do not stop.",
+    author: "Confucius",
+    category: "Perseverance",
+  },
+  {
+    text: "Perseverance is failing 19 times and succeeding the 20th.",
+    author: "Julie Andrews",
     category: "Perseverance",
   },
 
@@ -712,6 +787,11 @@ export const QUOTES: Quote[] = [
     author: "S.E. Hinton, The Outsiders",
     category: "Literature",
   },
+  {
+    text: "Outside of a dog, a book is man's best friend. Inside of a dog it's too dark to read.",
+    author: "Groucho Marx",
+    category: "Literature",
+  },
 
   // Humor
   {
@@ -799,4 +879,19 @@ export const QUOTES: Quote[] = [
     author: "Unknown",
     category: "Humor",
   },
+  {
+    text: "I'm not lazy, I'm on energy-saving mode.",
+    author: "Unknown",
+    category: "Humor",
+  },
+  {
+    text: "If at first you don't succeed, then skydiving definitely isn't for you.",
+    author: "Steven Wright",
+    category: "Humor",
+  },
+  {
+    text: "I'm sick of following my dreams, man. I'm just going to ask where they're going and hook up with them later.",
+    author: "Mitch Hedberg",
+    category: "Humor",
+  }
 ];
