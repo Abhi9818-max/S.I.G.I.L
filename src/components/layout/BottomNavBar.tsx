@@ -3,14 +3,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, ShieldCheck, ListChecks, Settings } from 'lucide-react';
+import { Home, Users, ShieldCheck, ListChecks, Settings, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/friends', label: 'Friends', icon: Users },
   { href: '/alliances', label: 'Alliances', icon: ShieldCheck },
-  { href: '/todo', label: 'Pacts', icon: ListChecks },
+  { href: '/timer', label: 'Timer', icon: Timer },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
