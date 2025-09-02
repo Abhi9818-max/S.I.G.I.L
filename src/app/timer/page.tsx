@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +19,7 @@ import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle } fro
 import type { TaskDefinition } from '@/types';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 const formatTime = (timeInSeconds: number) => {
   const hours = Math.floor(timeInSeconds / 3600);
@@ -59,6 +59,17 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
         setTime(totalSeconds);
     }, [hours, minutes, seconds]);
 
+    const logTime = useCallback(() => {
+        const task = tasks.find(t => t.id === selectedTaskId);
+        if (!task) return;
+        
+        // This function will be called when the timer finishes.
+        // It logs the *initial duration* of the timer, not how much time is left.
+        if (initialTime > 0) {
+            onLogTime(task, initialTime / 60); // Log in minutes
+        }
+    }, [tasks, selectedTaskId, initialTime, onLogTime]);
+
     useEffect(() => {
         if (isActive) {
             intervalRef.current = setInterval(() => {
@@ -78,21 +89,15 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [isActive, selectedTaskId]);
-
-    const logTime = () => {
-        const task = tasks.find(t => t.id === selectedTaskId);
-        if (!task) return;
-        
-        const timeToLog = initialTime - time;
-        if(timeToLog > 0) {
-            onLogTime(task, timeToLog / 60); // Log in minutes
-        }
-    };
+    }, [isActive, logTime]);
     
     const handleStartPause = () => {
         if (!selectedTaskId) {
             toast({ title: 'No Task Selected', description: 'Please select a task to track time for.', variant: 'destructive' });
+            return;
+        }
+        if (initialTime <= 0) {
+            toast({ title: 'No Time Set', description: 'Please set a timer duration greater than zero.', variant: 'destructive' });
             return;
         }
         setIsActive(!isActive);
@@ -110,7 +115,7 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
             <div className="text-6xl font-mono tracking-tighter">
                 {formatTime(time)}
             </div>
-            {!isActive && time === 0 && (
+            {(!isActive && time === initialTime) && (
                  <div className="flex items-center gap-2">
                     <TimeInput value={hours} onChange={setHours} label="Hours"/>
                     <span className="text-2xl -mt-4">:</span>
@@ -166,7 +171,7 @@ const StopwatchComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onL
     };
 
     const handleReset = () => {
-        if (isActive) { // If stopwatch is running, log the time before resetting
+        if (time > 0) { // Only log if there's time on the clock
             const task = tasks.find(t => t.id === selectedTaskId);
             if (task) {
                 onLogTime(task, time / 60); // Log in minutes
