@@ -6,7 +6,7 @@ import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ClientHeader from '@/components/ClientHeader';
-import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns';
+import { differenceInDays, parseISO, formatDistanceToNowStrict, isPast } from 'date-fns';
 import Link from 'next/link';
 import { doc, getDoc, collection, query, where, documentId, getDocs, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -159,7 +159,10 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             
             const membersData = allianceData.members || [];
             let topContributorId = '';
-            if (membersData.length > 0) {
+            
+            // Only determine top contributor if the alliance hasn't ended
+            const allianceHasEnded = isPast(parseISO(allianceData.endDate));
+            if (!allianceHasEnded && membersData.length > 0) {
               topContributorId = membersData.reduce((prev, current) => 
                 (prev.contribution > current.contribution) ? prev : current
               ).uid;
