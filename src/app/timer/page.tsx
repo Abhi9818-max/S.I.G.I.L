@@ -80,25 +80,27 @@ const TimerComponent = ({ items, onLogTime, onDoubleClick, onToggleFullScreen, o
     }, [items, selectedItemId, initialTime, onLogTime]);
 
     useEffect(() => {
-        if (isActive) {
+        if (isActive && time > 0) {
             intervalRef.current = setInterval(() => {
                 setTime(prevTime => {
                     if (prevTime <= 1) {
                         clearInterval(intervalRef.current!);
                         setIsActive(false);
-                        logTime();
+                        logTime(); // Log when timer finishes
                         return 0;
                     }
                     return prevTime - 1;
                 });
             }, 1000);
+        } else if (!isActive && time === 0 && initialTime > 0) {
+            // This handles the case where it reaches 0 and stops
         } else {
-            if (intervalRef.current) clearInterval(intervalRef.current);
+             if (intervalRef.current) clearInterval(intervalRef.current);
         }
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [isActive, logTime]);
+    }, [isActive, time, initialTime, logTime]);
     
     const handleStartPause = () => {
         if (!selectedItemId) {
