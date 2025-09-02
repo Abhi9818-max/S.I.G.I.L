@@ -55,10 +55,12 @@ import {
 import ProfileCard from '@/components/profile/ProfileCard';
 import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 import { ACHIEVEMENTS } from '@/lib/achievements';
-import TiersPage from '@/app/tiers/page';
-import ReputationPage from '@/app/reputation/page';
-import InsightsPage from '@/app/insights/page';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const TiersPage = dynamic(() => import('@/app/tiers/page'));
+const ReputationPage = dynamic(() => import('@/app/reputation/page'));
+const InsightsPage = dynamic(() => import('@/app/insights/page'));
 
 
 // Simple hash function to get a number from a string for consistent default avatars
