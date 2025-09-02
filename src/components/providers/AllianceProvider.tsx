@@ -305,6 +305,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             opponentDetails: {
                 allianceId: challenge.challengedAllianceId,
                 allianceName: challenge.challengedAllianceName,
+                opponentProgress: 0,
             }
         });
 
@@ -314,6 +315,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             opponentDetails: {
                 allianceId: challenge.challengerAllianceId,
                 allianceName: challenge.challengerAllianceName,
+                opponentProgress: 0,
             }
         });
 
@@ -337,14 +339,31 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
     const updateAllianceProgress = useCallback(async (allianceId: string, value: number) => {
         if (!user || !db) throw new Error("Authentication required.");
         
-        const allianceRef = doc(db, 'alliances', allianceId);
-        
         try {
-            await updateDoc(allianceRef, {
-                progress: increment(value)
+            await runTransaction(db, async (transaction) => {
+                const allianceRef = doc(db, 'alliances', allianceId);
+                const allianceDoc = await transaction.get(allianceRef);
+                if (!allianceDoc.exists()) {
+                    throw new Error("Alliance does not exist!");
+                }
+                
+                const allianceData = allianceDoc.data() as Alliance;
+                const newProgress = (allianceData.progress || 0) + value;
+                transaction.update(allianceRef, { progress: newProgress });
+
+                // If in a challenge, update opponent's view of my progress
+                if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
+                    const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
+                    // This update doesn't need to be in the transaction if it's just for display
+                    // and not critical for consistency, but it's safer this way.
+                    transaction.update(opponentAllianceRef, { 
+                        'opponentDetails.opponentProgress': newProgress
+                    });
+                }
             });
         } catch (error) {
             console.error("Error updating alliance progress:", error);
+            // Optionally re-throw or handle the error
         }
     }, [user]);
 

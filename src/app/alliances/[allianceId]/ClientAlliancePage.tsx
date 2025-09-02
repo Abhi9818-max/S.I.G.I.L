@@ -8,10 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ClientHeader from '@/components/ClientHeader';
 import { differenceInDays, parseISO, formatDistanceToNowStrict } from 'date-fns';
 import Link from 'next/link';
-import { doc, getDoc, collection, query, where, documentId, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, documentId, getDocs, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown } from 'lucide-react';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAlliance } from '@/components/providers/AllianceProvider';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -144,49 +145,46 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
 
   const { user } = useAuth();
   const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
-  const { getAllianceWithMembers, sendAllianceInvitation, getPendingAllianceInvitesFor } = useAlliance();
+  const { sendAllianceInvitation, getPendingAllianceInvitesFor } = useAlliance();
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchAllianceData() {
-      if (!db || !allianceId) return;
-      
-      try {
-        const result = await getAllianceWithMembers(allianceId);
+    if (!db || !allianceId) return;
 
-        if (result) {
-          const { allianceData, membersData } = result;
-          setAlliance(allianceData);
-          
-          let topContributorId = '';
-          if (membersData.length > 0) {
-            topContributorId = membersData.reduce((prev, current) => 
-              (prev.contribution > current.contribution) ? prev : current
-            ).uid;
-          }
+    const allianceRef = doc(db, 'alliances', allianceId);
+    const unsubscribe = onSnapshot(allianceRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const allianceData = { id: docSnap.id, ...docSnap.data() } as Alliance;
+            setAlliance(allianceData);
+            
+            const membersData = allianceData.members || [];
+            let topContributorId = '';
+            if (membersData.length > 0) {
+              topContributorId = membersData.reduce((prev, current) => 
+                (prev.contribution > current.contribution) ? prev : current
+              ).uid;
+            }
 
-          const membersWithStatus = membersData.map(member => ({
-            ...member,
-            isFriend: friends.some(f => f.uid === member.uid),
-            isPending: pendingRequests.some(req => req.recipientId === member.uid),
-            isIncoming: incomingRequests.some(req => req.senderId === member.uid),
-            isTopContributor: member.uid === topContributorId && member.contribution > 0
-          }));
-          setMembers(membersWithStatus);
-
+            const membersWithStatus = membersData.map(member => ({
+                ...member,
+                isFriend: friends.some(f => f.uid === member.uid),
+                isPending: pendingRequests.some(req => req.recipientId === member.uid),
+                isIncoming: incomingRequests.some(req => req.senderId === member.uid),
+                isTopContributor: member.uid === topContributorId && member.contribution > 0
+            }));
+            setMembers(membersWithStatus);
         } else {
-          setAlliance(null);
+            setAlliance(null);
         }
-      } catch (error) {
+        setLoading(false);
+    }, (error) => {
         console.error("Error fetching alliance data:", error);
         setAlliance(null);
-      } finally {
         setLoading(false);
-      }
-    }
+    });
 
-    fetchAllianceData();
-  }, [allianceId, getAllianceWithMembers, friends, pendingRequests, incomingRequests]);
+    return () => unsubscribe();
+  }, [allianceId, friends, pendingRequests, incomingRequests]);
   
   const handleAddFriend = async (member: UserData) => {
     if (!member.uid || !member.username) {
@@ -270,6 +268,9 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const pageTierClass = `page-tier-group-${levelInfo.tierGroup}`;
   const daysLeft = differenceInDays(parseISO(alliance.endDate), new Date());
   const progressPercentage = Math.min(100, (alliance.progress / alliance.target) * 100);
+  const opponentProgressPercentage = alliance.opponentDetails?.opponentProgress 
+    ? Math.min(100, (alliance.opponentDetails.opponentProgress / alliance.target) * 100)
+    : 0;
   const isCreator = user?.uid === alliance.creatorId;
 
   return (
@@ -304,6 +305,34 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             </div>
         </div>
         
+        {alliance.activeChallengeId && alliance.opponentDetails && (
+          <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Swords className="h-5 w-5" />
+                Active Challenge
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm mb-4">
+                Versus: <span className="font-bold">{alliance.opponentDetails.allianceName}</span>
+              </p>
+              <div className="space-y-3">
+                 <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.name}</p>
+                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
+                    <p className="text-xs text-right mt-1">{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()}</p>
+                 </div>
+                 <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.opponentDetails.allianceName}</p>
+                    <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
+                    <p className="text-xs text-right mt-1">{alliance.opponentDetails.opponentProgress?.toLocaleString() ?? 0} / {alliance.target.toLocaleString()}</p>
+                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div>
             <div className="flex items-center justify-between gap-2 mb-4">
                  <div className="flex items-center gap-2">
