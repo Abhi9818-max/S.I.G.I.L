@@ -370,7 +370,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                         <PopoverContent className="w-auto p-2">
                             <div className="flex flex-col gap-2 items-center text-center">
                                 <p className="font-semibold">{member.username}</p>
-                                {member.isTopContributor && <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-300 hover:bg-yellow-400/30">KING</Badge>}
+                                {member.isTopContributor && <Badge variant="success">KING</Badge>}
                                 {member.uid === user?.uid ? (
                                     <Badge variant="secondary">This is you</Badge>
                                 ) : member.isFriend ? (
