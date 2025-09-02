@@ -409,10 +409,6 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
       <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
         <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
         <main className="flex-grow container mx-auto px-4 pb-4 md:p-8 animate-fade-in-up space-y-8">
-          <Button variant="outline" onClick={() => router.push('/friends')} className="hidden md:inline-flex mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Friends
-          </Button>
           <div className="pt-6 md:p-0">
             <div className="flex flex-col md:flex-row items-start gap-4">
               <div className="flex items-center gap-4 md:items-start">
