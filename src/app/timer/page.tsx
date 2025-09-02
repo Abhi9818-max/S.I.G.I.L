@@ -260,14 +260,12 @@ export default function TimerPage() {
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
+            if (event.key === 'Escape' && isFullScreen) {
                 setIsFullScreen(false);
             }
         };
 
-        if (isFullScreen) {
-            document.addEventListener('keydown', handleKeyDown);
-        }
+        document.addEventListener('keydown', handleKeyDown);
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
@@ -370,10 +368,14 @@ export default function TimerPage() {
         setMode(current => current === 'stopwatch' ? 'timer' : 'stopwatch');
     };
 
+    const toggleFullScreen = () => {
+        setIsFullScreen(prev => !prev);
+    }
+    
     const FullScreenDisplay = () => (
         <div 
             className="fixed inset-0 bg-background z-[100] flex flex-col items-center justify-center cursor-pointer"
-            onClick={() => setIsFullScreen(false)}
+            onClick={toggleFullScreen}
         >
             <div className="text-8xl md:text-9xl font-mono tracking-tighter">
                 {formatTime(currentTime)}
@@ -382,48 +384,47 @@ export default function TimerPage() {
         </div>
     );
     
-    if (isFullScreen) {
-        return <FullScreenDisplay />;
-    }
-
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
-            <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="max-w-2xl mx-auto mt-8 relative">
-                     <div className="absolute top-0 right-0">
-                        <Button variant="ghost" size="icon" onClick={toggleMode} aria-label={`Switch to ${mode === 'stopwatch' ? 'Timer' : 'Stopwatch'}`}>
-                            <Repeat className="h-5 w-5 text-muted-foreground" />
-                        </Button>
-                    </div>
-                    {mode === 'stopwatch' ? (
-                         <StopwatchComponent 
-                            items={selectableItems} 
-                            onLogTime={handleLogTime} 
-                            onDoubleClick={toggleMode} 
-                            onToggleFullScreen={() => setIsFullScreen(true)}
-                            onTimeUpdate={setCurrentTime}
-                         />
-                    ) : (
-                        <TimerComponent 
-                            items={selectableItems} 
-                            onLogTime={handleLogTime} 
-                            onDoubleClick={toggleMode} 
-                            onToggleFullScreen={() => setIsFullScreen(true)}
-                            onTimeUpdate={setCurrentTime}
-                        />
-                    )}
-                   
-                     {timeBasedTasks.length === 0 && (
-                        <div className="text-center p-4 border-t mt-4">
-                            <p className="text-muted-foreground">No time-based tasks found.</p>
-                            <Button asChild variant="link">
-                                <Link href="/settings"><PlusCircle className="mr-2 h-4 w-4"/>Create a time-based task</Link>
+            {isFullScreen && <FullScreenDisplay />}
+            <div className={cn(isFullScreen && 'hidden')}>
+                <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
+                <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
+                    <div className="max-w-2xl mx-auto mt-8 relative">
+                        <div className="absolute top-0 right-0">
+                            <Button variant="ghost" size="icon" onClick={toggleMode} aria-label={`Switch to ${mode === 'stopwatch' ? 'Timer' : 'Stopwatch'}`}>
+                                <Repeat className="h-5 w-5 text-muted-foreground" />
                             </Button>
                         </div>
-                    )}
-                </div>
-            </main>
+                        {mode === 'stopwatch' ? (
+                            <StopwatchComponent 
+                                items={selectableItems} 
+                                onLogTime={handleLogTime} 
+                                onDoubleClick={toggleMode} 
+                                onToggleFullScreen={toggleFullScreen}
+                                onTimeUpdate={setCurrentTime}
+                            />
+                        ) : (
+                            <TimerComponent 
+                                items={selectableItems} 
+                                onLogTime={handleLogTime} 
+                                onDoubleClick={toggleMode} 
+                                onToggleFullScreen={toggleFullScreen}
+                                onTimeUpdate={setCurrentTime}
+                            />
+                        )}
+                    
+                        {timeBasedTasks.length === 0 && (
+                            <div className="text-center p-4 border-t mt-4">
+                                <p className="text-muted-foreground">No time-based tasks found.</p>
+                                <Button asChild variant="link">
+                                    <Link href="/settings"><PlusCircle className="mr-2 h-4 w-4"/>Create a time-based task</Link>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }
