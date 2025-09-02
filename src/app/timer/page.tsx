@@ -10,16 +10,19 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
+import { useTodos } from '@/components/providers/TodoProvider';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle } from 'lucide-react';
-import type { TaskDefinition } from '@/types';
+import { Play, Pause, RotateCcw, Timer as TimerIcon, Hourglass, PlusCircle, ListChecks } from 'lucide-react';
+import type { TaskDefinition, TodoItem } from '@/types';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
+import { format, isToday, parseISO } from 'date-fns';
 
 const formatTime = (timeInSeconds: number) => {
   const hours = Math.floor(timeInSeconds / 3600);
@@ -41,8 +44,13 @@ const TimeInput = ({ value, onChange, label }: { value: number, onChange: (value
     </div>
 );
 
+type SelectableItem = {
+    id: string;
+    name: string;
+    type: 'task' | 'pact';
+};
 
-const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTime: (task: TaskDefinition, value: number) => void }) => {
+const TimerComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void }) => {
     const [hours, setHours] = useState(0);
     const [minutes, setMinutes] = useState(25);
     const [seconds, setSeconds] = useState(0);
@@ -50,7 +58,7 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -60,15 +68,13 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
     }, [hours, minutes, seconds]);
 
     const logTime = useCallback(() => {
-        const task = tasks.find(t => t.id === selectedTaskId);
-        if (!task) return;
+        const item = items.find(i => i.id === selectedItemId);
+        if (!item) return;
         
-        // This function will be called when the timer finishes.
-        // It logs the *initial duration* of the timer, not how much time is left.
         if (initialTime > 0) {
-            onLogTime(task, initialTime / 60); // Log in minutes
+            onLogTime(item, initialTime / 60); // Log in minutes
         }
-    }, [tasks, selectedTaskId, initialTime, onLogTime]);
+    }, [items, selectedItemId, initialTime, onLogTime]);
 
     useEffect(() => {
         if (isActive) {
@@ -92,8 +98,8 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
     }, [isActive, logTime]);
     
     const handleStartPause = () => {
-        if (!selectedTaskId) {
-            toast({ title: 'No Task Selected', description: 'Please select a task to track time for.', variant: 'destructive' });
+        if (!selectedItemId) {
+            toast({ title: 'No Item Selected', description: 'Please select a task or pact to track time for.', variant: 'destructive' });
             return;
         }
         if (initialTime <= 0) {
@@ -110,6 +116,9 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
         setTime(totalSeconds);
     };
 
+    const tasks = items.filter(i => i.type === 'task');
+    const pacts = items.filter(i => i.type === 'pact');
+
     return (
         <div className="flex flex-col items-center gap-6">
             <div className="text-6xl font-mono tracking-tighter">
@@ -125,10 +134,21 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
                 </div>
             )}
             <div className="w-full max-w-sm">
-                <Select onValueChange={setSelectedTaskId} value={selectedTaskId || ''} disabled={isActive}>
-                    <SelectTrigger><SelectValue placeholder="Select a task..." /></SelectTrigger>
+                <Select onValueChange={setSelectedItemId} value={selectedItemId || ''} disabled={isActive}>
+                    <SelectTrigger><SelectValue placeholder="Select a task or pact..." /></SelectTrigger>
                     <SelectContent>
-                        {tasks.map(task => <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>)}
+                        {pacts.length > 0 && (
+                            <SelectGroup>
+                                <SelectLabel className="flex items-center gap-2"><ListChecks className="h-4 w-4" />Daily Pacts</SelectLabel>
+                                {pacts.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                            </SelectGroup>
+                        )}
+                        {tasks.length > 0 && (
+                            <SelectGroup>
+                                <SelectLabel>Tasks</SelectLabel>
+                                {tasks.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                            </SelectGroup>
+                        )}
                     </SelectContent>
                 </Select>
             </div>
@@ -142,10 +162,10 @@ const TimerComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTi
     );
 };
 
-const StopwatchComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onLogTime: (task: TaskDefinition, value: number) => void }) => {
+const StopwatchComponent = ({ items, onLogTime }: { items: SelectableItem[], onLogTime: (item: SelectableItem, value: number) => void }) => {
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const { toast } = useToast();
 
@@ -163,25 +183,28 @@ const StopwatchComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onL
     }, [isActive]);
     
     const handleStartPause = () => {
-        if (!selectedTaskId) {
-            toast({ title: 'No Task Selected', description: 'Please select a task to track time for.', variant: 'destructive' });
+        if (!selectedItemId) {
+            toast({ title: 'No Item Selected', description: 'Please select a task or pact to track time for.', variant: 'destructive' });
             return;
         }
         setIsActive(!isActive);
     };
 
     const handleReset = () => {
-        if (time > 0) { // Only log if there's time on the clock
-            const task = tasks.find(t => t.id === selectedTaskId);
-            if (task) {
-                onLogTime(task, time / 60); // Log in minutes
+        if (time > 0) {
+            const item = items.find(i => i.id === selectedItemId);
+            if (item) {
+                onLogTime(item, time / 60); // Log in minutes
             }
         }
         if (intervalRef.current) clearInterval(intervalRef.current);
         setIsActive(false);
         setTime(0);
-        setSelectedTaskId(null);
+        setSelectedItemId(null);
     };
+
+    const tasks = items.filter(i => i.type === 'task');
+    const pacts = items.filter(i => i.type === 'pact');
 
     return (
         <div className="flex flex-col items-center gap-6">
@@ -189,10 +212,21 @@ const StopwatchComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onL
                 {formatTime(time)}
             </div>
             <div className="w-full max-w-sm">
-                <Select onValueChange={setSelectedTaskId} value={selectedTaskId || ''} disabled={isActive}>
-                    <SelectTrigger><SelectValue placeholder="Select a task..." /></SelectTrigger>
+                <Select onValueChange={setSelectedItemId} value={selectedItemId || ''} disabled={isActive}>
+                    <SelectTrigger><SelectValue placeholder="Select a task or pact..." /></SelectTrigger>
                     <SelectContent>
-                        {tasks.map(task => <SelectItem key={task.id} value={task.id}>{task.name}</SelectItem>)}
+                       {pacts.length > 0 && (
+                            <SelectGroup>
+                                <SelectLabel className="flex items-center gap-2"><ListChecks className="h-4 w-4" />Daily Pacts</SelectLabel>
+                                {pacts.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                            </SelectGroup>
+                        )}
+                        {tasks.length > 0 && (
+                            <SelectGroup>
+                                <SelectLabel>Tasks</SelectLabel>
+                                {tasks.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                            </SelectGroup>
+                        )}
                     </SelectContent>
                 </Select>
             </div>
@@ -208,27 +242,98 @@ const StopwatchComponent = ({ tasks, onLogTime }: { tasks: TaskDefinition[], onL
 
 
 export default function TimerPage() {
-    const { taskDefinitions, addRecord, getUserLevelInfo } = useUserRecords();
+    const { taskDefinitions, addRecord, getUserLevelInfo, getTaskDefinitionById } = useUserRecords();
+    const { todoItems, toggleTodoItem } = useTodos();
     const { toast } = useToast();
 
-    const timeBasedTasks = taskDefinitions.filter(task => task.unit === 'minutes' || task.unit === 'hours');
+    const timeBasedTasks: SelectableItem[] = taskDefinitions
+        .filter(task => task.unit === 'minutes' || task.unit === 'hours')
+        .map(task => ({ id: task.id, name: task.name, type: 'task' }));
 
-    const handleLogTime = (task: TaskDefinition, value: number) => {
-        let valueToLog = value;
-        if (task.unit === 'hours') {
-            valueToLog = value / 60;
+    const todaysPacts: SelectableItem[] = todoItems
+        .filter(pact => isToday(parseISO(pact.createdAt)) && !pact.completed)
+        .map(pact => ({ id: pact.id, name: pact.text, type: 'pact' }));
+
+    const selectableItems = [...todaysPacts, ...timeBasedTasks];
+
+    const findAssociatedTask = (pactText: string): TaskDefinition | null => {
+        const lowerPactText = pactText.toLowerCase();
+        // Prioritize specific keywords
+        const keywordMap: { [key: string]: string[] } = {
+            'exercise': ['exercise', 'workout', 'gym', 'run', 'yoga', 'cardio', 'lift'],
+            'work': ['work', 'project', 'meeting', 'code', 'develop'],
+            'reading': ['read', 'book'],
+            'learning': ['learn', 'study', 'course'],
+            'personal': ['meditate', 'journal', 'plan'],
+        };
+
+        for (const taskId in keywordMap) {
+            if (keywordMap[taskId].some(keyword => lowerPactText.includes(keyword))) {
+                const task = getTaskDefinitionById(taskId);
+                if (task && (task.unit === 'minutes' || task.unit === 'hours')) {
+                    return task;
+                }
+            }
+        }
+        // Fallback to the generic "Other" task if it's time-based
+        const otherTask = getTaskDefinitionById('other');
+        if(otherTask && (otherTask.unit === 'minutes' || otherTask.unit === 'hours')) return otherTask;
+        
+        return null;
+    };
+
+
+    const handleLogTime = (item: SelectableItem, valueInMinutes: number) => {
+        let taskToLog: TaskDefinition | null = null;
+        let loggedTaskName = '';
+
+        if (item.type === 'pact') {
+            toggleTodoItem(item.id);
+            taskToLog = findAssociatedTask(item.name);
+            loggedTaskName = item.name;
+             toast({
+                title: "Pact Completed!",
+                description: `You've completed the pact: "${item.name}".`
+            });
+        } else {
+            taskToLog = getTaskDefinitionById(item.id)!;
+            loggedTaskName = taskToLog.name;
+        }
+
+        if (!taskToLog) {
+             toast({
+                title: "Time Logged to 'Other'",
+                description: `Could not find a specific time-based task for "${loggedTaskName}". Logged under 'Other'.`,
+                variant: 'default'
+            });
+            const otherTask = getTaskDefinitionById('other');
+            if (otherTask) {
+                taskToLog = otherTask;
+            } else {
+                 toast({
+                    title: "Logging Failed",
+                    description: "No time-based 'Other' task found. Please create one.",
+                    variant: 'destructive'
+                });
+                return;
+            }
+        }
+        
+        let valueToLog = valueInMinutes;
+        if (taskToLog.unit === 'hours') {
+            valueToLog = valueInMinutes / 60;
         }
 
         addRecord({
             date: format(new Date(), 'yyyy-MM-dd'),
             value: valueToLog,
-            taskType: task.id,
-            notes: 'Logged via timer/stopwatch.'
+            taskType: taskToLog.id,
+            notes: `Logged via timer for: "${loggedTaskName}"`
         });
 
         toast({
             title: "Time Logged!",
-            description: `${value.toFixed(2)} minutes logged for "${task.name}".`
+            description: `${valueInMinutes.toFixed(2)} minutes logged for "${taskToLog.name}".`
         });
     };
     
@@ -251,10 +356,10 @@ export default function TimerPage() {
                         </TabsList>
                         <div className="pt-8">
                             <TabsContent value="stopwatch">
-                                <StopwatchComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
+                                <StopwatchComponent items={selectableItems} onLogTime={handleLogTime} />
                             </TabsContent>
                             <TabsContent value="timer">
-                                <TimerComponent tasks={timeBasedTasks} onLogTime={handleLogTime} />
+                                <TimerComponent items={selectableItems} onLogTime={handleLogTime} />
                             </TabsContent>
                         </div>
                     </Tabs>
