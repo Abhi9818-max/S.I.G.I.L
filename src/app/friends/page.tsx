@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords, Search } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords, Search, MoreVertical, Pencil, UserX } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -26,13 +26,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-
-// Updated import to use client-side search helper
 import { findUserByUsername } from '@/lib/server/actions/user';
 import { Separator } from '@/components/ui/separator';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
+import { useRouter } from 'next/navigation';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -51,7 +52,59 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 };
 
-const FriendCard3D = ({ friend }: { friend: Friend }) => {
+const NicknameDialog = ({ isOpen, onOpenChange, currentNickname, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; currentNickname: string; onSave: (name: string) => void }) => {
+  const [nickname, setNickname] = useState(currentNickname);
+
+  useEffect(() => {
+    setNickname(currentNickname);
+  }, [currentNickname, isOpen]);
+
+  const handleSave = () => {
+    onSave(nickname);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Set Nickname</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="nickname">Friend's Nickname</Label>
+          <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const UnfriendDialog = ({ isOpen, onOpenChange, friendName, onConfirm }: { isOpen: boolean; onOpenChange: (open: boolean) => void; friendName: string; onConfirm: () => void; }) => {
+  return (
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This will remove {friendName} from your friends list. This action cannot be undone.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onConfirm}>
+                Unfriend
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
+
+const FriendCard3D = ({ friend, onEdit, onUnfriend }: { friend: Friend, onEdit: () => void, onUnfriend: () => void }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -70,37 +123,72 @@ const FriendCard3D = ({ friend }: { friend: Friend }) => {
         cardRef.current.style.setProperty('--rotate-x', '0deg');
         cardRef.current.style.setProperty('--rotate-y', '0deg');
     };
+    
+    const router = useRouter();
+
+    const handleInteractionStart = (e: React.TouchEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const dropdownTrigger = e.currentTarget.querySelector('[data-radix-dropdown-menu-trigger]') as HTMLElement;
+        dropdownTrigger?.click();
+    };
+
 
     return (
-        <Link href={`/friends/${friend.uid}`} className="flex-shrink-0">
-            <div 
-                ref={cardRef} 
-                className="card-3d w-[180px] h-[240px] md:w-[261px] md:h-[348px]"
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            >
-                <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
-                    <div className="relative w-full h-full">
-                        <Image 
-                            src={getAvatarForId(friend.uid, friend.photoURL)} 
-                            alt={friend.username} 
-                            fill 
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
-                        <div className="absolute bottom-0 left-0 p-3 text-white">
-                            <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
-                            {friend.relationship && (
-                                <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
-                                    <Heart className="h-3 w-3" />
-                                    {friend.relationship}
-                                </CardDescription>
-                            )}
+        <div 
+            ref={cardRef} 
+            className="card-3d w-[180px] h-[240px] md:w-[261px] md:h-[348px] flex-shrink-0"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
+            <div className="relative w-full h-full group">
+                <Link href={`/friends/${friend.uid}`} className="block w-full h-full">
+                    <Card className="overflow-hidden group-hover:shadow-2xl w-full h-full card-3d-content">
+                        <div className="relative w-full h-full">
+                            <Image 
+                                src={getAvatarForId(friend.uid, friend.photoURL)} 
+                                alt={friend.username} 
+                                fill 
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
+                            <div className="absolute bottom-0 left-0 p-3 text-white">
+                                <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
+                                {friend.relationship && (
+                                    <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
+                                        <Heart className="h-3 w-3" />
+                                        {friend.relationship}
+                                    </CardDescription>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </Card>
+                    </Card>
+                </Link>
+                <div 
+                    className="absolute top-2 right-2 z-10 md:hidden"
+                    onContextMenu={handleInteractionStart}
+                >
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
+                                <MoreVertical className="h-4 w-4"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => router.push(`/friends/${friend.uid}`)}>
+                                <Eye className="mr-2 h-4 w-4" /> View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={onEdit}>
+                                <Pencil className="mr-2 h-4 w-4" /> Edit Nickname
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={onUnfriend} className="text-destructive">
+                                <UserX className="mr-2 h-4 w-4" /> Unfriend
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
-        </Link>
+        </div>
     );
 };
 
@@ -229,6 +317,8 @@ export default function FriendsPage() {
         incomingRelationshipProposals,
         acceptRelationshipProposal,
         declineRelationshipProposal,
+        unfriend,
+        updateFriendNickname,
     } = useFriends();
     const {
         incomingAllianceInvitations,
@@ -244,6 +334,8 @@ export default function FriendsPage() {
     const [isPending, startTransition] = useTransition();
     const [searchMessage, setSearchMessage] = useState<string | null>(null);
     const { toast } = useToast();
+    const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
+    const [unfriendingFriend, setUnfriendingFriend] = useState<Friend | null>(null);
 
     const handleSearch = async () => {
         if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
@@ -287,13 +379,59 @@ export default function FriendsPage() {
     
     const allRequestsCount = incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
 
+    const handleUpdateNickname = async (newNickname: string) => {
+      if (!editingFriend) return;
+      await updateFriendNickname(editingFriend.uid, newNickname);
+      toast({ title: 'Nickname Updated!', description: `The nickname for ${editingFriend.username} has been saved.` });
+      setEditingFriend(null);
+    };
+
+    const handleUnfriend = async () => {
+      if (!unfriendingFriend) return;
+      await unfriend(unfriendingFriend.uid);
+      setUnfriendingFriend(null);
+    }
+
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="flex items-center justify-between">
+                <div className="flex flex-col lg:flex-row lg:gap-8">
+                    <div className="flex-1 space-y-8 order-2 lg:order-1">
+                        {/* Friends Carousel */}
+                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                            <AccordionItem value="friends-list">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-6 w-6 text-primary" />
+                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {friends.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                                    ) : (
+                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
+                                            <div className="flex space-x-4 pb-4">
+                                                {friends.map((friend) => (
+                                                    <FriendCard3D 
+                                                      key={friend.uid} 
+                                                      friend={friend} 
+                                                      onEdit={() => setEditingFriend(friend)}
+                                                      onUnfriend={() => setUnfriendingFriend(friend)}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <ScrollBar orientation="horizontal" className="invisible"/>
+                                        </ScrollArea>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
+                    
+                     <div className="lg:w-1/3 space-y-4 order-1 lg:order-2 mb-8 lg:mb-0">
+                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <UserSearch className="h-6 w-6 text-primary" />
                                 <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
@@ -390,35 +528,6 @@ export default function FriendsPage() {
                                 </div>
                             )}
                         </div>
-                        
-                        {/* Friends Carousel */}
-                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
-                            <AccordionItem value="friends-list">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="h-6 w-6 text-primary" />
-                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {friends.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                                    ) : (
-                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
-                                            <div className="flex space-x-4 pb-4">
-                                                {friends.map((friend) => (
-                                                    <FriendCard3D key={friend.uid} friend={friend} />
-                                                ))}
-                                            </div>
-                                            <ScrollBar orientation="horizontal" className="invisible"/>
-                                        </ScrollArea>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
-                    
-                     <div className="space-y-4">
                          <Card className="hover:shadow-xl transition-shadow">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary"/>Alliances</CardTitle>
@@ -435,6 +544,22 @@ export default function FriendsPage() {
                     </div>
                 </div>
             </main>
+            {editingFriend && (
+              <NicknameDialog 
+                isOpen={!!editingFriend}
+                onOpenChange={(open) => !open && setEditingFriend(null)}
+                currentNickname={editingFriend.nickname || editingFriend.username}
+                onSave={handleUpdateNickname}
+              />
+            )}
+            {unfriendingFriend && (
+              <UnfriendDialog
+                isOpen={!!unfriendingFriend}
+                onOpenChange={(open) => !open && setUnfriendingFriend(null)}
+                friendName={unfriendingFriend.nickname || unfriendingFriend.username}
+                onConfirm={handleUnfriend}
+              />
+            )}
         </div>
     );
 }
