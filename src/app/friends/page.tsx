@@ -180,7 +180,6 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend }: { friend: Friend, onEdit: 
                             <DropdownMenuItem onSelect={onEdit}>
                                 <Pencil className="mr-2 h-4 w-4" /> Edit Nickname
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={onUnfriend} className="text-destructive">
                                 <UserX className="mr-2 h-4 w-4" /> Unfriend
                             </DropdownMenuItem>
@@ -397,40 +396,7 @@ export default function FriendsPage() {
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
                 <div className="flex flex-col lg:flex-row lg:gap-8">
-                    <div className="flex-1 space-y-8 order-2 lg:order-1">
-                        {/* Friends Carousel */}
-                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
-                            <AccordionItem value="friends-list">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="h-6 w-6 text-primary" />
-                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {friends.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                                    ) : (
-                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
-                                            <div className="flex space-x-4 pb-4">
-                                                {friends.map((friend) => (
-                                                    <FriendCard3D 
-                                                      key={friend.uid} 
-                                                      friend={friend} 
-                                                      onEdit={() => setEditingFriend(friend)}
-                                                      onUnfriend={() => setUnfriendingFriend(friend)}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <ScrollBar orientation="horizontal" className="invisible"/>
-                                        </ScrollArea>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
-                    
-                     <div className="lg:w-1/3 space-y-4 order-1 lg:order-2 mb-8 lg:mb-0">
+                    <div className="lg:w-1/3 space-y-4 order-1 lg:order-2 mb-8 lg:mb-0">
                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <UserSearch className="h-6 w-6 text-primary" />
@@ -541,6 +507,38 @@ export default function FriendsPage() {
                                 </Button>
                             </CardContent>
                          </Card>
+                    </div>
+                     <div className="flex-1 space-y-8 order-2 lg:order-1">
+                        {/* Friends Carousel */}
+                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                            <AccordionItem value="friends-list">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-6 w-6 text-primary" />
+                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {friends.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                                    ) : (
+                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
+                                            <div className="flex space-x-4 pb-4">
+                                                {friends.map((friend) => (
+                                                    <FriendCard3D 
+                                                      key={friend.uid} 
+                                                      friend={friend} 
+                                                      onEdit={() => setEditingFriend(friend)}
+                                                      onUnfriend={() => setUnfriendingFriend(friend)}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <ScrollBar orientation="horizontal" className="invisible"/>
+                                        </ScrollArea>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </div>
                 </div>
             </main>
