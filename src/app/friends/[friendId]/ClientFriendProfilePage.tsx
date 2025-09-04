@@ -550,22 +550,26 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsNicknameDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
                     )}
                   </div>
-                  <div className="hidden md:block">
+                  <div className="flex items-center gap-2">
+                    <Button onClick={() => setViewMode(v => v === 'feed' ? 'details' : 'feed')} variant="ghost" size="icon">
+                      <Repeat className="h-4 w-4" />
+                    </Button>
                     {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
                   </div>
                 </div>
                 <div className="mt-1 md:hidden">
-                  {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
+                  <div className="flex items-center justify-between">
+                     {friendLevelInfo && <LevelIndicator levelInfo={friendLevelInfo} />}
+                     <Button onClick={() => setViewMode(v => v === 'feed' ? 'details' : 'feed')} variant="ghost" size="icon">
+                      <Repeat className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground italic mt-2 whitespace-pre-wrap">
                   {friendData.bio || "No bio yet."}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {getRelationshipContent()}
-                  <Button onClick={() => setViewMode(v => v === 'feed' ? 'details' : 'feed')} variant="outline" size="sm" className="md:w-auto w-9 md:p-2 p-0">
-                    <Repeat className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">{viewMode === 'feed' ? 'View Details' : 'View Feed'}</span>
-                  </Button>
 
                   {isFriend && (
                     <AlertDialog>
