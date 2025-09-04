@@ -363,7 +363,6 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         Could not load user data.
-        <Button onClick={() => router.push('/friends')} className="ml-4">Back to Friends</Button>
       </div>
     );
   }
