@@ -523,19 +523,6 @@ export default function FriendsPage() {
                                 </div>
                             )}
                         </div>
-                        <Card className="hover:shadow-xl transition-shadow">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5 text-primary"/>Alliances</CardTitle>
-                                <CardDescription>Team up with friends to achieve greatness.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button asChild className="w-full">
-                                    <Link href="/alliances">
-                                        View Alliances <ArrowRight className="ml-2 h-4 w-4"/>
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                         </Card>
                     </div>
                      <div className="flex-1 space-y-8 order-2 lg:order-1">
                         {/* Friends Carousel */}
