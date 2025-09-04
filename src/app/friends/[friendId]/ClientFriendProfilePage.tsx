@@ -435,8 +435,8 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
        <Tabs defaultValue="stats" className="w-full mt-6">
           <TabsList>
             <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-            <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
-            <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+            {canViewPacts && <TabsTrigger value="pacts"><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>}
+            {canViewActivity && <TabsTrigger value="activity"><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="stats" className="mt-6">
@@ -446,16 +446,14 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
             </div>
           </TabsContent>
 
-          <TabsContent value="pacts" className="mt-6">
-            {canViewPacts ? (
+          {canViewPacts && (
+            <TabsContent value="pacts" className="mt-6">
               <PactList items={friendPacts} isEditable={false} onToggle={() => { }} onDelete={() => { }} onToggleDare={() => { }} />
-            ) : (
-              <PrivateContent message={`${displayName} has made their pacts private.`} />
-            )}
-          </TabsContent>
+            </TabsContent>
+          )}
 
-          <TabsContent value="activity" className="mt-6">
-            {canViewActivity ? (
+          {canViewActivity && (
+            <TabsContent value="activity" className="mt-6">
               <>
                 <div className="mb-8 max-w-4xl mx-auto">
                   <div className="flex items-center justify-between mb-4">
@@ -511,10 +509,8 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
                   />
                 </div>
               </>
-            ) : (
-              <PrivateContent message={`${displayName} has made their activity private.`} />
-            )}
-          </TabsContent>
+            </TabsContent>
+          )}
         </Tabs>
     </div>
   );
@@ -637,3 +633,4 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     </>
   );
 }
+
