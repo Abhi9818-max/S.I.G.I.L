@@ -10,7 +10,6 @@ import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import { useAlliance } from '@/components/providers/AllianceProvider';
 import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -394,15 +393,15 @@ export default function FriendsPage() {
       const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
       return (
         <div key={suggestion.uid} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3">
+            <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 hover:bg-muted/80 rounded-md p-1 -m-1 transition-colors flex-grow">
                 <Avatar>
                     <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
                     <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <span className="font-medium">{suggestion.username}</span>
-            </div>
-            <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending}>
-                {isPending ? 'Sent' : 'Add Friend'}
+            </Link>
+            <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending} className="ml-2">
+                {isPending ? 'Sent' : 'Add'}
             </Button>
         </div>
       )
