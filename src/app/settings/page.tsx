@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon, BarChart2, HelpCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Download, Upload, Trash2, AlertTriangle, LayoutDashboard, Database, User, Camera, PieChart, TrendingUp, KeyRound, Zap, CheckCircle, Star, Pencil, Share2, UserPlus, LogOut, CreditCard, Flame, MoreVertical, Menu, PlusSquare, ChevronDown, CalendarDays, Award, Drama, ShieldAlert, Users as UsersIcon, BarChart2, HelpCircle, MessageSquare } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { toPng } from 'html-to-image';
@@ -57,6 +57,8 @@ import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import CreatePostForm from '@/components/social/CreatePostForm';
+import PostCard from '@/components/social/PostCard';
 
 const TiersPage = dynamic(() => import('@/app/tiers/page'));
 const ReputationPage = dynamic(() => import('@/app/reputation/page'));
@@ -158,7 +160,7 @@ const TitleSelectionDialog = ({ isOpen, onOpenChange, unlockedTitles, equippedTi
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
-  const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances } = useFriends();
+  const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances, createPost } = useFriends();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout, equipTitle, updatePrivacySetting } = useAuth();
   const { toast } = useToast();
@@ -452,6 +454,12 @@ export default function SettingsPage() {
     router.push('/?tour=true');
   };
 
+  const userPosts = useMemo(() => {
+    if (!userData?.posts) return [];
+    return [...userData.posts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [userData?.posts]);
+
+
   if (showLoading) {
     return null;
   }
@@ -598,12 +606,14 @@ export default function SettingsPage() {
               <div className="border-b mt-4">
                  <div className="flex justify-around md:hidden">
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'profile' && 'text-primary')} onClick={() => setActiveTab('profile')}><User/></button>
+                    <button className={cn("p-3 text-muted-foreground", activeTab === 'feed' && 'text-primary')} onClick={() => setActiveTab('feed')}><MessageSquare/></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'insights' && 'text-primary')} onClick={() => setActiveTab('insights')}><BarChart2 /></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'reputation' && 'text-primary')} onClick={() => setActiveTab('reputation')}><UsersIcon /></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'tiers' && 'text-primary')} onClick={() => setActiveTab('tiers')}><Star /></button>
                   </div>
                  <div className="hidden md:flex justify-around">
                       <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
+                      <button className={cn("p-3", activeTab === 'feed' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('feed')}><MessageSquare/></button>
                       <button className={cn("p-3", activeTab === 'layout' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('layout')}><LayoutDashboard/></button>
                       <button className={cn("p-3", activeTab === 'data' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('data')}><Database/></button>
                   </div>
@@ -624,6 +634,21 @@ export default function SettingsPage() {
                 </div>
               )}
               
+              {activeTab === 'feed' && (
+                <div className="animate-fade-in-up py-4 space-y-6 max-w-2xl mx-auto">
+                    <CreatePostForm onCreatePost={createPost} />
+                    {userPosts.length > 0 ? (
+                      userPosts.map(post => (
+                        <PostCard key={post.id} post={post} />
+                      ))
+                    ) : (
+                      <div className="text-center py-10 text-muted-foreground">
+                        <p>You haven't posted anything yet.</p>
+                      </div>
+                    )}
+                  </div>
+              )}
+
               {activeTab === 'insights' && (
                  <div className="animate-fade-in-up py-4"><InsightsPage /></div>
               )}
@@ -984,3 +1009,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
