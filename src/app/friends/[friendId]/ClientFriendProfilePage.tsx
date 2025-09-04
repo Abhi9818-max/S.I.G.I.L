@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, Lock, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, Lock, MessageSquare, Repeat } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -171,6 +171,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
   const [isNicknameDialogOpen, setIsNicknameDialogOpen] = useState(false);
   const [isRelationshipDialogOpen, setIsRelationshipDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'feed' | 'details'>('feed');
   const { toast } = useToast();
 
   const levelInfo = currentUserRecords.getUserLevelInfo();
@@ -408,6 +409,117 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const canViewPacts = isFriend || isOwnProfile || friendData.privacySettings?.pacts === 'everyone';
   const canViewActivity = isFriend || isOwnProfile || friendData.privacySettings?.activity === 'everyone';
 
+  const FeedView = () => (
+    <div className="animate-fade-in-up mt-6">
+      {canViewFeed ? (
+        <div className="space-y-6 max-w-2xl mx-auto">
+          {isOwnProfile && <CreatePostForm onCreatePost={createPost} />}
+          {userPosts.length > 0 ? (
+            userPosts.map(post => (
+              <PostCard key={post.id} post={post} />
+            ))
+          ) : (
+            <div className="text-center py-10 text-muted-foreground">
+              <p>{isOwnProfile ? "You haven't" : `${displayName} hasn't`} posted anything yet.</p>
+            </div>
+          )}
+        </div>
+      ) : (
+          <PrivateContent message={`${displayName} has made their feed private.`} />
+      )}
+    </div>
+  );
+
+  const DetailsView = () => (
+    <div className="animate-fade-in-up mt-6">
+       <Tabs defaultValue="stats" className="w-full mt-6">
+          <TabsList>
+            <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
+            <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
+            <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="stats" className="mt-6">
+            <StatsPanel friendData={friendData} />
+            <div className="mt-8">
+              <TaskComparisonChart friendData={friendData} friendNickname={friendInfo?.nickname} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="pacts" className="mt-6">
+            {canViewPacts ? (
+              <PactList items={friendPacts} isEditable={false} onToggle={() => { }} onDelete={() => { }} onToggleDare={() => { }} />
+            ) : (
+              <PrivateContent message={`${displayName} has made their pacts private.`} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-6">
+            {canViewActivity ? (
+              <>
+                <div className="mb-8 max-w-4xl mx-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
+                    <Tabs defaultValue="today" className="w-auto">
+                      <TabsList>
+                        <TabsTrigger value="today">Today</TabsTrigger>
+                        <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  <ScrollArea className="w-full whitespace-nowrap">
+                    <Tabs defaultValue="today" className="w-full inline-block min-w-full">
+                      <TabsContent value="today" className="mt-4">
+                        <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
+                          <DailyTimeBreakdownChart
+                            date={today}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
+                            hideFooter={true}
+                          />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="yesterday" className="mt-4">
+                        <div className="w-full md:mx-auto">
+                          <DailyTimeBreakdownChart
+                            date={yesterday}
+                            records={friendRecords}
+                            taskDefinitions={friendTasks}
+                            hideFooter={true}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
+                  <TaskFilterBar
+                    taskDefinitions={friendTasks}
+                    selectedTaskId={selectedTaskFilterId}
+                    onSelectTask={setSelectedTaskFilterId}
+                  />
+                  <ContributionGraph
+                    year={new Date().getFullYear()}
+                    onDayClick={() => { }}
+                    onDayDoubleClick={() => { }}
+                    selectedTaskFilterId={selectedTaskFilterId}
+                    records={friendRecords}
+                    taskDefinitions={friendTasks}
+                    displayMode="full"
+                  />
+                </div>
+              </>
+            ) : (
+              <PrivateContent message={`${displayName} has made their activity private.`} />
+            )}
+          </TabsContent>
+        </Tabs>
+    </div>
+  );
+
+
   return (
     <>
       <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -450,9 +562,9 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {getRelationshipContent()}
-                  <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="md:w-auto w-9 md:p-2 p-0">
-                    <CreditCard className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">Download Card</span>
+                  <Button onClick={() => setViewMode(v => v === 'feed' ? 'details' : 'feed')} variant="outline" size="sm" className="md:w-auto w-9 md:p-2 p-0">
+                    <Repeat className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">{viewMode === 'feed' ? 'View Details' : 'View Feed'}</span>
                   </Button>
 
                   {isFriend && (
@@ -482,112 +594,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
                 </div>
               </div>
             </div>
-
-            <Tabs defaultValue="feed" className="w-full mt-6">
-              <TabsList>
-                <TabsTrigger value="feed" disabled={!canViewFeed}><MessageSquare className="mr-2 h-4 w-4" />Feed</TabsTrigger>
-                <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
-                <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
-                <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="feed" className="mt-6">
-                {canViewFeed ? (
-                  <div className="space-y-6 max-w-2xl mx-auto">
-                    {isOwnProfile && <CreatePostForm onCreatePost={createPost} />}
-                    {userPosts.length > 0 ? (
-                      userPosts.map(post => (
-                        <PostCard key={post.id} post={post} />
-                      ))
-                    ) : (
-                      <div className="text-center py-10 text-muted-foreground">
-                        <p>{isOwnProfile ? "You haven't" : `${displayName} hasn't`} posted anything yet.</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                   <PrivateContent message={`${displayName} has made their feed private.`} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="stats" className="mt-6">
-                <StatsPanel friendData={friendData} />
-                <div className="mt-8">
-                  <TaskComparisonChart friendData={friendData} friendNickname={friendInfo?.nickname} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="pacts" className="mt-6">
-                {canViewPacts ? (
-                  <PactList items={friendPacts} isEditable={false} onToggle={() => { }} onDelete={() => { }} onToggleDare={() => { }} />
-                ) : (
-                  <PrivateContent message={`${displayName} has made their pacts private.`} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="activity" className="mt-6">
-                {canViewActivity ? (
-                  <>
-                    <div className="mb-8 max-w-4xl mx-auto">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-semibold">Daily Breakdown</h2>
-                        <Tabs defaultValue="today" className="w-auto">
-                          <TabsList>
-                            <TabsTrigger value="today">Today</TabsTrigger>
-                            <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-                          </TabsList>
-                        </Tabs>
-                      </div>
-                      <ScrollArea className="w-full whitespace-nowrap">
-                        <Tabs defaultValue="today" className="w-full inline-block min-w-full">
-                          <TabsContent value="today" className="mt-4">
-                            <div className="w-[600px] md:w-full md:mx-auto md:transform-none transform -translate-x-1/4">
-                              <DailyTimeBreakdownChart
-                                date={today}
-                                records={friendRecords}
-                                taskDefinitions={friendTasks}
-                                hideFooter={true}
-                              />
-                            </div>
-                          </TabsContent>
-                          <TabsContent value="yesterday" className="mt-4">
-                            <div className="w-full md:mx-auto">
-                              <DailyTimeBreakdownChart
-                                date={yesterday}
-                                records={friendRecords}
-                                taskDefinitions={friendTasks}
-                                hideFooter={true}
-                              />
-                            </div>
-                          </TabsContent>
-                        </Tabs>
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-semibold mb-4">Contribution Graph</h2>
-                      <TaskFilterBar
-                        taskDefinitions={friendTasks}
-                        selectedTaskId={selectedTaskFilterId}
-                        onSelectTask={setSelectedTaskFilterId}
-                      />
-                      <ContributionGraph
-                        year={new Date().getFullYear()}
-                        onDayClick={() => { }}
-                        onDayDoubleClick={() => { }}
-                        selectedTaskFilterId={selectedTaskFilterId}
-                        records={friendRecords}
-                        taskDefinitions={friendTasks}
-                        displayMode="full"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <PrivateContent message={`${displayName} has made their activity private.`} />
-                )}
-              </TabsContent>
-
-            </Tabs>
+            {viewMode === 'feed' ? <FeedView /> : <DetailsView />}
           </div>
         </main>
       </div>
