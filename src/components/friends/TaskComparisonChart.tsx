@@ -73,7 +73,7 @@ const TaskComparisonChart: React.FC<TaskComparisonChartProps> = ({ friendData, f
       ...comparisonData.flatMap(d => [d['You'] as number, d[friendDisplayName] as number])
     );
     const friendColor = "hsl(var(--destructive))";
-    const userColor = "hsl(var(--primary))";
+    const userColor = "hsl(var(--progress-tier-group-2))";
 
     return (
         <div className="p-6 md:p-0">
