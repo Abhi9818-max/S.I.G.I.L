@@ -239,6 +239,9 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
           const data = isFriend || isOwnProfile ? await getFriendData(friendId) : await getPublicUserData(friendId);
           if (data) {
             setFriendData(data);
+            if (!data.posts || data.posts.length === 0) {
+              setViewMode('details');
+            }
           } else {
             toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
             router.push('/friends');
