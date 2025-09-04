@@ -97,7 +97,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // Fetch incoming friend requests
             const incomingQuery = query(collection(db!, 'friend_requests'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
             const incomingSnapshot = await getDocs(incomingQuery);
-            setIncomingRequests(incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
+            const incomingRequestsData = incomingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
+            setIncomingRequests(incomingRequestsData);
 
             // Fetch sent/pending friend requests
             const pendingQuery = query(collection(db!, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
@@ -140,10 +141,10 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const pendingRelSnapshot = await getDocs(pendingRelQuery);
             setPendingRelationshipProposals(pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
             
-             // Fetch Friend Suggestions
+            // Fetch Friend Suggestions
             const friendIds = friendsData.map(f => f.uid);
             const pendingIds = pendingRequestsData.map(p => p.recipientId);
-            const incomingIds = incomingRequests.docs.map(d => d.data().senderId);
+            const incomingIds = incomingRequestsData.map(req => req.senderId);
             const allExcludedIds = [...new Set([user.uid, ...friendIds, ...pendingIds, ...incomingIds])];
             
             // This is a simplified suggestion logic. In a real app, this would be more complex.
