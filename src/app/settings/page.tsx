@@ -627,10 +627,6 @@ export default function SettingsPage() {
                         <CreditCard className="mr-2 h-4 w-4" />
                         Download Profile Card
                     </Button>
-                    <Button onClick={handleTakeTour} variant="outline" size="sm" className="w-full">
-                        <HelpCircle className="mr-2 h-4 w-4" />
-                        How to Use (Feature Tour)
-                    </Button>
                 </div>
               )}
               
@@ -868,6 +864,17 @@ export default function SettingsPage() {
                     </div>
                     
                     <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-primary">Help &amp; Support</h3>
+                         <div className="p-4 border rounded-lg space-y-4">
+                           <p className="text-sm text-muted-foreground">Need a refresher on how things work? The feature tour will guide you through the main components of the dashboard.</p>
+                           <Button onClick={handleTakeTour} variant="outline" size="sm" className="w-full">
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                How to Use (Feature Tour)
+                            </Button>
+                         </div>
+                    </div>
+
+                    <div className="space-y-4">
                         <h3 className="text-lg font-medium text-primary">Secrets</h3>
                          <div className="p-4 border rounded-lg space-y-4">
                            {!masterControlUnlocked ? (
@@ -1009,5 +1016,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
