@@ -622,11 +622,6 @@ export default function SettingsPage() {
 
               {activeTab === 'profile' && (
                 <div className="animate-fade-in-up py-4 space-y-4">
-                  <h3 className="text-lg font-medium text-primary">Profile Actions</h3>
-                   <Button onClick={handleDownloadProfileCard} variant="outline" size="sm" className="w-full">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Download Profile Card
-                    </Button>
                 </div>
               )}
               
