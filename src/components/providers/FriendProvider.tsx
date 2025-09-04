@@ -43,6 +43,7 @@ interface FriendContextType {
     incomingRelationshipProposalFromFriend: (friendId: string) => RelationshipProposal | undefined;
     getPublicUserData: (userId: string) => Promise<UserData | null>;
     unfriend: (friendId: string) => Promise<void>;
+    suggestedFriends: SearchedUser[];
     // Marketplace
     globalListings: MarketplaceListing[];
     userListings: MarketplaceListing[];
@@ -61,6 +62,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
     const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
     const [friends, setFriends] = useState<Friend[]>([]);
+    const [suggestedFriends, setSuggestedFriends] = useState<SearchedUser[]>([]);
     const [incomingRelationshipProposals, setIncomingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [globalListings, setGlobalListings] = useState<MarketplaceListing[]>([]);
@@ -100,7 +102,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // Fetch sent/pending friend requests
             const pendingQuery = query(collection(db!, 'friend_requests'), where('senderId', '==', user.uid), where('status', '==', 'pending'));
             const pendingSnapshot = await getDocs(pendingQuery);
-            setPendingRequests(pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest)));
+            const pendingRequestsData = pendingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
+            setPendingRequests(pendingRequestsData);
             
             // Fetch friends list
             const friendsQuery = collection(db!, `users/${user.uid}/friends`);
@@ -124,7 +127,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 }
                 return null;
             });
-            setFriends((await Promise.all(friendsListPromises)).filter(Boolean) as Friend[]);
+            const friendsData = (await Promise.all(friendsListPromises)).filter(Boolean) as Friend[];
+            setFriends(friendsData);
             
             // Fetch incoming relationship proposals
             const incomingRelQuery = query(collection(db!, 'relationship_proposals'), where('recipientId', '==', user.uid), where('status', '==', 'pending'));
@@ -136,6 +140,32 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const pendingRelSnapshot = await getDocs(pendingRelQuery);
             setPendingRelationshipProposals(pendingRelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RelationshipProposal)));
             
+             // Fetch Friend Suggestions
+            const friendIds = friendsData.map(f => f.uid);
+            const pendingIds = pendingRequestsData.map(p => p.recipientId);
+            const incomingIds = incomingRequests.docs.map(d => d.data().senderId);
+            const allExcludedIds = [...new Set([user.uid, ...friendIds, ...pendingIds, ...incomingIds])];
+            
+            // This is a simplified suggestion logic. In a real app, this would be more complex.
+            // We fetch a few users who are not in the excluded list.
+            if (allExcludedIds.length > 0) {
+              const suggestionsQuery = query(
+                collection(db!, 'users'),
+                where(documentId(), 'not-in', allExcludedIds.slice(0, 10)), // Firestore 'not-in' has a limit of 10
+                limit(5)
+              );
+              const suggestionsSnapshot = await getDocs(suggestionsQuery);
+              const suggestions = suggestionsSnapshot.docs.map(doc => {
+                  const data = doc.data();
+                  return {
+                      uid: doc.id,
+                      username: data.username,
+                      photoURL: data.photoURL,
+                  };
+              });
+              setSuggestedFriends(suggestions);
+            }
+
         } catch (error) {
             console.error("Error fetching friends and requests:", error);
         }
@@ -492,6 +522,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             incomingRelationshipProposalFromFriend,
             getPublicUserData,
             unfriend,
+            suggestedFriends,
             globalListings,
             userListings,
             listTitleForSale,
