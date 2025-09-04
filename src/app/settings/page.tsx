@@ -595,10 +595,6 @@ export default function SettingsPage() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                         <Button variant="ghost" size="icon" onClick={handleDownloadProfileCard}>
-                            <CreditCard className="h-4 w-4" />
-                            <span className="sr-only">Download Profile Card</span>
-                        </Button>
                     </div>
                 </div>
 
@@ -606,14 +602,12 @@ export default function SettingsPage() {
               <div className="border-b mt-4">
                  <div className="flex justify-around md:hidden">
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'profile' && 'text-primary')} onClick={() => setActiveTab('profile')}><User/></button>
-                    <button className={cn("p-3 text-muted-foreground", activeTab === 'feed' && 'text-primary')} onClick={() => setActiveTab('feed')}><MessageSquare/></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'insights' && 'text-primary')} onClick={() => setActiveTab('insights')}><BarChart2 /></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'reputation' && 'text-primary')} onClick={() => setActiveTab('reputation')}><UsersIcon /></button>
                     <button className={cn("p-3 text-muted-foreground", activeTab === 'tiers' && 'text-primary')} onClick={() => setActiveTab('tiers')}><Star /></button>
                   </div>
                  <div className="hidden md:flex justify-around">
                       <button className={cn("p-3", activeTab === 'profile' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('profile')}><User/></button>
-                      <button className={cn("p-3", activeTab === 'feed' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('feed')}><MessageSquare/></button>
                       <button className={cn("p-3", activeTab === 'layout' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('layout')}><LayoutDashboard/></button>
                       <button className={cn("p-3", activeTab === 'data' && "border-b-2 border-primary text-primary")} onClick={() => setActiveTab('data')}><Database/></button>
                   </div>
@@ -621,11 +615,6 @@ export default function SettingsPage() {
 
 
               {activeTab === 'profile' && (
-                <div className="animate-fade-in-up py-4 space-y-4">
-                </div>
-              )}
-              
-              {activeTab === 'feed' && (
                 <div className="animate-fade-in-up py-4 space-y-6 max-w-2xl mx-auto">
                     <CreatePostForm onCreatePost={createPost} />
                     {userPosts.length > 0 ? (
@@ -639,7 +628,7 @@ export default function SettingsPage() {
                     )}
                   </div>
               )}
-
+              
               {activeTab === 'insights' && (
                  <div className="animate-fade-in-up py-4"><InsightsPage /></div>
               )}
