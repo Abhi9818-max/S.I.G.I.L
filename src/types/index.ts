@@ -260,6 +260,25 @@ export interface MarketplaceListing {
   createdAt: string; // ISO date string
 }
 
+// For Social Feed
+export interface Comment {
+  id: string;
+  authorId: string;
+  authorUsername: string;
+  authorPhotoURL?: string | null;
+  content: string;
+  createdAt: string; // ISO
+}
+
+export interface Post {
+  id: string;
+  authorId: string;
+  content: string;
+  createdAt: string; // ISO
+  likes: string[]; // Array of user IDs who liked
+  comments: Comment[];
+}
+
 // For Auth/User Data
 export interface UserData {
     uid?: string;
@@ -288,6 +307,7 @@ export interface UserData {
     marketplaceListings?: MarketplaceListing[]; // User's own active listings
     equippedTitleId?: string | null | undefined;
     pinnedAllianceIds?: string[];
+    posts?: Post[];
     privacySettings?: {
         pacts?: PrivacySetting;
         activity?: PrivacySetting;

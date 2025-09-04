@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, Lock } from 'lucide-react';
+import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, Heart, Send, Clock, Award, CreditCard, UserX, Lock, MessageSquare } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
@@ -45,6 +45,8 @@ import { toPng } from 'html-to-image';
 import ProfileCard from '@/components/profile/ProfileCard';
 import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
+import PostCard from '@/components/social/PostCard';
+import CreatePostForm from '@/components/social/CreatePostForm';
 
 type Props = {
   friendId: string;
@@ -160,7 +162,7 @@ const PrivateContent = ({ message }: { message: string }) => (
 export default function ClientFriendProfilePage({ friendId }: Props) {
   const router = useRouter();
   const { user } = useAuth();
-  const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData, unfriend } = useFriends();
+  const { friends, getFriendData, updateFriendNickname, sendRelationshipProposal, pendingRelationshipProposalForFriend, incomingRelationshipProposalFromFriend, getPublicUserData, unfriend, createPost } = useFriends();
   const currentUserRecords = useUserRecords();
   const profileCardRef = useRef<HTMLDivElement>(null);
 
@@ -175,6 +177,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
 
   const friendInfo = useMemo(() => friends.find(f => f.uid === friendId), [friends, friendId]);
   const isFriend = !!friendInfo;
+  const isOwnProfile = user?.uid === friendId;
 
   const pendingProposal = useMemo(() => pendingRelationshipProposalForFriend(friendId), [pendingRelationshipProposalForFriend, friendId]);
   const incomingProposal = useMemo(() => incomingRelationshipProposalFromFriend(friendId), [incomingRelationshipProposalFromFriend, friendId]);
@@ -232,7 +235,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     const fetchFriendData = async () => {
       if (friendId) {
         try {
-          const data = isFriend ? await getFriendData(friendId) : await getPublicUserData(friendId);
+          const data = isFriend || isOwnProfile ? await getFriendData(friendId) : await getPublicUserData(friendId);
           if (data) {
             setFriendData(data);
           } else {
@@ -250,7 +253,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     };
 
     fetchFriendData();
-  }, [friendId, getFriendData, getPublicUserData, isFriend, router, toast, user?.uid]);
+  }, [friendId, getFriendData, getPublicUserData, isFriend, isOwnProfile, router, toast, user?.uid]);
 
   const friendPacts = useMemo(() => {
     if (!friendData?.todoItems) return [];
@@ -372,6 +375,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const today = new Date();
   const yesterday = subDays(today, 1);
   const displayName = friendInfo?.nickname || friendData.username;
+  const userPosts = (friendData.posts || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const getRelationshipContent = () => {
     if (!isFriend) return null;
@@ -401,8 +405,9 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     )
   };
 
-  const canViewPacts = isFriend || friendData.privacySettings?.pacts === 'everyone';
-  const canViewActivity = isFriend || friendData.privacySettings?.activity === 'everyone';
+  const canViewFeed = isFriend || isOwnProfile || friendData.privacySettings?.activity === 'everyone';
+  const canViewPacts = isFriend || isOwnProfile || friendData.privacySettings?.pacts === 'everyone';
+  const canViewActivity = isFriend || isOwnProfile || friendData.privacySettings?.activity === 'everyone';
 
   return (
     <>
@@ -479,12 +484,32 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
               </div>
             </div>
 
-            <Tabs defaultValue="stats" className="w-full">
+            <Tabs defaultValue="feed" className="w-full mt-6">
               <TabsList>
+                <TabsTrigger value="feed" disabled={!canViewFeed}><MessageSquare className="mr-2 h-4 w-4" />Feed</TabsTrigger>
                 <TabsTrigger value="stats"><BarChart2 className="mr-2 h-4 w-4" />Stats</TabsTrigger>
                 <TabsTrigger value="pacts" disabled={!canViewPacts}><ListChecks className="mr-2 h-4 w-4" />Pacts</TabsTrigger>
                 <TabsTrigger value="activity" disabled={!canViewActivity}><Activity className="mr-2 h-4 w-4" />Activity</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="feed" className="mt-6">
+                {canViewFeed ? (
+                  <div className="space-y-6 max-w-2xl mx-auto">
+                    {isOwnProfile && <CreatePostForm onCreatePost={createPost} />}
+                    {userPosts.length > 0 ? (
+                      userPosts.map(post => (
+                        <PostCard key={post.id} post={post} />
+                      ))
+                    ) : (
+                      <div className="text-center py-10 text-muted-foreground">
+                        <p>{isOwnProfile ? "You haven't" : `${displayName} hasn't`} posted anything yet.</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                   <PrivateContent message={`${displayName} has made their feed private.`} />
+                )}
+              </TabsContent>
 
               <TabsContent value="stats" className="mt-6">
                 <StatsPanel friendData={friendData} />

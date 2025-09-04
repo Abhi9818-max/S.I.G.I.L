@@ -5,10 +5,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry, Post, Comment } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import { v4 as uuidv4 } from 'uuid';
 
 const RELATIONSHIP_MAP: Record<string, string> = {
     "Boyfriend": "Girlfriend",
@@ -50,6 +51,10 @@ interface FriendContextType {
     listTitleForSale: (titleId: string, price: number) => Promise<void>;
     purchaseTitle: (listing: MarketplaceListing) => Promise<void>;
     cancelListing: (listingId: string) => Promise<void>;
+    // Social Feed
+    createPost: (content: string) => Promise<void>;
+    addComment: (postId: string, postAuthorId: string, content: string) => Promise<void>;
+    toggleLike: (postId: string, postAuthorId: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -502,6 +507,78 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         await batch.commit();
     }, [user]);
 
+    // Social Feed Logic
+    const createPost = useCallback(async (content: string) => {
+        if (!user || !userData || !db) throw new Error("You must be logged in.");
+
+        const newPost: Post = {
+            id: uuidv4(),
+            authorId: user.uid,
+            content,
+            createdAt: new Date().toISOString(),
+            likes: [],
+            comments: [],
+        };
+        
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+            posts: arrayUnion(newPost)
+        });
+
+    }, [user, userData]);
+
+    const addComment = useCallback(async (postId: string, postAuthorId: string, content: string) => {
+        if (!user || !userData || !db) throw new Error("You must be logged in.");
+        
+        const newComment: Comment = {
+            id: uuidv4(),
+            authorId: user.uid,
+            authorUsername: userData.username,
+            authorPhotoURL: userData.photoURL,
+            content,
+            createdAt: new Date().toISOString(),
+        };
+
+        const postAuthorRef = doc(db, 'users', postAuthorId);
+        await runTransaction(db, async (transaction) => {
+            const postAuthorDoc = await transaction.get(postAuthorRef);
+            if (!postAuthorDoc.exists()) throw new Error("Post author not found.");
+            
+            const authorData = postAuthorDoc.data() as UserData;
+            const updatedPosts = (authorData.posts || []).map(post => {
+                if (post.id === postId) {
+                    return { ...post, comments: [...post.comments, newComment] };
+                }
+                return post;
+            });
+            transaction.update(postAuthorRef, { posts: updatedPosts });
+        });
+    }, [user, userData]);
+
+    const toggleLike = useCallback(async (postId: string, postAuthorId: string) => {
+        if (!user || !db) throw new Error("You must be logged in.");
+        
+        const postAuthorRef = doc(db, 'users', postAuthorId);
+         await runTransaction(db, async (transaction) => {
+            const postAuthorDoc = await transaction.get(postAuthorRef);
+            if (!postAuthorDoc.exists()) throw new Error("Post author not found.");
+            
+            const authorData = postAuthorDoc.data() as UserData;
+            const updatedPosts = (authorData.posts || []).map(post => {
+                if (post.id === postId) {
+                    const likes = post.likes || [];
+                    const isLiked = likes.includes(user.uid);
+                    const newLikes = isLiked
+                        ? likes.filter(uid => uid !== user.uid)
+                        : [...likes, user.uid];
+                    return { ...post, likes: newLikes };
+                }
+                return post;
+            });
+            transaction.update(postAuthorRef, { posts: updatedPosts });
+        });
+    }, [user]);
+
     return (
         <FriendContext.Provider value={{ 
             sendFriendRequest,
@@ -529,6 +606,9 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             listTitleForSale,
             purchaseTitle,
             cancelListing,
+            createPost,
+            addComment,
+            toggleLike,
         }}>
             {children}
         </FriendContext.Provider>
