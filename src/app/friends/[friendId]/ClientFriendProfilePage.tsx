@@ -412,7 +412,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const FeedView = () => (
     <div className="animate-fade-in-up mt-6">
       {canViewFeed ? (
-        <div className="space-y-6 max-w-2xl mx-auto">
+        <div className="space-y-6 max-w-2xl">
           {isOwnProfile && <CreatePostForm onCreatePost={createPost} />}
           {userPosts.length > 0 ? (
             userPosts.map(post => (
@@ -633,4 +633,3 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
     </>
   );
 }
-

@@ -27,25 +27,23 @@ const getAvatarForId = (id: string, url?: string | null) => {
 
 const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const { user, userData } = useAuth();
+  const { getPublicUserData } = useFriends();
   const { addComment, toggleLike } = useFriends();
   const [newComment, setNewComment] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [authorInfo, setAuthorInfo] = useState<{ username: string; photoURL: string | null }>({ username: 'Loading...', photoURL: null });
   
-  // This is a workaround since post object doesn't contain author details directly.
-  // In a real app, this would be fetched more efficiently.
   useEffect(() => {
     const fetchAuthorInfo = async () => {
-        // This is a fake fetch. In a real app, you would fetch from your DB.
-        // For now, we'll just use a placeholder if it's not the current user.
-        if (user && post.authorId === user.uid) {
-            setAuthorInfo({ username: userData?.username || 'User', photoURL: userData?.photoURL || null });
+        const fetchedUser = await getPublicUserData(post.authorId);
+        if (fetchedUser) {
+            setAuthorInfo({ username: fetchedUser.username, photoURL: fetchedUser.photoURL || null });
         } else {
              setAuthorInfo({ username: `User...${post.authorId.slice(-4)}`, photoURL: null });
         }
     };
     fetchAuthorInfo();
-  }, [post.authorId, user, userData]);
+  }, [post.authorId, getPublicUserData]);
 
   const timeAgo = formatDistanceToNowStrict(parseISO(post.createdAt), { addSuffix: true });
   const isLiked = user ? post.likes.includes(user.uid) : false;
