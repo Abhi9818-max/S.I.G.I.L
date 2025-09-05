@@ -30,6 +30,7 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment, allComments, postId,
   const { user } = useAuth();
   const { addComment, toggleCommentLike } = useFriends();
   const [isReplying, setIsReplying] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   
   const replies = useMemo(() => {
@@ -74,6 +75,11 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment, allComments, postId,
             <p className="text-sm mt-1">{comment.content}</p>
             <div className="mt-2 flex items-center gap-4">
                 <Button variant="ghost" size="sm" onClick={() => setIsReplying(!isReplying)} className="text-xs text-muted-foreground p-0 h-auto">Reply</Button>
+                {replies.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setShowReplies(!showReplies)} className="text-xs text-muted-foreground p-0 h-auto">
+                        {showReplies ? 'Hide replies' : `View ${replies.length} ${replies.length > 1 ? 'replies' : 'reply'}`}
+                    </Button>
+                )}
             </div>
           </div>
           <div className="flex flex-col items-center">
@@ -101,7 +107,7 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment, allComments, postId,
             </div>
         )}
 
-        {replies.length > 0 && (
+        {showReplies && replies.length > 0 && (
             <div className="mt-3 space-y-3">
                 {replies.map(reply => (
                     <CommentCard 
