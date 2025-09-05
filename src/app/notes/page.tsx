@@ -16,11 +16,11 @@ const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => vo
     <div className="bg-white dark:bg-card rounded-3xl shadow-lg overflow-hidden flex flex-col w-full max-w-sm mx-auto">
       <div className="relative h-56">
         <Image
-          src={`https://picsum.photos/seed/${note.id}/600/400`}
+          src="/notes/notes27.jpeg"
           alt={note.title}
           fill
           className="object-cover"
-          data-ai-hint="mountain landscape"
+          data-ai-hint="fantasy city street"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 p-4 w-full flex justify-between items-end">
