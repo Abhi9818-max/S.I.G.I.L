@@ -113,7 +113,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       }
   }
 
-  const sortedComments = post.comments.sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const topLevelComments = post.comments.filter(c => !c.parentId);
 
   return (
     <>
@@ -187,9 +187,17 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
         {showComments && (
           <div className="w-full space-y-3 pt-3">
-            {sortedComments.length > 0 && (
-              <div className="space-y-2">
-                {sortedComments.map(comment => <CommentCard key={comment.id} comment={comment} />)}
+            {topLevelComments.length > 0 && (
+              <div className="space-y-4">
+                {topLevelComments.map(comment => (
+                    <CommentCard 
+                        key={comment.id} 
+                        comment={comment} 
+                        allComments={post.comments}
+                        postId={post.id}
+                        postAuthorId={post.authorId}
+                    />
+                ))}
               </div>
             )}
             <div className="flex items-center gap-2">

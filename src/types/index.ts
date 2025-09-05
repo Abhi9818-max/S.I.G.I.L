@@ -268,6 +268,8 @@ export interface Comment {
   authorPhotoURL?: string | null;
   content: string;
   createdAt: string; // ISO
+  likes: string[]; // Array of user IDs who liked the comment
+  parentId?: string | null; // ID of the comment this is a reply to
 }
 
 export interface Post {

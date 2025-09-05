@@ -55,8 +55,9 @@ interface FriendContextType {
     createPost: (content: string) => Promise<void>;
     editPost: (postId: string, newContent: string) => Promise<void>;
     deletePost: (postId: string) => Promise<void>;
-    addComment: (postId: string, postAuthorId: string, content: string) => Promise<void>;
+    addComment: (postId: string, postAuthorId: string, content: string, parentId?: string | null) => Promise<void>;
     toggleLike: (postId: string, postAuthorId: string) => Promise<void>;
+    toggleCommentLike: (postId: string, postAuthorId: string, commentId: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -544,7 +545,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }, [user, userData, updateUserDataInDb]);
 
 
-    const addComment = useCallback(async (postId: string, postAuthorId: string, content: string) => {
+    const addComment = useCallback(async (postId: string, postAuthorId: string, content: string, parentId: string | null = null) => {
         if (!user || !userData || !db) throw new Error("You must be logged in.");
         
         const newComment: Comment = {
@@ -554,6 +555,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             authorPhotoURL: userData.photoURL,
             content,
             createdAt: new Date().toISOString(),
+            likes: [],
+            parentId: parentId
         };
 
         const postAuthorRef = doc(db, 'users', postAuthorId);
@@ -570,7 +573,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             });
             transaction.update(postAuthorRef, { posts: updatedPosts });
         });
-    }, [user, userData]);
+    }, [user, userData, db]);
 
     const toggleLike = useCallback(async (postId: string, postAuthorId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");
@@ -610,7 +613,37 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             });
             transaction.update(postAuthorRef, { posts: updatedPosts });
         });
-    }, [user, userData, updateUserDataInDb]);
+    }, [user, userData, updateUserDataInDb, db]);
+    
+    const toggleCommentLike = useCallback(async (postId: string, postAuthorId: string, commentId: string) => {
+        if (!user || !db) throw new Error("You must be logged in.");
+        
+        const postAuthorRef = doc(db, 'users', postAuthorId);
+        await runTransaction(db, async (transaction) => {
+            const postAuthorDoc = await transaction.get(postAuthorRef);
+            if (!postAuthorDoc.exists()) throw new Error("Post author not found.");
+
+            const authorData = postAuthorDoc.data() as UserData;
+            const updatedPosts = (authorData.posts || []).map(post => {
+                if (post.id === postId) {
+                    const updatedComments = post.comments.map(comment => {
+                        if (comment.id === commentId) {
+                            const likes = comment.likes || [];
+                            const isLiked = likes.includes(user.uid);
+                            const newLikes = isLiked
+                                ? likes.filter(uid => uid !== user.uid)
+                                : [...likes, user.uid];
+                            return { ...comment, likes: newLikes };
+                        }
+                        return comment;
+                    });
+                    return { ...post, comments: updatedComments };
+                }
+                return post;
+            });
+            transaction.update(postAuthorRef, { posts: updatedPosts });
+        });
+    }, [user, db]);
 
     return (
         <FriendContext.Provider value={{ 
@@ -644,6 +677,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             deletePost,
             addComment,
             toggleLike,
+            toggleCommentLike,
         }}>
             {children}
         </FriendContext.Provider>
