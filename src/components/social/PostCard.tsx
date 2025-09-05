@@ -131,7 +131,10 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <Link href={`/friends/${post.authorId}`}>
                 <p className="font-semibold cursor-pointer hover:underline">{authorInfo.username}</p>
               </Link>
-              <p className="text-xs text-muted-foreground">{timeAgo}</p>
+              <p className="text-xs text-muted-foreground">
+                {timeAgo}
+                {post.editedAt && <span className="italic"> &middot; edited</span>}
+              </p>
             </div>
           </div>
           {isAuthor && (

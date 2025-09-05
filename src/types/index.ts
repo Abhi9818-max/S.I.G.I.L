@@ -277,6 +277,7 @@ export interface Post {
   authorId: string;
   content: string;
   createdAt: string; // ISO
+  editedAt?: string; // ISO
   likes: string[]; // Array of user IDs who liked
   comments: Comment[];
 }

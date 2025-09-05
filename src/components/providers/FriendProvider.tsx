@@ -531,7 +531,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         if (!user || !db || !userData?.posts) throw new Error("You must be logged in.");
         
         const updatedPosts = userData.posts.map(post => 
-            post.id === postId ? { ...post, content: newContent } : post
+            post.id === postId ? { ...post, content: newContent, editedAt: new Date().toISOString() } : post
         );
         await updateUserDataInDb({ posts: updatedPosts });
 
