@@ -157,6 +157,15 @@ const TitleSelectionDialog = ({ isOpen, onOpenChange, unlockedTitles, equippedTi
     )
 }
 
+const SettingsSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
+  <div className="space-y-4">
+    <h3 className="text-lg font-medium text-primary">{title}</h3>
+    <div className="p-4 border rounded-lg space-y-4">
+      {children}
+    </div>
+  </div>
+);
+
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
@@ -643,11 +652,9 @@ export default function SettingsPage() {
 
 
               {activeTab === 'layout' && (
-              <div className="animate-fade-in-up py-4">
-                <Accordion type="multiple" className="w-full space-y-4">
-                  <AccordionItem value="privacy" className="border rounded-lg p-4">
-                    <AccordionTrigger>Privacy &amp; Visibility</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
+              <div className="space-y-8 animate-fade-in-up py-4">
+                <SettingsSection title="Privacy & Visibility">
+                  <div className="space-y-4">
                       <div>
                           <Label className="font-normal">Profile Visibility</Label>
                           <p className="text-xs text-muted-foreground mt-1">Who can view your stats and activity?</p>
@@ -685,11 +692,11 @@ export default function SettingsPage() {
                             </div>
                           </RadioGroup>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="dashboard-components" className="border rounded-lg p-4">
-                    <AccordionTrigger>Main Dashboard Components</AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-4">
+                  </div>
+                </SettingsSection>
+
+                <SettingsSection title="Main Dashboard Components">
+                   <div className="space-y-3">
                       {dashboardComponents.map(({ key, label }) => (
                           <div key={key} className="flex items-center justify-between">
                               <Label htmlFor={key.toString()} className="font-normal">{label}</Label>
@@ -700,11 +707,11 @@ export default function SettingsPage() {
                               />
                           </div>
                       ))}
-                    </AccordionContent>
-                  </AccordionItem>
-                   <AccordionItem value="stats-panel" className="border rounded-lg p-4">
-                    <AccordionTrigger>Stats Panel Cards</AccordionTrigger>
-                    <AccordionContent className="space-y-3 pt-4">
+                    </div>
+                </SettingsSection>
+                
+                <SettingsSection title="Stats Panel Cards">
+                    <div className="space-y-3">
                        {statComponents.map(({ key, label, hasDaysInput }) => (
                           <div key={key} className="flex flex-col gap-2">
                               <div className="flex items-center justify-between">
@@ -733,11 +740,11 @@ export default function SettingsPage() {
                               )}
                           </div>
                       ))}
-                    </AccordionContent>
-                  </AccordionItem>
-                   <AccordionItem value="chart-display" className="border rounded-lg p-4">
-                    <AccordionTrigger>Chart &amp; Card Display</AccordionTrigger>
-                    <AccordionContent className="space-y-4 pt-4">
+                    </div>
+                </SettingsSection>
+
+                <SettingsSection title="Chart & Card Display">
+                   <div className="space-y-4">
                        <div>
                           <Label className="font-normal flex items-center gap-2"><Drama className="h-4 w-4" />Dare Category</Label>
                           <p className="text-xs text-muted-foreground mt-1">Select the type of dares you want for failed pacts and alliances.</p>
@@ -821,85 +828,75 @@ export default function SettingsPage() {
                             </div>
                           </RadioGroup>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                    </div>
+                </SettingsSection>
               </div>
               )}
               
               {activeTab === 'data' && (
                 <div className="space-y-8 animate-fade-in-up py-4">
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Data Backup &amp; Restore</h3>
-                        <div className="p-4 border rounded-lg space-y-4">
-                            <p className="text-sm text-muted-foreground"> just export your JSON file and upload it to chatgpt , now chatgpt has also ur progress. & u can import ur any data like progress into this app also</p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <Button onClick={handleExportData} className="w-full">
-                                    <Download className="mr-2 h-4 w-4"/>
-                                    Export Data
-                                </Button>
-                                <Label htmlFor="import-file" className={cn("w-full cursor-pointer", buttonVariants())}>
-                                    <Upload className="mr-2 h-4 w-4"/>
-                                    Import Data
-                                </Label>
-                                <Input id="import-file" type="file" accept=".json" className="hidden" onChange={handleImportData} disabled={isImporting}/>
-                            </div>
+                    <SettingsSection title="Data Backup & Restore">
+                        <p className="text-sm text-muted-foreground"> just export your JSON file and upload it to chatgpt , now chatgpt has also ur progress. & u can import ur any data like progress into this app also</p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <Button onClick={handleExportData} className="w-full">
+                                <Download className="mr-2 h-4 w-4"/>
+                                Export Data
+                            </Button>
+                            <Label htmlFor="import-file" className={cn("w-full cursor-pointer", buttonVariants())}>
+                                <Upload className="mr-2 h-4 w-4"/>
+                                Import Data
+                            </Label>
+                            <Input id="import-file" type="file" accept=".json" className="hidden" onChange={handleImportData} disabled={isImporting}/>
                         </div>
-                    </div>
+                    </SettingsSection>
                     
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Help &amp; Support</h3>
-                         <div className="p-4 border rounded-lg space-y-4">
-                           <p className="text-sm text-muted-foreground">Need a refresher on how things work? The feature tour will guide you through the main components of the dashboard.</p>
-                           <Button onClick={handleTakeTour} variant="outline" size="sm" className="w-full">
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                How to Use (Feature Tour)
+                    <SettingsSection title="Help & Support">
+                       <p className="text-sm text-muted-foreground">Need a refresher on how things work? The feature tour will guide you through the main components of the dashboard.</p>
+                       <Button onClick={handleTakeTour} variant="outline" size="sm" className="w-full">
+                            <HelpCircle className="mr-2 h-4 w-4" />
+                            How to Use (Feature Tour)
+                        </Button>
+                    </SettingsSection>
+
+                    <SettingsSection title="Secrets">
+                       {!masterControlUnlocked ? (
+                         <>
+                            <p className="text-sm text-muted-foreground">Enter the correct sequence to unlock master control.</p>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <div className="relative flex-grow">
+                                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                  type="password"
+                                  placeholder="Secret Code"
+                                  className="pl-10"
+                                  value={secretCodeInput}
+                                  onChange={(e) => setSecretCodeInput(e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleUnlockMasterControl()}
+                                />
+                              </div>
+                              <Button onClick={handleUnlockMasterControl}>Unlock</Button>
+                            </div>
+                         </>
+                       ) : (
+                         <div className="space-y-4 animate-fade-in-up">
+                            <h4 className="font-semibold text-primary">Master Control Panel</h4>
+                            <p className="text-sm text-muted-foreground">With great power comes great responsibility.</p>
+                            <Button onClick={handleAwardBonusXp} disabled={masterBonusAwarded}>
+                              {masterBonusAwarded ? (
+                                <>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Bonus Awarded
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="mr-2 h-4 w-4" />
+                                  Award 10,000 Bonus XP
+                                </>
+                              )}
                             </Button>
                          </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-primary">Secrets</h3>
-                         <div className="p-4 border rounded-lg space-y-4">
-                           {!masterControlUnlocked ? (
-                             <>
-                                <p className="text-sm text-muted-foreground">Enter the correct sequence to unlock master control.</p>
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                  <div className="relative flex-grow">
-                                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                      type="password"
-                                      placeholder="Secret Code"
-                                      className="pl-10"
-                                      value={secretCodeInput}
-                                      onChange={(e) => setSecretCodeInput(e.target.value)}
-                                      onKeyDown={(e) => e.key === 'Enter' && handleUnlockMasterControl()}
-                                    />
-                                  </div>
-                                  <Button onClick={handleUnlockMasterControl}>Unlock</Button>
-                                </div>
-                             </>
-                           ) : (
-                             <div className="space-y-4 animate-fade-in-up">
-                                <h4 className="font-semibold text-primary">Master Control Panel</h4>
-                                <p className="text-sm text-muted-foreground">With great power comes great responsibility.</p>
-                                <Button onClick={handleAwardBonusXp} disabled={masterBonusAwarded}>
-                                  {masterBonusAwarded ? (
-                                    <>
-                                      <CheckCircle className="mr-2 h-4 w-4" />
-                                      Bonus Awarded
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Zap className="mr-2 h-4 w-4" />
-                                      Award 10,000 Bonus XP
-                                    </>
-                                  )}
-                                </Button>
-                             </div>
-                           )}
-                         </div>
-                    </div>
+                       )}
+                    </SettingsSection>
 
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
@@ -1000,3 +997,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
