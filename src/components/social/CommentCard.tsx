@@ -39,7 +39,8 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment, allComments, postId,
   }, [allComments, comment.id]);
 
   const timeAgo = formatDistanceToNowStrict(parseISO(comment.createdAt), { addSuffix: true });
-  const isLiked = user ? comment.likes.includes(user.uid) : false;
+  const likes = comment.likes || [];
+  const isLiked = user ? likes.includes(user.uid) : false;
 
   const handleReplySubmit = async () => {
     if (!replyContent.trim() || !user) return;
@@ -79,8 +80,8 @@ const CommentCard: React.FC<CommentCardProps> = ({ comment, allComments, postId,
             <Button variant="ghost" size="icon" onClick={handleToggleLike} className="h-8 w-8">
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}/>
             </Button>
-            {comment.likes.length > 0 && (
-                <span className="text-xs text-muted-foreground">{comment.likes.length}</span>
+            {likes.length > 0 && (
+                <span className="text-xs text-muted-foreground">{likes.length}</span>
             )}
           </div>
         </div>
