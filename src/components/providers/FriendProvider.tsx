@@ -62,7 +62,7 @@ interface FriendContextType {
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
 
 export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user, userData } = useAuth();
+    const { user, userData, updateUserDataInDb } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -522,42 +522,26 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             comments: [],
         };
         
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-            posts: arrayUnion(newPost)
-        });
+        await updateUserDataInDb({ posts: arrayUnion(newPost) as any });
 
-    }, [user, userData]);
+    }, [user, userData, updateUserDataInDb]);
     
     const editPost = useCallback(async (postId: string, newContent: string) => {
-        if (!user || !db) throw new Error("You must be logged in.");
+        if (!user || !db || !userData?.posts) throw new Error("You must be logged in.");
         
-        const userRef = doc(db, 'users', user.uid);
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) throw new Error("User not found.");
-            
-            const userData = userDoc.data() as UserData;
-            const updatedPosts = (userData.posts || []).map(post => 
-                post.id === postId ? { ...post, content: newContent } : post
-            );
-            transaction.update(userRef, { posts: updatedPosts });
-        });
-    }, [user]);
+        const updatedPosts = userData.posts.map(post => 
+            post.id === postId ? { ...post, content: newContent } : post
+        );
+        await updateUserDataInDb({ posts: updatedPosts });
+
+    }, [user, userData, updateUserDataInDb]);
 
     const deletePost = useCallback(async (postId: string) => {
-        if (!user || !db) throw new Error("You must be logged in.");
+        if (!user || !db || !userData?.posts) throw new Error("You must be logged in.");
 
-        const userRef = doc(db, 'users', user.uid);
-        await runTransaction(db, async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) throw new Error("User not found.");
-            
-            const userData = userDoc.data() as UserData;
-            const updatedPosts = (userData.posts || []).filter(post => post.id !== postId);
-            transaction.update(userRef, { posts: updatedPosts });
-        });
-    }, [user]);
+        const updatedPosts = userData.posts.filter(post => post.id !== postId);
+        await updateUserDataInDb({ posts: updatedPosts });
+    }, [user, userData, updateUserDataInDb]);
 
 
     const addComment = useCallback(async (postId: string, postAuthorId: string, content: string) => {
@@ -580,7 +564,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             const authorData = postAuthorDoc.data() as UserData;
             const updatedPosts = (authorData.posts || []).map(post => {
                 if (post.id === postId) {
-                    return { ...post, comments: [...post.comments, newComment] };
+                    return { ...post, comments: [...(post.comments || []), newComment] };
                 }
                 return post;
             });
@@ -590,6 +574,22 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const toggleLike = useCallback(async (postId: string, postAuthorId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");
+
+        // Optimistic update
+        if (postAuthorId === user.uid && userData) {
+             const updatedPosts = (userData.posts || []).map(post => {
+                if (post.id === postId) {
+                    const likes = post.likes || [];
+                    const isLiked = likes.includes(user.uid);
+                    const newLikes = isLiked
+                        ? likes.filter(uid => uid !== user.uid)
+                        : [...likes, user.uid];
+                    return { ...post, likes: newLikes };
+                }
+                return post;
+            });
+            updateUserDataInDb({ posts: updatedPosts });
+        }
         
         const postAuthorRef = doc(db, 'users', postAuthorId);
          await runTransaction(db, async (transaction) => {
@@ -610,7 +610,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             });
             transaction.update(postAuthorRef, { posts: updatedPosts });
         });
-    }, [user]);
+    }, [user, userData, updateUserDataInDb]);
 
     return (
         <FriendContext.Provider value={{ 
