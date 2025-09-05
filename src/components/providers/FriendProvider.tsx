@@ -53,6 +53,8 @@ interface FriendContextType {
     cancelListing: (listingId: string) => Promise<void>;
     // Social Feed
     createPost: (content: string) => Promise<void>;
+    editPost: (postId: string, newContent: string) => Promise<void>;
+    deletePost: (postId: string) => Promise<void>;
     addComment: (postId: string, postAuthorId: string, content: string) => Promise<void>;
     toggleLike: (postId: string, postAuthorId: string) => Promise<void>;
 }
@@ -526,6 +528,37 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
 
     }, [user, userData]);
+    
+    const editPost = useCallback(async (postId: string, newContent: string) => {
+        if (!user || !db) throw new Error("You must be logged in.");
+        
+        const userRef = doc(db, 'users', user.uid);
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) throw new Error("User not found.");
+            
+            const userData = userDoc.data() as UserData;
+            const updatedPosts = (userData.posts || []).map(post => 
+                post.id === postId ? { ...post, content: newContent } : post
+            );
+            transaction.update(userRef, { posts: updatedPosts });
+        });
+    }, [user]);
+
+    const deletePost = useCallback(async (postId: string) => {
+        if (!user || !db) throw new Error("You must be logged in.");
+
+        const userRef = doc(db, 'users', user.uid);
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) throw new Error("User not found.");
+            
+            const userData = userDoc.data() as UserData;
+            const updatedPosts = (userData.posts || []).filter(post => post.id !== postId);
+            transaction.update(userRef, { posts: updatedPosts });
+        });
+    }, [user]);
+
 
     const addComment = useCallback(async (postId: string, postAuthorId: string, content: string) => {
         if (!user || !userData || !db) throw new Error("You must be logged in.");
@@ -607,6 +640,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             purchaseTitle,
             cancelListing,
             createPost,
+            editPost,
+            deletePost,
             addComment,
             toggleLike,
         }}>
