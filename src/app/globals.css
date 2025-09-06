@@ -293,4 +293,10 @@
       filter: drop-shadow(0 0 10px var(--progress-color, hsl(var(--primary))));
     }
   }
+  .note-card-glow {
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  .note-card-glow:hover {
+    box-shadow: 0 0 15px 5px hsl(var(--primary) / 0.3);
+  }
 }

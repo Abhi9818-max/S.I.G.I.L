@@ -26,7 +26,7 @@ const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string
 
   return (
     <Link href={`/notes/${note.id}`} passHref>
-      <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group cursor-pointer">
+      <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group cursor-pointer note-card-glow">
           <Image 
               src={imageUrl}
               alt={`Note background for ${note.title}`}
