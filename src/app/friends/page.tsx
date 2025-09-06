@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { findUserByUsername } from '@/lib/server/actions/user';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter as AlertDialogFooterComponent } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -175,7 +176,7 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
     );
 };
 
-const RequestsDialog = ({ isOpen, onOpenChange, defaultTab }: { isOpen: boolean, onOpenChange: (open: boolean) => void, defaultTab: 'incoming' | 'sent' }) => {
+const RequestsPopoverContent = ({ defaultTab }: { defaultTab: 'incoming' | 'sent' }) => {
     const { 
         incomingRequests, 
         pendingRequests, 
@@ -199,55 +200,58 @@ const RequestsDialog = ({ isOpen, onOpenChange, defaultTab }: { isOpen: boolean,
     );
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-sm">
-                <DialogHeader><DialogTitle>Requests &amp; Invitations</DialogTitle></DialogHeader>
-                <Tabs defaultValue={defaultTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+        <PopoverContent className="w-80 p-0" align="end">
+            <Tabs defaultValue={defaultTab} className="w-full">
+                <div className="p-4 pb-0">
+                    <h4 className="font-medium leading-none">Requests &amp; Invitations</h4>
+                    <TabsList className="grid w-full grid-cols-2 mt-4">
                         <TabsTrigger value="incoming">Incoming</TabsTrigger>
                         <TabsTrigger value="sent">Sent</TabsTrigger>
                     </TabsList>
-                    <ScrollArea className="h-96 pr-3 mt-4">
-                        <TabsContent value="incoming">
-                            <div className="space-y-4">
-                                {incomingRequests.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && renderEmptyState("No incoming requests.")}
-                                {incomingRequests.map(req => (
-                                    <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} /><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.senderUsername}</p><p className="text-xs text-muted-foreground">Friend Request</p></div></div>
-                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
-                                    </CardContent></Card>
-                                ))}
-                                {incomingAllianceInvitations.map(inv => (
-                                    <Card key={inv.id}><CardContent className="p-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3"><Shield className="h-8 w-8 text-primary" /><div><p className="font-semibold">{inv.allianceName}</p><p className="text-xs text-muted-foreground">Alliance Invite from {inv.senderUsername}</p></div></div>
-                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceInvitation(inv)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(inv.id)}><X className="h-4 w-4"/></Button></div>
-                                    </CardContent></Card>
-                                ))}
-                                {incomingAllianceChallenges.map(chal => (
-                                    <Card key={chal.id}><CardContent className="p-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3"><Swords className="h-8 w-8 text-destructive" /><div><p className="font-semibold">{chal.challengerAllianceName}</p><p className="text-xs text-muted-foreground">Alliance Challenge</p></div></div>
-                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceChallenge(chal)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(chal.id)}><X className="h-4 w-4"/></Button></div>
-                                    </CardContent></Card>
-                                ))}
-                            </div>
-                        </TabsContent>
-                        <TabsContent value="sent">
-                            <div className="space-y-4">
-                                {pendingRequests.length === 0 && renderEmptyState("You haven't sent any friend requests.")}
-                                {pendingRequests.map(req => (
-                                    <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
-                                        <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} /><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.recipientUsername}</p><p className="text-xs text-muted-foreground">Request Sent</p></div></div>
-                                        <Button size="sm" variant="outline" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
-                                    </CardContent></Card>
-                                ))}
-                            </div>
-                        </TabsContent>
-                    </ScrollArea>
-                </Tabs>
-            </DialogContent>
-        </Dialog>
+                </div>
+                <ScrollArea className="h-96 pr-3 mt-4">
+                    <div className="p-4 pt-0">
+                    <TabsContent value="incoming">
+                        <div className="space-y-4">
+                            {incomingRequests.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && renderEmptyState("No incoming requests.")}
+                            {incomingRequests.map(req => (
+                                <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} /><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.senderUsername}</p><p className="text-xs text-muted-foreground">Friend Request</p></div></div>
+                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
+                                </CardContent></Card>
+                            ))}
+                            {incomingAllianceInvitations.map(inv => (
+                                <Card key={inv.id}><CardContent className="p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3"><Shield className="h-8 w-8 text-primary" /><div><p className="font-semibold">{inv.allianceName}</p><p className="text-xs text-muted-foreground">Alliance Invite from {inv.senderUsername}</p></div></div>
+                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceInvitation(inv)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(inv.id)}><X className="h-4 w-4"/></Button></div>
+                                </CardContent></Card>
+                            ))}
+                            {incomingAllianceChallenges.map(chal => (
+                                <Card key={chal.id}><CardContent className="p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3"><Swords className="h-8 w-8 text-destructive" /><div><p className="font-semibold">{chal.challengerAllianceName}</p><p className="text-xs text-muted-foreground">Alliance Challenge</p></div></div>
+                                    <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceChallenge(chal)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(chal.id)}><X className="h-4 w-4"/></Button></div>
+                                </CardContent></Card>
+                            ))}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="sent">
+                        <div className="space-y-4">
+                            {pendingRequests.length === 0 && renderEmptyState("You haven't sent any friend requests.")}
+                            {pendingRequests.map(req => (
+                                <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} /><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.recipientUsername}</p><p className="text-xs text-muted-foreground">Request Sent</p></div></div>
+                                    <Button size="sm" variant="outline" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                </CardContent></Card>
+                            ))}
+                        </div>
+                    </TabsContent>
+                    </div>
+                </ScrollArea>
+            </Tabs>
+        </PopoverContent>
     );
 };
+
 
 export default function FriendsPage() {
     const { user, userData } = useAuth();
@@ -272,9 +276,6 @@ export default function FriendsPage() {
     const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
     const [unfriendingFriend, setUnfriendingFriend] = useState<Friend | null>(null);
     const router = useRouter();
-
-    const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
-    const [requestDialogTab, setRequestDialogTab] = useState<'incoming' | 'sent'>('incoming');
 
     const handleSearch = () => {
         if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
@@ -328,11 +329,6 @@ export default function FriendsPage() {
       await unfriend(unfriendingFriend.uid);
       setUnfriendingFriend(null);
     }
-
-    const openRequestDialog = (tab: 'incoming' | 'sent') => {
-        setRequestDialogTab(tab);
-        setIsRequestDialogOpen(true);
-    };
     
     const incomingNotificationCount = incomingRequests.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
     const sentNotificationCount = pendingRequests.length;
@@ -350,11 +346,6 @@ export default function FriendsPage() {
                 onOpenChange={(open) => !open && setUnfriendingFriend(null)}
                 friendName={unfriendingFriend?.nickname || unfriendingFriend?.username || ''}
                 onConfirm={handleUnfriend}
-            />
-            <RequestsDialog 
-                isOpen={isRequestDialogOpen}
-                onOpenChange={setIsRequestDialogOpen}
-                defaultTab={requestDialogTab}
             />
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
@@ -385,14 +376,24 @@ export default function FriendsPage() {
                         )}
 
                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => openRequestDialog('incoming')} className="relative">
-                                <Mail className="h-6 w-6"/>
-                                {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => openRequestDialog('sent')} className="relative">
-                                <Hourglass className="h-6 w-6"/>
-                                {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
-                            </Button>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Mail className="h-6 w-6"/>
+                                        {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <RequestsPopoverContent defaultTab="incoming" />
+                            </Popover>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Hourglass className="h-6 w-6"/>
+                                        {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <RequestsPopoverContent defaultTab="sent" />
+                            </Popover>
                             {!showSearch && (
                                 <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
                                     <Search className="h-6 w-6" />
