@@ -188,144 +188,18 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
     );
 };
 
-const RequestsPopover = ({
-    incomingRequests,
-    incomingRelationshipProposals,
-    incomingAllianceInvitations,
-    incomingAllianceChallenges,
-    onAcceptFriend,
-    onDeclineFriend,
-    onAcceptRelationship,
-    onDeclineRelationship,
-    onAcceptAllianceInvite,
-    onDeclineAllianceInvite,
-    onAcceptAllianceChallenge,
-    onDeclineAllianceChallenge,
-}: any) => (
-    <PopoverContent className="w-80">
-        <ScrollArea className="h-96">
-        <div className="p-4 space-y-4">
-            <h4 className="font-medium leading-none">Incoming Requests</h4>
-            <Separator />
-             {incomingRequests.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Friend Requests</h5>
-                    {incomingRequests.map((req: FriendRequest) => (
-                         <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                             <div className="flex items-center gap-2">
-                                 <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)}/><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar>
-                                 <span className="text-sm font-medium">{req.senderUsername}</span>
-                             </div>
-                             <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptFriend(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineFriend(req.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-             )}
-              {incomingRelationshipProposals.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Relationship Proposals</h5>
-                    {incomingRelationshipProposals.map((prop: RelationshipProposal) => (
-                         <div key={prop.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                             <div className="flex items-center gap-2">
-                                 <Heart className="h-4 w-4 text-pink-400"/><span className="text-sm font-medium">{prop.senderUsername} wants to be your {prop.correspondingRelationship}.</span>
-                             </div>
-                             <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptRelationship(prop)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineRelationship(prop.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingAllianceInvitations.length > 0 && (
-                 <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Alliance Invitations</h5>
-                     {incomingAllianceInvitations.map((invite: AllianceInvitation) => (
-                         <div key={invite.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                            <div className="flex items-center gap-2">
-                                 <Shield className="h-4 w-4 text-cyan-400"/><span className="text-sm font-medium">Invite to {invite.allianceName} from {invite.senderUsername}</span>
-                            </div>
-                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceInvite(invite)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceInvite(invite.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingAllianceChallenges.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Alliance Challenges</h5>
-                    {incomingAllianceChallenges.map((challenge: AllianceChallenge) => (
-                         <div key={challenge.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                            <div className="flex items-center gap-2">
-                                <Swords className="h-4 w-4 text-red-500"/><span className="text-sm font-medium">{challenge.challengerAllianceName} challenges you!</span>
-                            </div>
-                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceChallenge(challenge)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceChallenge(challenge.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingRequests.length === 0 && incomingRelationshipProposals.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && (
-                <p className="text-xs text-center text-muted-foreground p-2">No incoming requests.</p>
-              )}
-        </div>
-        </ScrollArea>
-    </PopoverContent>
-);
-
-const PendingPopover = ({
-    pendingRequests,
-    onCancelFriend,
-}: any) => (
-    <PopoverContent className="w-80">
-        <ScrollArea className="h-96">
-        <div className="p-4 space-y-4">
-            <h4 className="font-medium leading-none">Sent Requests</h4>
-            <Separator />
-            {pendingRequests.length > 0 ? (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Friend Requests</h5>
-                     {pendingRequests.map((req: FriendRequest) => (
-                         <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                             <div className="flex items-center gap-2">
-                                 <Avatar className="h-8 w-8"><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)}/><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar>
-                                 <span className="text-sm font-medium">{req.recipientUsername}</span>
-                             </div>
-                             <div className="flex items-center gap-1"><Hourglass className="h-4 w-4 text-amber-400"/><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onCancelFriend(req.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                     ))}
-                </div>
-            ) : (
-                <p className="text-xs text-center text-muted-foreground p-2">No pending friend requests.</p>
-            )}
-        </div>
-        </ScrollArea>
-    </PopoverContent>
-);
-
-
 export default function FriendsPage() {
     const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
     const {
         sendFriendRequest,
-        incomingRequests,
         pendingRequests,
         friends,
-        acceptFriendRequest,
-        declineFriendRequest,
-        cancelFriendRequest,
-        incomingRelationshipProposals,
-        acceptRelationshipProposal,
-        declineRelationshipProposal,
         unfriend,
         updateFriendNickname,
         suggestedFriends,
     } = useFriends();
-    const {
-        incomingAllianceInvitations,
-        acceptAllianceInvitation,
-        declineAllianceInvitation,
-        incomingAllianceChallenges,
-        acceptAllianceChallenge,
-        declineAllianceChallenge,
-    } = useAlliance();
-
+    
     const [usernameQuery, setUsernameQuery] = useState('');
     const [searchedUser, setSearchedUser] = useState<SearchedUser | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -376,8 +250,6 @@ export default function FriendsPage() {
     const isAlreadyFriend = searchedUser && friends.some(friend => friend.uid === searchedUser.uid);
     const hasIncomingRequest = searchedUser && incomingRequests.some(req => req.senderId === searchedUser.uid);
     
-    const allRequestsCount = incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
-
     const handleUpdateNickname = async (newNickname: string) => {
       if (!editingFriend) return;
       await updateFriendNickname(editingFriend.uid, newNickname);
@@ -458,40 +330,6 @@ export default function FriendsPage() {
                                         <Search className="h-6 w-6" />
                                     </Button>
                                 )}
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="relative">
-                                            <Mail className="h-6 w-6"/>
-                                            {allRequestsCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{allRequestsCount}</Badge>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <RequestsPopover 
-                                        incomingRequests={incomingRequests}
-                                        incomingRelationshipProposals={incomingRelationshipProposals}
-                                        incomingAllianceInvitations={incomingAllianceInvitations}
-                                        incomingAllianceChallenges={incomingAllianceChallenges}
-                                        onAcceptFriend={acceptFriendRequest}
-                                        onDeclineFriend={declineFriendRequest}
-                                        onAcceptRelationship={acceptRelationshipProposal}
-                                        onDeclineRelationship={declineRelationshipProposal}
-                                        onAcceptAllianceInvite={acceptAllianceInvitation}
-                                        onDeclineAllianceInvite={declineAllianceInvitation}
-                                        onAcceptAllianceChallenge={acceptAllianceChallenge}
-                                        onDeclineAllianceChallenge={declineAllianceChallenge}
-                                    />
-                                </Popover>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="relative">
-                                            <Hourglass className="h-6 w-6"/>
-                                            {pendingRequests.length > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{pendingRequests.length}</Badge>}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PendingPopover
-                                        pendingRequests={pendingRequests}
-                                        onCancelFriend={cancelFriendRequest}
-                                    />
-                                </Popover>
                             </div>
                         </div>
                         <div className="space-y-3">
