@@ -23,7 +23,7 @@ const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => vo
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint="abstract background"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col p-4 text-white">
             <div className="flex-grow">
                 <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
