@@ -197,10 +197,12 @@ export default function AlliancesPage() {
           <div className="lg:col-span-2 space-y-8">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Swords className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
-                </div>
+                {!showSearch && (
+                    <div className="flex items-center gap-2">
+                        <Swords className="h-6 w-6 text-primary" />
+                        <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
+                    </div>
+                )}
                  {showSearch ? (
                      <div className="relative w-full max-w-sm animate-fade-in-up ml-4">
                         <Input 
