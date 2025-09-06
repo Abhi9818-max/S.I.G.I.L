@@ -470,7 +470,7 @@ export default function FriendsPage() {
                     </Accordion>
                     
                     {/* Suggestions Section */}
-                    <Accordion type="single" collapsible className="w-full pt-4" defaultValue="suggestions">
+                    <Accordion type="single" collapsible className="w-full pt-4">
                          <AccordionItem value="suggestions">
                             <AccordionTrigger>
                                 <div className="flex items-center gap-2">
