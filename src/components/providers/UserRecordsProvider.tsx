@@ -16,7 +16,7 @@ import {
   FACTIONS,
   getContributionLevel
 } from '@/lib/config';
-import { XP_CONFIG } from '@/lib/xp-config';
+import { XP_CONFIG } from './xp-config';
 import { CONSTELLATIONS } from '@/lib/constellations';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import {
@@ -130,6 +130,8 @@ interface UserRecordsContextType {
   // Notes
   addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
   deleteNote: (noteId: string) => void;
+  updateNote: (note: Note) => void;
+  getNoteById: (noteId: string) => Note | undefined;
 }
 
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
@@ -986,6 +988,15 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const updatedNotes = notes.filter(n => n.id !== noteId);
     updateUserDataInDb({ notes: updatedNotes });
   }, [notes, updateUserDataInDb]);
+  
+  const getNoteById = useCallback((noteId: string): Note | undefined => {
+    return notes.find(note => note.id === noteId);
+  }, [notes]);
+  
+  const updateNote = useCallback((note: Note) => {
+    const updatedNotes = notes.map(n => n.id === note.id ? note : n);
+    updateUserDataInDb({ notes: updatedNotes });
+  }, [notes, updateUserDataInDb]);
 
   const contextValue = useMemo(() => ({
     records,
@@ -1038,6 +1049,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     convertXpToShards,
     addNote,
     deleteNote,
+    updateNote,
+    getNoteById,
   }), [
       records,
       addRecord,
@@ -1089,6 +1102,8 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       convertXpToShards,
       addNote,
       deleteNote,
+      updateNote,
+      getNoteById,
   ]);
 
   return (

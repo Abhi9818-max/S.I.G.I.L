@@ -11,32 +11,41 @@ import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
+import Link from 'next/link';
 
 const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string) => void; index: number }) => {
   const imageNumber = (index % 10) + 1;
   const imageUrl = `/notes/notes${imageNumber}.jpeg`;
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent link navigation
+    e.stopPropagation(); // Stop event bubbling
+    onDelete(note.id);
+  };
+
   return (
-    <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group">
-        <Image 
-            src={imageUrl}
-            alt={`Note background for ${note.title}`}
-            fill 
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        <div className="absolute inset-0 flex flex-col p-4 text-white">
-            <div className="flex-grow flex justify-end">
-                 <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/20" onClick={() => onDelete(note.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete note</span>
-                </Button>
-            </div>
-            <div>
-                <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
-            </div>
-        </div>
-    </Card>
+    <Link href={`/notes/${note.id}`} passHref>
+      <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group cursor-pointer">
+          <Image 
+              src={imageUrl}
+              alt={`Note background for ${note.title}`}
+              fill 
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 flex flex-col p-4 text-white">
+              <div className="flex-grow flex justify-end">
+                  <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/20 z-10" onClick={handleDeleteClick}>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete note</span>
+                  </Button>
+              </div>
+              <div>
+                  <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
+              </div>
+          </div>
+      </Card>
+    </Link>
   );
 };
 
@@ -52,7 +61,7 @@ export default function NotesPage() {
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      addNote({ title, content: '' }); // Content is not used in the card, so passing empty string
+      addNote({ title, content: '' }); 
       setTitle('');
       setShowForm(false);
     }
