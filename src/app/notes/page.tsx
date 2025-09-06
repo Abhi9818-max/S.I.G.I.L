@@ -15,16 +15,25 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => void }) => {
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader>
-        <CardTitle>{note.title}</CardTitle>
+    <Card className="flex flex-col h-full overflow-hidden">
+      <CardHeader className="p-0">
+        <div className="relative w-full h-40">
+          <Image 
+            src="https://picsum.photos/400/200" 
+            alt="Note image" 
+            fill 
+            className="object-cover"
+            data-ai-hint="abstract background"
+          />
+        </div>
       </CardHeader>
-      <CardContent className="flex-grow">
+      <CardContent className="p-4 flex-grow">
+        <CardTitle className="mb-2">{note.title}</CardTitle>
         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
           {note.content}
         </p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-4 pt-0">
         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive ml-auto" onClick={() => onDelete(note.id)}>
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete note</span>
