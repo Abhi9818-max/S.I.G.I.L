@@ -40,8 +40,8 @@ const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string
                       <span className="sr-only">Delete note</span>
                   </Button>
               </div>
-              <div>
-                  <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
+              <div className="text-shadow">
+                  <h3 className="text-lg font-bold">{note.title}</h3>
               </div>
           </div>
       </Card>
@@ -74,7 +74,6 @@ export default function NotesPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <StickyNote className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-semibold">Notes</h1>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
             <PlusCircle className="h-6 w-6"/>
