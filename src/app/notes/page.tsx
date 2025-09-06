@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string) => void; index: number }) => {
-  const imageNumber = (index % 10) + 1;
+  const imageNumber = (index % 29) + 1;
   const imageUrl = `/notes/notes${imageNumber}.jpeg`;
 
   const handleDeleteClick = (e: React.MouseEvent) => {
