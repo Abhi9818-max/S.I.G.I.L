@@ -275,7 +275,7 @@ export default function FriendsPage() {
     const router = useRouter();
 
     const handleSearch = () => {
-        if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
+        if (!usernameQuery.trim() || (userData?.username && usernameQuery.trim().toLowerCase() === userData.username.toLowerCase())) {
             setSearchMessage("Please enter a valid username other than your own.");
             setSearchedUser(null);
             return;
