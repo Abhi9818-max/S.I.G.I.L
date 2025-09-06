@@ -10,7 +10,6 @@ import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import { useAlliance } from '@/components/providers/AllianceProvider';
 import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -200,6 +199,9 @@ export default function FriendsPage() {
         updateFriendNickname,
         suggestedFriends,
         incomingRequests,
+        acceptFriendRequest,
+        declineFriendRequest,
+        cancelFriendRequest,
     } = useFriends();
     
     const [usernameQuery, setUsernameQuery] = useState('');
@@ -368,9 +370,70 @@ export default function FriendsPage() {
                                 </div>
                             )}
                         </div>
-                         <Accordion type="single" collapsible className="w-full pt-4">
+                         <Accordion type="multiple" className="w-full pt-4 space-y-2" defaultValue={['suggestions', 'incoming', 'pending']}>
+                            <AccordionItem value="incoming">
+                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <Mail className="h-5 w-5 text-primary" />
+                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Incoming Requests</h3>
+                                        {incomingRequests.length > 0 && <Badge>{incomingRequests.length}</Badge>}
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {incomingRequests.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">No incoming requests.</p>
+                                    ) : (
+                                        <div className="space-y-3 pt-2">
+                                            {incomingRequests.map(req => (
+                                                <div key={req.id} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
+                                                    <Link href={`/friends/${req.senderId}`} className="flex items-center gap-3 flex-grow">
+                                                        <Avatar>
+                                                            <AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} />
+                                                            <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="font-medium">{req.senderUsername}</span>
+                                                    </Link>
+                                                    <div className="flex gap-1">
+                                                        <Button size="icon" className="h-8 w-8 bg-green-600 hover:bg-green-500" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button>
+                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                             <AccordionItem value="pending">
+                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <Hourglass className="h-5 w-5 text-primary" />
+                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Sent Requests</h3>
+                                        {pendingRequests.length > 0 && <Badge>{pendingRequests.length}</Badge>}
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {pendingRequests.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">No pending requests.</p>
+                                    ) : (
+                                        <div className="space-y-3 pt-2">
+                                            {pendingRequests.map(req => (
+                                                <div key={req.id} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
+                                                    <Link href={`/friends/${req.recipientId}`} className="flex items-center gap-3 flex-grow">
+                                                        <Avatar>
+                                                            <AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} />
+                                                            <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="font-medium">{req.recipientUsername}</span>
+                                                    </Link>
+                                                    <Button size="sm" variant="outline" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
                             <AccordionItem value="suggestions">
-                                <AccordionTrigger>
+                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
                                     <div className="flex items-center gap-2">
                                         <Star className="h-5 w-5 text-primary" />
                                         <h3 className="text-lg font-semibold leading-none tracking-tight">Suggestions</h3>
