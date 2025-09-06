@@ -30,6 +30,8 @@ import Image from 'next/image';
 import { useTodos } from '@/components/providers/TodoProvider';
 import InteractiveTour from '@/components/layout/InteractiveTour';
 import { useSearchParams } from 'next/navigation';
+import { toPng } from 'html-to-image';
+import QuoteDisplayCard from '@/components/layout/QuoteDisplayCard';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -53,6 +55,7 @@ function HomePageContent() {
   const { toast } = useToast();
   const { checkMissedDares } = useTodos();
   const searchParams = useSearchParams();
+  const quoteCardRef = useRef<HTMLDivElement>(null);
 
   // Tour State
   const [isTourActive, setIsTourActive] = useState(false);
@@ -154,6 +157,29 @@ function HomePageContent() {
     }
   }, [currentLevelInfo, toast, awardTierEntryBonus]);
 
+  const handleDownloadQuote = useCallback(() => {
+    if (quoteCardRef.current === null) {
+      return;
+    }
+
+    toPng(quoteCardRef.current, { cacheBust: true, pixelRatio: 2 })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `sigil-quote-${quote?.author.replace(/\s/g, '_')}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error('Failed to create quote card image', err);
+        toast({
+          title: "Download Failed",
+          description: "Could not generate quote card.",
+          variant: "destructive"
+        });
+      });
+  }, [quoteCardRef, toast, quote]);
+
+
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
     setIsRecordModalOpen(true);
@@ -194,7 +220,7 @@ function HomePageContent() {
         onComplete={handleTourComplete}
         refs={tourRefs}
       />
-      <QuoteCard quote={quote} />
+      <QuoteCard quote={quote} onDownload={handleDownloadQuote} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8 animate-fade-in-up">
         {showStatsPanel && <div ref={tourRefs.stats}><StatsPanel selectedTaskFilterId={selectedTaskFilterId} /></div>}
 
@@ -264,6 +290,13 @@ function HomePageContent() {
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
         S.I.G.I.L. &copy; {currentYear}
       </footer>
+      
+      {/* Offscreen element for image generation */}
+      <div className="fixed -left-[9999px] top-0">
+          <div ref={quoteCardRef}>
+              <QuoteDisplayCard quote={quote} />
+          </div>
+      </div>
     </div>
   );
 }
