@@ -2,7 +2,7 @@
 
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell, User as UserIcon, Heart, Swords, Activity } from 'lucide-react';
+import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell, User as UserIcon, Heart, Swords, Activity, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LevelIndicator from './LevelIndicator'; 
 import { useUserRecords } from '@/components/providers/UserRecordsProvider'; 
@@ -54,6 +54,7 @@ const getNotificationIcon = (type: Notification['type']) => {
         case 'alliance_invite': return <ShieldCheck className="h-4 w-4 text-cyan-400" />;
         case 'alliance_challenge': return <Swords className="h-4 w-4 text-red-500" />;
         case 'friend_activity': return <Activity className="h-4 w-4 text-green-400" />;
+        case 'comment_on_post': return <MessageSquare className="h-4 w-4 text-purple-400" />;
         default: return <Bell className="h-4 w-4" />;
     }
 }
@@ -72,7 +73,7 @@ const NotificationItem = ({ notification, onAction }: { notification: Notificati
                 <p className="text-xs text-muted-foreground">{formatDistanceToNowStrict(parseISO(notification.createdAt), { addSuffix: true })}</p>
             </div>
         </div>
-        {notification.type !== 'friend_activity' && (
+        {(notification.type !== 'friend_activity' && notification.type !== 'comment_on_post') && (
              <div className="flex gap-1 self-end mt-2">
                 <Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAction('accept', notification)}><Check className="h-4 w-4"/></Button>
                 <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onAction('decline', notification)}><X className="h-4 w-4"/></Button>

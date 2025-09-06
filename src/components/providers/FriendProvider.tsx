@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry, Post, Comment } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry, Post, Comment, Notification } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { ACHIEVEMENTS } from '@/lib/achievements';
@@ -58,6 +58,10 @@ interface FriendContextType {
     addComment: (postId: string, postAuthorId: string, content: string, parentId?: string | null) => Promise<void>;
     toggleLike: (postId: string, postAuthorId: string) => Promise<void>;
     toggleCommentLike: (postId: string, postAuthorId: string, commentId: string) => Promise<void>;
+    // Notifications
+    notifications: Notification[];
+    markNotificationsAsRead: () => void;
+    createActivityNotificationForFriends: (message: string) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -75,6 +79,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [pendingRelationshipProposals, setPendingRelationshipProposals] = useState<RelationshipProposal[]>([]);
     const [globalListings, setGlobalListings] = useState<MarketplaceListing[]>([]);
     const [userListings, setUserListings] = useState<MarketplaceListing[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
     // Marketplace listeners
     useEffect(() => {
@@ -95,6 +100,24 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             setUserListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MarketplaceListing)));
         });
+        return () => unsubscribe();
+    }, [user]);
+
+    // Notifications listener
+    useEffect(() => {
+        if (!user || !db) {
+            setNotifications([]);
+            return;
+        };
+
+        const notificationsRef = collection(db, 'notifications');
+        const q = query(notificationsRef, where('recipientId', '==', user.uid), orderBy('createdAt', 'desc'), limit(50));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+            setNotifications(notifs);
+        });
+
         return () => unsubscribe();
     }, [user]);
 
@@ -558,6 +581,21 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             likes: [],
             parentId: parentId
         };
+        
+        if (postAuthorId !== user.uid) {
+             const notification: Omit<Notification, 'id'> = {
+                recipientId: postAuthorId,
+                senderId: user.uid,
+                senderUsername: userData.username,
+                senderPhotoURL: userData.photoURL,
+                type: 'comment_on_post',
+                message: parentId ? `replied to your comment on a post.` : `commented on your post.`,
+                link: `/friends/${postAuthorId}`,
+                isRead: false,
+                createdAt: new Date().toISOString(),
+            };
+            await addDoc(collection(db, 'notifications'), notification);
+        }
 
         const postAuthorRef = doc(db, 'users', postAuthorId);
         await runTransaction(db, async (transaction) => {
@@ -645,6 +683,44 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
     }, [user, db]);
 
+    const markNotificationsAsRead = useCallback(async () => {
+        if (!user || !db) return;
+        const unreadNotifs = notifications.filter(n => !n.isRead);
+        if (unreadNotifs.length === 0) return;
+
+        const batch = writeBatch(db);
+        unreadNotifs.forEach(notif => {
+            const notifRef = doc(db, 'notifications', notif.id);
+            batch.update(notifRef, { isRead: true });
+        });
+        await batch.commit();
+
+    }, [user, notifications]);
+
+    const createActivityNotificationForFriends = useCallback(async (message: string) => {
+         if (!user || !userData || !db || friends.length === 0) return;
+        
+        const batch = writeBatch(db);
+        friends.forEach(friend => {
+            const notificationRef = doc(collection(db!, 'notifications'));
+            const notification: Omit<Notification, 'id'> = {
+                recipientId: friend.uid,
+                senderId: user.uid,
+                senderUsername: userData.username,
+                senderPhotoURL: userData.photoURL,
+                type: 'friend_activity',
+                message,
+                link: `/friends/${user.uid}`,
+                isRead: false,
+                createdAt: new Date().toISOString(),
+            };
+            batch.set(notificationRef, notification);
+        });
+        
+        await batch.commit();
+
+    }, [user, userData, friends]);
+
     return (
         <FriendContext.Provider value={{ 
             sendFriendRequest,
@@ -678,6 +754,9 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             addComment,
             toggleLike,
             toggleCommentLike,
+            notifications,
+            markNotificationsAsRead,
+            createActivityNotificationForFriends,
         }}>
             {children}
         </FriendContext.Provider>

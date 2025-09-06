@@ -290,7 +290,8 @@ export type NotificationType =
     | 'relationship_proposal' 
     | 'alliance_invite' 
     | 'alliance_challenge' 
-    | 'friend_activity';
+    | 'friend_activity'
+    | 'comment_on_post';
 
 export interface Notification {
     id: string;
