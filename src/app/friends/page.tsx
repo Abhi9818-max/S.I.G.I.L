@@ -10,6 +10,7 @@ import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
