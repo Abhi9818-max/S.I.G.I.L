@@ -195,43 +195,40 @@ export default function AlliancesPage() {
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
-            
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Swords className="h-6 w-6 text-primary" />
                     <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
                 </div>
-                 {!showSearch && (
+                 {showSearch ? (
+                     <div className="relative w-full max-w-sm animate-fade-in-up ml-4">
+                        <Input 
+                            placeholder="Search for an alliance..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
+                            autoFocus
+                            onBlur={() => {
+                                if (!searchQuery) setShowSearch(false);
+                            }}
+                        />
+                        <button 
+                            onClick={handleSearch} 
+                            disabled={isSearching}
+                            className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            <Search className="h-5 w-5" />
+                        </button>
+                    </div>
+                ) : (
                   <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
                     <Search className="h-6 w-6" />
                   </Button>
                 )}
               </div>
              
-              {showSearch && (
-                <div className="relative w-full max-w-sm animate-fade-in-up">
-                    <Input 
-                      placeholder="Search for an alliance..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                      className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
-                      autoFocus
-                      onBlur={() => {
-                          if (!searchQuery) setShowSearch(false);
-                      }}
-                    />
-                    <button 
-                      onClick={handleSearch} 
-                      disabled={isSearching}
-                      className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <Search className="h-5 w-5" />
-                    </button>
-                  </div>
-              )}
-
               {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
 
               {searchResults.length > 0 && (
@@ -254,7 +251,6 @@ export default function AlliancesPage() {
                 </div>
               )}
             </div>
-
           </div>
 
            <div className="space-y-4">
@@ -284,4 +280,3 @@ export default function AlliancesPage() {
     </div>
   );
 }
-
