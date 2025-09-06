@@ -6,33 +6,27 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, Heart, Send, Shield, ArrowRight, Eye, Swords, Search, MoreVertical, Pencil, UserX, Star } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, Eye, MoreVertical, Pencil, UserX, Star, Shield, Swords } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { findUserByUsername } from '@/lib/server/actions/user';
-import { Separator } from '@/components/ui/separator';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -122,13 +116,6 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
         cardRef.current.style.setProperty('--rotate-y', '0deg');
     };
     
-    const handleInteractionStart = (e: React.TouchEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const dropdownTrigger = e.currentTarget.querySelector('[data-radix-dropdown-menu-trigger]') as HTMLElement;
-        dropdownTrigger?.click();
-    };
-
-
     return (
         <div 
             ref={cardRef} 
@@ -151,7 +138,7 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
                                 <CardTitle className="text-md text-shadow">{friend.nickname || friend.username}</CardTitle>
                                 {friend.relationship && (
                                     <CardDescription className="text-xs flex items-center gap-1 mt-1 text-white/80 text-shadow">
-                                        <Heart className="h-3 w-3" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-pink-400"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                                         {friend.relationship}
                                     </CardDescription>
                                 )}
@@ -188,6 +175,80 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
     );
 };
 
+const RequestsDialog = ({ isOpen, onOpenChange, defaultTab }: { isOpen: boolean, onOpenChange: (open: boolean) => void, defaultTab: 'incoming' | 'sent' }) => {
+    const { 
+        incomingRequests, 
+        pendingRequests, 
+        acceptFriendRequest, 
+        declineFriendRequest,
+        cancelFriendRequest 
+    } = useFriends();
+    const { 
+        incomingAllianceInvitations, 
+        acceptAllianceInvitation, 
+        declineAllianceInvitation,
+        incomingAllianceChallenges,
+        acceptAllianceChallenge,
+        declineAllianceChallenge
+    } = useAlliance();
+
+    const renderEmptyState = (message: string) => (
+        <div className="text-center text-muted-foreground py-10 px-4">
+            <p>{message}</p>
+        </div>
+    );
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader><DialogTitle>Requests & Invitations</DialogTitle></DialogHeader>
+                <Tabs defaultValue={defaultTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="incoming">Incoming</TabsTrigger>
+                        <TabsTrigger value="sent">Sent</TabsTrigger>
+                    </TabsList>
+                    <ScrollArea className="h-96 pr-3 mt-4">
+                        <TabsContent value="incoming">
+                            <div className="space-y-4">
+                                {incomingRequests.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && renderEmptyState("No incoming requests.")}
+                                {incomingRequests.map(req => (
+                                    <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} /><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.senderUsername}</p><p className="text-xs text-muted-foreground">Friend Request</p></div></div>
+                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button></div>
+                                    </CardContent></Card>
+                                ))}
+                                {incomingAllianceInvitations.map(inv => (
+                                    <Card key={inv.id}><CardContent className="p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3"><Shield className="h-8 w-8 text-primary" /><div><p className="font-semibold">{inv.allianceName}</p><p className="text-xs text-muted-foreground">Alliance Invite from {inv.senderUsername}</p></div></div>
+                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceInvitation(inv)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceInvitation(inv.id)}><X className="h-4 w-4"/></Button></div>
+                                    </CardContent></Card>
+                                ))}
+                                {incomingAllianceChallenges.map(chal => (
+                                    <Card key={chal.id}><CardContent className="p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3"><Swords className="h-8 w-8 text-destructive" /><div><p className="font-semibold">{chal.challengerAllianceName}</p><p className="text-xs text-muted-foreground">Alliance Challenge</p></div></div>
+                                        <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-500 hover:bg-green-600" onClick={() => acceptAllianceChallenge(chal)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => declineAllianceChallenge(chal.id)}><X className="h-4 w-4"/></Button></div>
+                                    </CardContent></Card>
+                                ))}
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="sent">
+                            <div className="space-y-4">
+                                {pendingRequests.length === 0 && renderEmptyState("You haven't sent any friend requests.")}
+                                {pendingRequests.map(req => (
+                                    <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} /><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.recipientUsername}</p><p className="text-xs text-muted-foreground">Request Sent</p></div></div>
+                                        <Button size="sm" variant="outline" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
+                                    </CardContent></Card>
+                                ))}
+                            </div>
+                        </TabsContent>
+                    </ScrollArea>
+                </Tabs>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export default function FriendsPage() {
     const { user, userData } = useAuth();
     const { getUserLevelInfo } = useUserRecords();
@@ -199,10 +260,8 @@ export default function FriendsPage() {
         updateFriendNickname,
         suggestedFriends,
         incomingRequests,
-        acceptFriendRequest,
-        declineFriendRequest,
-        cancelFriendRequest,
     } = useFriends();
+    const { incomingAllianceInvitations, incomingAllianceChallenges } = useAlliance();
     
     const [usernameQuery, setUsernameQuery] = useState('');
     const [searchedUser, setSearchedUser] = useState<SearchedUser | null>(null);
@@ -213,6 +272,9 @@ export default function FriendsPage() {
     const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
     const [unfriendingFriend, setUnfriendingFriend] = useState<Friend | null>(null);
     const router = useRouter();
+
+    const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+    const [requestDialogTab, setRequestDialogTab] = useState<'incoming' | 'sent'>('incoming');
 
     const handleSearch = () => {
         if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
@@ -266,24 +328,14 @@ export default function FriendsPage() {
       await unfriend(unfriendingFriend.uid);
       setUnfriendingFriend(null);
     }
-    
-    const renderSuggestion = (suggestion: SearchedUser) => {
-      const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
-      return (
-        <div key={suggestion.uid} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
-            <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 flex-grow">
-                <Avatar>
-                    <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
-                    <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <span className="font-medium">{suggestion.username}</span>
-            </Link>
-            <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending} className="ml-2">
-                {isPending ? 'Sent' : 'Add'}
-            </Button>
-        </div>
-      )
+
+    const openRequestDialog = (tab: 'incoming' | 'sent') => {
+        setRequestDialogTab(tab);
+        setIsRequestDialogOpen(true);
     };
+    
+    const incomingNotificationCount = incomingRequests.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
+    const sentNotificationCount = pendingRequests.length;
 
     return (
         <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -298,6 +350,11 @@ export default function FriendsPage() {
                 onOpenChange={(open) => !open && setUnfriendingFriend(null)}
                 friendName={unfriendingFriend?.nickname || unfriendingFriend?.username || ''}
                 onConfirm={handleUnfriend}
+            />
+            <RequestsDialog 
+                isOpen={isRequestDialogOpen}
+                onOpenChange={setIsRequestDialogOpen}
+                defaultTab={requestDialogTab}
             />
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
             <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
@@ -329,6 +386,14 @@ export default function FriendsPage() {
                             )}
 
                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => openRequestDialog('incoming')} className="relative">
+                                    <Mail className="h-6 w-6"/>
+                                    {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => openRequestDialog('sent')} className="relative">
+                                    <Hourglass className="h-6 w-6"/>
+                                    {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
+                                </Button>
                                 {!showSearch && (
                                     <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
                                         <Search className="h-6 w-6" />
@@ -370,69 +435,8 @@ export default function FriendsPage() {
                                 </div>
                             )}
                         </div>
-                         <Accordion type="multiple" className="w-full pt-4 space-y-2" defaultValue={['suggestions', 'incoming', 'pending']}>
-                            <AccordionItem value="incoming">
-                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-5 w-5 text-primary" />
-                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Incoming Requests</h3>
-                                        {incomingRequests.length > 0 && <Badge>{incomingRequests.length}</Badge>}
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {incomingRequests.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">No incoming requests.</p>
-                                    ) : (
-                                        <div className="space-y-3 pt-2">
-                                            {incomingRequests.map(req => (
-                                                <div key={req.id} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
-                                                    <Link href={`/friends/${req.senderId}`} className="flex items-center gap-3 flex-grow">
-                                                        <Avatar>
-                                                            <AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} />
-                                                            <AvatarFallback>{req.senderUsername.charAt(0).toUpperCase()}</AvatarFallback>
-                                                        </Avatar>
-                                                        <span className="font-medium">{req.senderUsername}</span>
-                                                    </Link>
-                                                    <div className="flex gap-1">
-                                                        <Button size="icon" className="h-8 w-8 bg-green-600 hover:bg-green-500" onClick={() => acceptFriendRequest(req)}><Check className="h-4 w-4"/></Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => declineFriendRequest(req.id)}><X className="h-4 w-4"/></Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                             <AccordionItem value="pending">
-                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                        <Hourglass className="h-5 w-5 text-primary" />
-                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Sent Requests</h3>
-                                        {pendingRequests.length > 0 && <Badge>{pendingRequests.length}</Badge>}
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {pendingRequests.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">No pending requests.</p>
-                                    ) : (
-                                        <div className="space-y-3 pt-2">
-                                            {pendingRequests.map(req => (
-                                                <div key={req.id} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
-                                                    <Link href={`/friends/${req.recipientId}`} className="flex items-center gap-3 flex-grow">
-                                                        <Avatar>
-                                                            <AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} />
-                                                            <AvatarFallback>{req.recipientUsername.charAt(0).toUpperCase()}</AvatarFallback>
-                                                        </Avatar>
-                                                        <span className="font-medium">{req.recipientUsername}</span>
-                                                    </Link>
-                                                    <Button size="sm" variant="outline" onClick={() => cancelFriendRequest(req.id)}>Cancel</Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                            <AccordionItem value="suggestions">
+                        <Accordion type="single" collapsible className="w-full pt-4" defaultValue="suggestions">
+                             <AccordionItem value="suggestions">
                                 <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
                                     <div className="flex items-center gap-2">
                                         <Star className="h-5 w-5 text-primary" />
@@ -444,7 +448,23 @@ export default function FriendsPage() {
                                         <p className="text-center text-muted-foreground py-4">No suggestions right now. Try searching!</p>
                                     ) : (
                                         <div className="space-y-3 pt-2">
-                                            {suggestedFriends.map(renderSuggestion)}
+                                            {suggestedFriends.map((suggestion) => {
+                                                const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
+                                                return (
+                                                    <div key={suggestion.uid} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
+                                                        <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 flex-grow">
+                                                            <Avatar>
+                                                                <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
+                                                                <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="font-medium">{suggestion.username}</span>
+                                                        </Link>
+                                                        <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending} className="ml-2">
+                                                            {isPending ? 'Sent' : 'Add'}
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
                                     )}
                                 </AccordionContent>
