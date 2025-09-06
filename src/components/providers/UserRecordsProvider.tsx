@@ -2,9 +2,9 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement, Notification } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
@@ -43,6 +43,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
 import { useAlliance } from './AllianceProvider';
+import { useFriends } from './FriendProvider';
 
 
 // Helper function to recursively remove undefined values from an object
@@ -142,6 +143,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
   const { userAlliances, updateAllianceProgress, updateMemberContribution } = useAlliance();
+  const { createActivityNotificationForFriends } = useFriends();
 
   useEffect(() => {
     if (isUserDataLoaded && authUserData) {
@@ -361,48 +363,55 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // Base data to update
     const dataToUpdate: Partial<UserData> = { records: updatedRecords };
     
-    if (newRecord.taskType && user) {
+    if (newRecord.taskType && user && userData) {
         const task = getTaskDefinitionById(newRecord.taskType);
-        const currentUserLevel = getUserLevelInfo()?.currentLevel || 1;
-        const recordXp = calculateXpForRecord(newRecord.value, task, currentUserLevel);
-        
-        // Update task mastery
-        const currentMastery = taskMastery[newRecord.taskType] || { level: 1, xp: 0 };
-        const newMasteryXp = (currentMastery.xp || 0) + recordXp;
-        const updatedTaskMastery = {
-            ...taskMastery,
-            [newRecord.taskType]: { ...currentMastery, xp: newMasteryXp }
-        };
-        dataToUpdate.taskMastery = updatedTaskMastery;
-        
-        // Update reputation
-        const faction = FACTIONS.find(f => f.taskCategoryId === newRecord.taskType);
-        if (faction) {
-          const repGained = Math.round(recordXp * REP_PER_XP);
-          const currentRep = reputation[faction.id] || 0;
-          const newRep = currentRep + repGained;
-          const updatedReputation = { ...reputation, [faction.id]: newRep };
-          dataToUpdate.reputation = updatedReputation;
-        }
-
-        // Check for alliance progress
-        if(userAlliances && userAlliances.length > 0) {
-            const now = new Date();
-            const relevantAlliance = userAlliances.find(a => 
-                a.taskId === newRecord.taskType &&
-                isWithinInterval(now, { start: parseISO(a.startDate), end: parseISO(a.endDate) })
-            );
-
-            if (relevantAlliance) {
-                updateAllianceProgress(relevantAlliance.id, newRecord.value);
-                updateMemberContribution(relevantAlliance.id, user.uid, recordXp);
+        if (task) {
+            const currentUserLevel = getUserLevelInfo()?.currentLevel || 1;
+            const recordXp = calculateXpForRecord(newRecord.value, task, currentUserLevel);
+            
+            // Update task mastery
+            const currentMastery = taskMastery[newRecord.taskType] || { level: 1, xp: 0 };
+            const newMasteryXp = (currentMastery.xp || 0) + recordXp;
+            const updatedTaskMastery = {
+                ...taskMastery,
+                [newRecord.taskType]: { ...currentMastery, xp: newMasteryXp }
+            };
+            dataToUpdate.taskMastery = updatedTaskMastery;
+            
+            // Update reputation
+            const faction = FACTIONS.find(f => f.taskCategoryId === newRecord.taskType);
+            if (faction) {
+              const repGained = Math.round(recordXp * REP_PER_XP);
+              const currentRep = reputation[faction.id] || 0;
+              const newRep = currentRep + repGained;
+              const updatedReputation = { ...reputation, [faction.id]: newRep };
+              dataToUpdate.reputation = updatedReputation;
             }
+
+            // Check for alliance progress
+            if(userAlliances && userAlliances.length > 0) {
+                const now = new Date();
+                const relevantAlliance = userAlliances.find(a => 
+                    a.taskId === newRecord.taskType &&
+                    isWithinInterval(now, { start: parseISO(a.startDate), end: parseISO(a.endDate) })
+                );
+
+                if (relevantAlliance) {
+                    updateAllianceProgress(relevantAlliance.id, newRecord.value);
+                    updateMemberContribution(relevantAlliance.id, user.uid, recordXp);
+                }
+            }
+            
+            // Create notifications for friends
+            const unitLabel = task.unit === 'custom' ? task.customUnitName : task.unit;
+            const activityMessage = `completed ${newRecord.value} ${unitLabel || ''} of ${task.name}`;
+            createActivityNotificationForFriends(activityMessage);
         }
     }
     
     updateUserDataInDb(dataToUpdate);
 
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress, updateMemberContribution, user]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress, updateMemberContribution, user, userData, createActivityNotificationForFriends]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.

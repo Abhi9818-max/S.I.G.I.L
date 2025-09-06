@@ -284,6 +284,29 @@ export interface Post {
   comments: Comment[];
 }
 
+// NEW: For Notifications
+export type NotificationType = 
+    | 'friend_request' 
+    | 'relationship_proposal' 
+    | 'alliance_invite' 
+    | 'alliance_challenge' 
+    | 'friend_activity';
+
+export interface Notification {
+    id: string;
+    recipientId: string;
+    senderId: string;
+    senderUsername: string;
+    senderPhotoURL?: string | null;
+    type: NotificationType;
+    message: string; // e.g., "sent you a friend request." or "completed the task 'Reading'."
+    link?: string; // e.g., /friends/{senderId}
+    isRead: boolean;
+    createdAt: string; // ISO
+    // Add original request data for action buttons
+    originalRequest?: FriendRequest | RelationshipProposal | AllianceInvitation | AllianceChallenge;
+}
+
 // For Auth/User Data
 export interface UserData {
     uid?: string;

@@ -1,11 +1,12 @@
 
+
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell } from 'lucide-react';
+import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell, User as UserIcon, Heart, Swords, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LevelIndicator from './LevelIndicator'; 
 import { useUserRecords } from '@/components/providers/UserRecordsProvider'; 
-import type { UserLevelInfo, FriendRequest, RelationshipProposal, AllianceInvitation, AllianceChallenge } from '@/types'; 
+import type { UserLevelInfo, FriendRequest, RelationshipProposal, AllianceInvitation, AllianceChallenge, Notification } from '@/types'; 
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -26,6 +27,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 
 // Simple hash function to get a number from a string for consistent default avatars
 const simpleHash = (s: string) => {
@@ -45,82 +47,55 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 };
 
-const RequestsPopover = ({
-    incomingRequests,
-    incomingRelationshipProposals,
-    incomingAllianceInvitations,
-    incomingAllianceChallenges,
-    onAcceptFriend,
-    onDeclineFriend,
-    onAcceptRelationship,
-    onDeclineRelationship,
-    onAcceptAllianceInvite,
-    onDeclineAllianceInvite,
-    onAcceptAllianceChallenge,
-    onDeclineAllianceChallenge,
-}: any) => (
-    <PopoverContent className="w-80" align="end">
-        <ScrollArea className="h-96">
-        <div className="p-4 space-y-4">
-            <h4 className="font-medium leading-none">Incoming Requests</h4>
-            <Separator />
-             {incomingRequests.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Friend Requests</h5>
-                    {incomingRequests.map((req: FriendRequest) => (
-                         <div key={req.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-                             <div className="flex items-center gap-2">
-                                 <AvatarPrimitive className="h-8 w-8"><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)}/><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></AvatarPrimitive>
-                                 <span className="text-sm font-medium">{req.senderUsername}</span>
-                             </div>
-                             <div className="flex gap-1"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptFriend(req)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineFriend(req.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-             )}
-              {incomingRelationshipProposals.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Relationship Proposals</h5>
-                    {incomingRelationshipProposals.map((prop: RelationshipProposal) => (
-                         <div key={prop.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                             <div className="flex items-center gap-2">
-                                 <Heart className="h-4 w-4 text-pink-400"/><span className="text-sm font-medium">{prop.senderUsername} wants to be your {prop.correspondingRelationship}.</span>
-                             </div>
-                             <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptRelationship(prop)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineRelationship(prop.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingAllianceInvitations.length > 0 && (
-                 <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Alliance Invitations</h5>
-                     {incomingAllianceInvitations.map((invite: AllianceInvitation) => (
-                         <div key={invite.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                            <div className="flex items-center gap-2">
-                                 <ShieldCheck className="h-4 w-4 text-cyan-400"/><span className="text-sm font-medium">Invite to {invite.allianceName} from {invite.senderUsername}</span>
-                            </div>
-                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceInvite(invite)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceInvite(invite.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingAllianceChallenges.length > 0 && (
-                <div className="space-y-2">
-                    <h5 className="text-sm font-semibold">Alliance Challenges</h5>
-                    {incomingAllianceChallenges.map((challenge: AllianceChallenge) => (
-                         <div key={challenge.id} className="flex flex-col p-2 rounded-md bg-muted/50">
-                            <div className="flex items-center gap-2">
-                                <Swords className="h-4 w-4 text-red-500"/><span className="text-sm font-medium">{challenge.challengerAllianceName} challenges you!</span>
-                            </div>
-                            <div className="flex gap-1 self-end mt-2"><Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAcceptAllianceChallenge(challenge)}><Check className="h-4 w-4"/></Button><Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onDeclineAllianceChallenge(challenge.id)}><X className="h-4 w-4"/></Button></div>
-                         </div>
-                    ))}
-                </div>
-              )}
-              {incomingRequests.length === 0 && incomingRelationshipProposals.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && (
-                <p className="text-xs text-center text-muted-foreground p-2">No incoming requests.</p>
-              )}
+const getNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+        case 'friend_request': return <UserIcon className="h-4 w-4 text-blue-400" />;
+        case 'relationship_proposal': return <Heart className="h-4 w-4 text-pink-400" />;
+        case 'alliance_invite': return <ShieldCheck className="h-4 w-4 text-cyan-400" />;
+        case 'alliance_challenge': return <Swords className="h-4 w-4 text-red-500" />;
+        case 'friend_activity': return <Activity className="h-4 w-4 text-green-400" />;
+        default: return <Bell className="h-4 w-4" />;
+    }
+}
+
+
+const NotificationItem = ({ notification, onAction }: { notification: Notification, onAction: (actionType: 'accept' | 'decline', notif: Notification) => void }) => (
+    <div className="flex flex-col p-2 rounded-md bg-muted/50">
+        <div className="flex items-start gap-2">
+            <Link href={notification.link || '#'}>
+                <AvatarPrimitive className="h-8 w-8 mt-1"><AvatarImage src={getAvatarForId(notification.senderId, notification.senderPhotoURL)}/><AvatarFallback>{notification.senderUsername.charAt(0)}</AvatarFallback></AvatarPrimitive>
+            </Link>
+            <div className="flex-1">
+                <p className="text-sm">
+                    <Link href={notification.link || '#'} className="font-semibold">{notification.senderUsername}</Link> {notification.message}
+                </p>
+                <p className="text-xs text-muted-foreground">{formatDistanceToNowStrict(parseISO(notification.createdAt), { addSuffix: true })}</p>
+            </div>
         </div>
+        {notification.type !== 'friend_activity' && (
+             <div className="flex gap-1 self-end mt-2">
+                <Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAction('accept', notification)}><Check className="h-4 w-4"/></Button>
+                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onAction('decline', notification)}><X className="h-4 w-4"/></Button>
+            </div>
+        )}
+    </div>
+);
+
+
+const RequestsPopover = ({ notifications, onAction }: any) => (
+    <PopoverContent className="w-80 p-0" align="end">
+        <ScrollArea className="h-96">
+            <div className="p-4 space-y-4">
+                <h4 className="font-medium leading-none">Notifications</h4>
+                <Separator />
+                {notifications.length > 0 ? (
+                    notifications.map((notif: Notification) => (
+                        <NotificationItem key={notif.id} notification={notif} onAction={onAction} />
+                    ))
+                ) : (
+                    <p className="text-xs text-center text-muted-foreground p-2">No new notifications.</p>
+                )}
+            </div>
         </ScrollArea>
     </PopoverContent>
 );
@@ -146,18 +121,16 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
   const { 
     acceptFriendRequest, 
     declineFriendRequest,
-    incomingRequests, 
     acceptRelationshipProposal, 
     declineRelationshipProposal,
-    incomingRelationshipProposals,
+    notifications,
+    markNotificationsAsRead,
   } = useFriends();
   const {
     acceptAllianceInvitation,
     declineAllianceInvitation,
-    incomingAllianceInvitations,
     acceptAllianceChallenge,
     declineAllianceChallenge,
-    incomingAllianceChallenges
   } = useAlliance();
 
   const [isLevelDetailsModalOpen, setIsLevelDetailsModalOpen] = useState(false);
@@ -184,7 +157,28 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
   
-  const allRequestsCount = incomingRequests.length + incomingRelationshipProposals.length + incomingAllianceInvitations.length + incomingAllianceChallenges.length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleAction = (actionType: 'accept' | 'decline', notif: Notification) => {
+      if (!notif.originalRequest) return;
+      
+      switch (notif.type) {
+        case 'friend_request':
+          actionType === 'accept' ? acceptFriendRequest(notif.originalRequest as FriendRequest) : declineFriendRequest(notif.id);
+          break;
+        case 'relationship_proposal':
+          actionType === 'accept' ? acceptRelationshipProposal(notif.originalRequest as RelationshipProposal) : declineRelationshipProposal(notif.id);
+          break;
+        case 'alliance_invite':
+          actionType === 'accept' ? acceptAllianceInvitation(notif.originalRequest as AllianceInvitation) : declineAllianceInvitation(notif.id);
+          break;
+        case 'alliance_challenge':
+          actionType === 'accept' ? acceptAllianceChallenge(notif.originalRequest as AllianceChallenge) : declineAllianceChallenge(notif.id);
+          break;
+        default:
+          break;
+      }
+  };
 
   const navLinks: NavLink[] = [
     { href: "/friends", label: "Friends", icon: Users },
@@ -204,7 +198,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
-  const userAvatar = userData?.photoURL || getAvatarForId(user?.uid);
+  const userAvatar = userData?.photoURL || getAvatarForId(user?.uid || '');
 
   return (
     <>
@@ -250,26 +244,16 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
               </>
             )}
 
-            <Popover>
+            <Popover onOpenChange={(open) => { if (open) markNotificationsAsRead(); }}>
               <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                       <Bell className="h-5 w-5"/>
-                      {allRequestsCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{allRequestsCount}</Badge>}
+                      {unreadCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadCount}</Badge>}
                   </Button>
               </PopoverTrigger>
               <RequestsPopover 
-                  incomingRequests={incomingRequests}
-                  incomingRelationshipProposals={incomingRelationshipProposals}
-                  incomingAllianceInvitations={incomingAllianceInvitations}
-                  incomingAllianceChallenges={incomingAllianceChallenges}
-                  onAcceptFriend={acceptFriendRequest}
-                  onDeclineFriend={declineFriendRequest}
-                  onAcceptRelationship={acceptRelationshipProposal}
-                  onDeclineRelationship={declineRelationshipProposal}
-                  onAcceptAllianceInvite={acceptAllianceInvitation}
-                  onDeclineAllianceInvite={declineAllianceInvitation}
-                  onAcceptAllianceChallenge={acceptAllianceChallenge}
-                  onDeclineAllianceChallenge={declineAllianceChallenge}
+                  notifications={notifications}
+                  onAction={handleAction}
               />
             </Popover>
 
