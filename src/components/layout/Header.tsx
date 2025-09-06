@@ -25,6 +25,7 @@ import { Avatar as AvatarPrimitive, AvatarImage, AvatarFallback } from '@/compon
 import LevelDetailsModal from './LevelDetailsModal';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 
@@ -243,7 +244,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
               </>
             )}
 
-            <Popover onOpenChange={(open) => { if (open) markNotificationsAsRead(); }}>
+            <Popover onOpenChange={(open) => { if (open && unreadCount > 0) markNotificationsAsRead(); }}>
               <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                       <Bell className="h-5 w-5"/>
