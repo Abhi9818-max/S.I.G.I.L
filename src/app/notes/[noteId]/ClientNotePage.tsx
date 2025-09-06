@@ -97,11 +97,7 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => router.push('/notes')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Notes
-          </Button>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
             {isEditing ? (
               <>
