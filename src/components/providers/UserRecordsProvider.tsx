@@ -16,7 +16,7 @@ import {
   FACTIONS,
   getContributionLevel
 } from '@/lib/config';
-import { XP_CONFIG } from './xp-config';
+import { XP_CONFIG } from '@/lib/xp-config';
 import { CONSTELLATIONS } from '@/lib/constellations';
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import {
