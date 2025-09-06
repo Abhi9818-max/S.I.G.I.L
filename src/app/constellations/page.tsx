@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SkillNode } from '@/types';
+import type { SkillNode, Achievement } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { Separator } from '@/components/ui/separator';
@@ -65,17 +65,22 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, taskColor, availablePoints
   );
 };
 
-const TitleCard = ({ title }: { title: typeof ACHIEVEMENTS[0] }) => {
+const TitleCard = ({ title, isUnlocked }: { title: Achievement; isUnlocked: boolean; }) => {
     const Icon = title.icon;
     return (
-        <Card className="p-4 flex items-center gap-4 bg-card hover:bg-muted/50 transition-colors">
-            <div className="p-3 rounded-full bg-primary/10 text-primary">
+        <Card className={cn("p-4 flex items-center gap-4 transition-colors", isUnlocked ? 'bg-card hover:bg-muted/50' : 'bg-card/50 opacity-60')}>
+            <div className={cn("p-3 rounded-full", isUnlocked ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground")}>
                 <Icon className="h-6 w-6" />
             </div>
             <div>
                 <p className="font-semibold">{title.name}</p>
                 <p className="text-xs text-muted-foreground">{title.description}</p>
             </div>
+            {!isUnlocked && (
+              <div className="ml-auto">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+            )}
         </Card>
     )
 }
@@ -117,9 +122,9 @@ export default function ConstellationsPage() {
   
   const defaultTab = constellations.length > 0 ? constellations[0].taskId : "";
   
-  const unlockedTitles = useMemo(() => {
-    return ACHIEVEMENTS.filter(a => a.isTitle && unlockedAchievements.includes(a.id));
-  }, [unlockedAchievements]);
+  const allTitles = useMemo(() => {
+    return ACHIEVEMENTS.filter(a => a.isTitle);
+  }, []);
 
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -190,21 +195,25 @@ export default function ConstellationsPage() {
             <div className="p-6 md:p-0">
                 <div className="flex items-center gap-2">
                     <Award className="h-6 w-6 text-yellow-400" />
-                    <h1 className="text-2xl font-semibold leading-none tracking-tight">Unlocked Titles</h1>
+                    <h1 className="text-2xl font-semibold leading-none tracking-tight">Titles</h1>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                     Special accolades earned for significant accomplishments. You can equip a title from the Settings page.
                 </p>
             </div>
             <div className="p-6 md:p-0 pt-6">
-                {unlockedTitles.length === 0 ? (
+                {allTitles.length === 0 ? (
                      <div className="text-center text-muted-foreground py-10">
-                        <p>No titles unlocked yet.</p>
+                        <p>No titles found.</p>
                      </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {unlockedTitles.map(title => (
-                            <TitleCard key={title.id} title={title} />
+                        {allTitles.map(title => (
+                            <TitleCard 
+                              key={title.id} 
+                              title={title} 
+                              isUnlocked={unlockedAchievements.includes(title.id)}
+                            />
                         ))}
                     </div>
                 )}
