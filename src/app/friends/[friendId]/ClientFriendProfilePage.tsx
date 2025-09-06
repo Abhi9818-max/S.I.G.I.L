@@ -10,7 +10,7 @@ import { ArrowLeft, User, ListChecks, ImageIcon, BarChart2, Activity, Pencil, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import type { UserData, Friend, RecordEntry, TaskDefinition, UserLevelInfo } from '@/types';
+import type { UserData, Friend, RecordEntry, TaskDefinition, UserLevelInfo, Post } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ContributionGraph from '@/components/records/ContributionGraph';
@@ -399,7 +399,12 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const today = new Date();
   const yesterday = subDays(today, 1);
   const displayName = friendInfo?.nickname || friendData.username;
-  const userPosts = (friendData.posts || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  const userPosts = useMemo(() => {
+    if (!friendData?.posts) return [];
+    return [...friendData.posts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [friendData?.posts]);
+
 
   const getRelationshipContent = () => {
     if (!isFriend) return null;

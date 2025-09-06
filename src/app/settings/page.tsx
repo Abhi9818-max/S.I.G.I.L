@@ -997,5 +997,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    
