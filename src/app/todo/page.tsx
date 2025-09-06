@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { ListChecks, PlusCircle, RotateCcw, CalendarIcon } from 'lucide-react';
+import { ListChecks, PlusCircle, RotateCcw, CalendarIcon, Pencil } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
@@ -48,6 +48,7 @@ export default function TodoPage() {
   const [newItemText, setNewItemText] = useState('');
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const { todoItems, addTodoItem, checkMissedDares, toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
@@ -74,6 +75,7 @@ export default function TodoPage() {
     if (newItemText.trim()) {
       addTodoItem(newItemText, format(selectedDate, 'yyyy-MM-dd'));
       setNewItemText('');
+      setShowAddForm(false);
     }
   };
 
@@ -103,6 +105,9 @@ export default function TodoPage() {
                 <h1 className="text-2xl font-bold text-white">Pacts</h1>
               </div>
               <div className="flex items-center gap-2">
+                 <Button variant="ghost" size="icon" onClick={() => setShowAddForm(!showAddForm)}>
+                    <Pencil className="h-5 w-5" />
+                 </Button>
                  <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -132,8 +137,8 @@ export default function TodoPage() {
             onDelete={deleteTodoItem}
             onToggleDare={toggleDareCompleted}
           />
-
-          <AddPactForm {...addPactFormProps} />
+          
+          {showAddForm && <AddPactForm {...addPactFormProps} />}
           
         </div>
       </main>
