@@ -201,7 +201,7 @@ const RequestsDialog = ({ isOpen, onOpenChange, defaultTab }: { isOpen: boolean,
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
-                <DialogHeader><DialogTitle>Requests & Invitations</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Requests &amp; Invitations</DialogTitle></DialogHeader>
                 <Tabs defaultValue={defaultTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="incoming">Incoming</TabsTrigger>
@@ -509,3 +509,5 @@ export default function FriendsPage() {
         </div>
     );
 }
+
+    
