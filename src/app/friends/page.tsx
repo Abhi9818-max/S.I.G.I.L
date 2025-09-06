@@ -166,7 +166,7 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
                 >
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                             <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full opacity-80 group-hover:opacity-100 transition-opacity">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-white/80 bg-black/20 hover:bg-black/40 transition-opacity">
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>
@@ -198,6 +198,7 @@ export default function FriendsPage() {
         unfriend,
         updateFriendNickname,
         suggestedFriends,
+        incomingRequests,
     } = useFriends();
     
     const [usernameQuery, setUsernameQuery] = useState('');
