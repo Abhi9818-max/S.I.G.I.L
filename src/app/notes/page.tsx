@@ -11,6 +11,7 @@ import { StickyNote, Trash2, PlusCircle } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
+import { Card } from '@/components/ui/card';
 
 const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => void }) => {
   return (
@@ -74,6 +75,7 @@ export default function NotesPage() {
   const { addNote, deleteNote } = useUserRecords();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [showForm, setShowForm] = useState(false);
 
   const notes = userData?.notes || [];
 
@@ -83,6 +85,7 @@ export default function NotesPage() {
       addNote({ title, content });
       setTitle('');
       setContent('');
+      setShowForm(false);
     }
   };
 
@@ -90,38 +93,45 @@ export default function NotesPage() {
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-background">
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8">
-        <div className="flex items-center gap-2">
-          <StickyNote className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-semibold">Notes</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <StickyNote className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-semibold">Notes</h1>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
+            <PlusCircle className="h-6 w-6"/>
+          </Button>
         </div>
-
-        <div className="w-full max-w-lg mx-auto">
-          <form onSubmit={handleAddNote} className="space-y-4 mb-8 p-4 border rounded-lg bg-card">
-            <h2 className="text-lg font-semibold">Create a New Note</h2>
-            <div>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Note Title"
-                className="bg-background"
-                required
-              />
-            </div>
-            <div>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Note content..."
-                className="bg-background"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Note
-            </Button>
-          </form>
-        </div>
+        
+        {showForm && (
+          <div className="w-full max-w-lg mx-auto animate-fade-in-up">
+            <form onSubmit={handleAddNote} className="space-y-4 mb-8 p-4 border rounded-lg bg-card">
+              <h2 className="text-lg font-semibold">Create a New Note</h2>
+              <div>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Note Title"
+                  className="bg-background"
+                  required
+                />
+              </div>
+              <div>
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Note content..."
+                  className="bg-background"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Note
+              </Button>
+            </form>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {notes.map((note) => (
@@ -133,10 +143,10 @@ export default function NotesPage() {
           ))}
         </div>
         
-        {notes.length === 0 && (
+        {notes.length === 0 && !showForm && (
           <div className="text-center text-muted-foreground py-10 col-span-full">
             <p>No notes yet.</p>
-            <p className="text-sm">Use the form above to add your first note.</p>
+            <p className="text-sm">Click the plus icon to add your first note.</p>
           </div>
         )}
       </main>
