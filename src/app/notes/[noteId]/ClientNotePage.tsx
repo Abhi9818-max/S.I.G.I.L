@@ -1,11 +1,12 @@
+
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Edit, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import type { Note } from '@/types';
@@ -22,7 +23,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from 'lucide-react';
 
 const ClientNotePage = ({ noteId }: { noteId: string }) => {
   const router = useRouter();
@@ -32,15 +32,20 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
   const [note, setNote] = useState<Note | null | undefined>(undefined);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  const resetState = useCallback((noteToSet: Note | null | undefined) => {
+    if (noteToSet) {
+      setTitle(noteToSet.title);
+      setContent(noteToSet.content);
+    }
+  }, []);
 
   useEffect(() => {
     const foundNote = getNoteById(noteId);
     setNote(foundNote);
-    if (foundNote) {
-      setTitle(foundNote.title);
-      setContent(foundNote.content);
-    }
-  }, [noteId, getNoteById]);
+    resetState(foundNote);
+  }, [noteId, getNoteById, resetState]);
 
   const handleSave = () => {
     if (note) {
@@ -49,19 +54,25 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
         title: 'Note Saved',
         description: 'Your changes have been saved successfully.',
       });
+      setIsEditing(false);
     }
   };
-  
+
+  const handleCancelEdit = () => {
+    resetState(note);
+    setIsEditing(false);
+  }
+
   const handleDelete = () => {
-      if (note) {
-        deleteNote(note.id);
-        toast({
-          title: 'Note Deleted',
-          description: 'The note has been permanently deleted.',
-          variant: 'destructive',
-        });
-        router.push('/notes');
-      }
+    if (note) {
+      deleteNote(note.id);
+      toast({
+        title: 'Note Deleted',
+        description: 'The note has been permanently deleted.',
+        variant: 'destructive',
+      });
+      router.push('/notes');
+    }
   };
 
   const levelInfo = getUserLevelInfo();
@@ -92,10 +103,24 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
             Back to Notes
           </Button>
           <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button variant="ghost" onClick={handleCancelEdit}>
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+                <Button onClick={handleSave}>
+                  <Save className="mr-2 h-4 w-4" /> Save
+                </Button>
+              </>
+            ) : (
+               <Button variant="outline" onClick={() => setIsEditing(true)}>
+                  <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                <Button variant="destructive" size="icon" className="h-10 w-10">
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -111,25 +136,30 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Button onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" /> Save
-            </Button>
           </div>
         </div>
         <div className="max-w-3xl mx-auto space-y-4">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Note Title"
-            className="text-2xl font-bold h-12 bg-transparent border-0 border-b-2 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary transition-colors"
-          />
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Your thoughts here..."
-            className="min-h-[60vh] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            rows={20}
-          />
+          {isEditing ? (
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Note Title"
+              className="text-2xl font-bold h-12 bg-transparent border-0 border-b-2 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary transition-colors"
+            />
+          ) : (
+            <h1 className="text-2xl font-bold h-12 py-2 border-b-2 border-transparent">{title}</h1>
+          )}
+          {isEditing ? (
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Your thoughts here..."
+              className="min-h-[60vh] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              rows={20}
+            />
+          ) : (
+             <div className="min-h-[60vh] py-2 whitespace-pre-wrap">{content || <p className="text-muted-foreground italic">No content yet. Click edit to start writing.</p>}</div>
+          )}
         </div>
       </main>
     </div>
