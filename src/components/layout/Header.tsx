@@ -88,7 +88,7 @@ const RequestsPopover = ({ notifications, onAction }: any) => (
             <div className="p-4 space-y-4">
                 <h4 className="font-medium leading-none">Notifications</h4>
                 <Separator />
-                {notifications.length > 0 ? (
+                {(notifications || []).length > 0 ? (
                     notifications.map((notif: Notification) => (
                         <NotificationItem key={notif.id} notification={notif} onAction={onAction} />
                     ))
