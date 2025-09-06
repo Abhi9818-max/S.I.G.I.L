@@ -357,157 +357,156 @@ export default function FriendsPage() {
                 defaultTab={requestDialogTab}
             />
             <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
-                <div className="flex flex-col lg:flex-row lg:gap-8">
-                    <div className="lg:w-1/3 space-y-4 order-1 lg:order-2 mb-8 lg:mb-0">
-                         <div className="flex items-center justify-between">
-                            {showSearch ? (
-                                <div className="relative w-full max-w-sm animate-fade-in">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Enter username..."
-                                        value={usernameQuery}
-                                        onChange={(e) => setUsernameQuery(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') handleSearch();
-                                        }}
-                                        className="bg-transparent border-white/50 rounded-full h-11 pl-10 pr-4 focus-visible:ring-primary/50"
-                                        autoFocus
-                                        onBlur={() => {
-                                            if (!usernameQuery) setShowSearch(false);
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <UserSearch className="h-6 w-6 text-primary" />
-                                    <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
-                                </div>
-                            )}
-
-                             <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => openRequestDialog('incoming')} className="relative">
-                                    <Mail className="h-6 w-6"/>
-                                    {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => openRequestDialog('sent')} className="relative">
-                                    <Hourglass className="h-6 w-6"/>
-                                    {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
-                                </Button>
-                                {!showSearch && (
-                                    <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
-                                        <Search className="h-6 w-6" />
-                                    </Button>
-                                )}
+            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
+                <div className="lg:w-2/3 mx-auto">
+                    <div className="flex items-center justify-between">
+                        {showSearch ? (
+                            <div className="relative w-full max-w-sm animate-fade-in">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Input
+                                    placeholder="Enter username..."
+                                    value={usernameQuery}
+                                    onChange={(e) => setUsernameQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSearch();
+                                    }}
+                                    className="bg-transparent border-white/50 rounded-full h-11 pl-10 pr-4 focus-visible:ring-primary/50"
+                                    autoFocus
+                                    onBlur={() => {
+                                        if (!usernameQuery) setShowSearch(false);
+                                    }}
+                                />
                             </div>
-                        </div>
-                        <div className="space-y-3">
-                            {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
-                            {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
-                            {searchedUser && (
-                                <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
-                                            <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="font-medium">{searchedUser.username}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button asChild variant="outline" size="sm">
-                                            <Link href={`/friends/${searchedUser.uid}`}>
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                View Profile
-                                            </Link>
-                                        </Button>
-                                        {isAlreadyFriend ? (
-                                            <Badge variant="secondary">Already Friends</Badge>
-                                        ) : hasIncomingRequest ? (
-                                            <Badge variant="outline">Check incoming</Badge>
-                                        ) : requestAlreadySent ? (
-                                            <Badge variant="outline">Request Sent</Badge>
-                                        ) : (
-                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
-                                                <UserPlus className="h-4 w-4 mr-2" /> Add Friend
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <UserSearch className="h-6 w-6 text-primary" />
+                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
+                            </div>
+                        )}
+
+                         <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => openRequestDialog('incoming')} className="relative">
+                                <Mail className="h-6 w-6"/>
+                                {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => openRequestDialog('sent')} className="relative">
+                                <Hourglass className="h-6 w-6"/>
+                                {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
+                            </Button>
+                            {!showSearch && (
+                                <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
+                                    <Search className="h-6 w-6" />
+                                </Button>
                             )}
                         </div>
-                        <Accordion type="single" collapsible className="w-full pt-4" defaultValue="suggestions">
-                             <AccordionItem value="suggestions">
-                                <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                        <Star className="h-5 w-5 text-primary" />
-                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Suggestions</h3>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {suggestedFriends.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">No suggestions right now. Try searching!</p>
+                    </div>
+                    <div className="space-y-3 mt-4">
+                        {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
+                        {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
+                        {searchedUser && (
+                            <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
+                                <div className="flex items-center gap-3">
+                                    <Avatar>
+                                        <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
+                                        <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{searchedUser.username}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/friends/${searchedUser.uid}`}>
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View Profile
+                                        </Link>
+                                    </Button>
+                                    {isAlreadyFriend ? (
+                                        <Badge variant="secondary">Already Friends</Badge>
+                                    ) : hasIncomingRequest ? (
+                                        <Badge variant="outline">Check incoming</Badge>
+                                    ) : requestAlreadySent ? (
+                                        <Badge variant="outline">Request Sent</Badge>
                                     ) : (
-                                        <div className="space-y-3 pt-2">
-                                            {suggestedFriends.map((suggestion) => {
-                                                const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
-                                                return (
-                                                    <div key={suggestion.uid} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
-                                                        <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 flex-grow">
-                                                            <Avatar>
-                                                                <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
-                                                                <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                                            </Avatar>
-                                                            <span className="font-medium">{suggestion.username}</span>
-                                                        </Link>
-                                                        <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending} className="ml-2">
-                                                            {isPending ? 'Sent' : 'Add'}
-                                                        </Button>
-                                                    </div>
-                                                )
-                                            })}
+                                        <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
+                                            <UserPlus className="h-4 w-4 mr-2" /> Add Friend
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="space-y-8 mt-12">
+                    {/* Friends Carousel */}
+                    <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
+                        <AccordionItem value="friends-list">
+                            <AccordionTrigger>
+                                <div className="flex items-center gap-2">
+                                    <Users className="h-6 w-6 text-primary" />
+                                    <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                {friends.length === 0 ? (
+                                    <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
+                                ) : (
+                                    <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
+                                        <div className="flex space-x-4 pb-4">
+                                            {friends.map((friend) => (
+                                                <FriendCard3D 
+                                                  key={friend.uid} 
+                                                  friend={friend} 
+                                                  onEdit={() => setEditingFriend(friend)}
+                                                  onUnfriend={() => setUnfriendingFriend(friend)}
+                                                  router={router}
+                                                />
+                                            ))}
                                         </div>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
-                     <div className="flex-1 space-y-8 order-2 lg:order-1">
-                        {/* Friends Carousel */}
-                        <Accordion type="single" collapsible className="w-full" defaultValue="friends-list">
-                            <AccordionItem value="friends-list">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="h-6 w-6 text-primary" />
-                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Your Friends</h2>
+                                        <ScrollBar orientation="horizontal" className="invisible"/>
+                                    </ScrollArea>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                    
+                    {/* Suggestions Section */}
+                    <Accordion type="single" collapsible className="w-full pt-4" defaultValue="suggestions">
+                         <AccordionItem value="suggestions">
+                            <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
+                                <div className="flex items-center gap-2">
+                                    <Star className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold leading-none tracking-tight">Suggestions</h3>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                {suggestedFriends.length === 0 ? (
+                                    <p className="text-center text-muted-foreground py-4">No suggestions right now. Try searching!</p>
+                                ) : (
+                                    <div className="space-y-3 pt-2">
+                                        {suggestedFriends.map((suggestion) => {
+                                            const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
+                                            return (
+                                                <div key={suggestion.uid} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
+                                                    <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 flex-grow">
+                                                        <Avatar>
+                                                            <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
+                                                            <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="font-medium">{suggestion.username}</span>
+                                                    </Link>
+                                                    <Button size="sm" onClick={() => handleSendRequest(suggestion)} disabled={isPending} className="ml-2">
+                                                        {isPending ? 'Sent' : 'Add'}
+                                                    </Button>
+                                                </div>
+                                            )
+                                        })}
                                     </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {friends.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">You have no friends yet.</p>
-                                    ) : (
-                                        <ScrollArea className="w-full whitespace-nowrap friends-scroller-container">
-                                            <div className="flex space-x-4 pb-4">
-                                                {friends.map((friend) => (
-                                                    <FriendCard3D 
-                                                      key={friend.uid} 
-                                                      friend={friend} 
-                                                      onEdit={() => setEditingFriend(friend)}
-                                                      onUnfriend={() => setUnfriendingFriend(friend)}
-                                                      router={router}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <ScrollBar orientation="horizontal" className="invisible"/>
-                                        </ScrollArea>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </div>
             </main>
         </div>
     );
 }
-
-    
