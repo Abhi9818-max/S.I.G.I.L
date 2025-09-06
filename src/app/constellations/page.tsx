@@ -1,18 +1,19 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Lock, Unlock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SkillNode } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-
+import { ACHIEVEMENTS } from '@/lib/achievements';
+import { Separator } from '@/components/ui/separator';
 
 interface SkillCardProps {
   skill: SkillNode;
@@ -64,6 +65,20 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, taskColor, availablePoints
   );
 };
 
+const TitleCard = ({ title }: { title: typeof ACHIEVEMENTS[0] }) => {
+    const Icon = title.icon;
+    return (
+        <Card className="p-4 flex items-center gap-4 bg-card hover:bg-muted/50 transition-colors">
+            <div className="p-3 rounded-full bg-primary/10 text-primary">
+                <Icon className="h-6 w-6" />
+            </div>
+            <div>
+                <p className="font-semibold">{title.name}</p>
+                <p className="text-xs text-muted-foreground">{title.description}</p>
+            </div>
+        </Card>
+    )
+}
 
 export default function ConstellationsPage() {
   const { 
@@ -71,7 +86,8 @@ export default function ConstellationsPage() {
     getAvailableSkillPoints, 
     unlockSkill, 
     isSkillUnlocked,
-    getUserLevelInfo 
+    getUserLevelInfo,
+    unlockedAchievements
   } = useUserRecords();
   const { toast } = useToast();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
@@ -100,6 +116,10 @@ export default function ConstellationsPage() {
   const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
   
   const defaultTab = constellations.length > 0 ? constellations[0].taskId : "";
+  
+  const unlockedTitles = useMemo(() => {
+    return ACHIEVEMENTS.filter(a => a.isTitle && unlockedAchievements.includes(a.id));
+  }, [unlockedAchievements]);
 
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -164,6 +184,32 @@ export default function ConstellationsPage() {
                 </Tabs>
             )}
           </div>
+          
+          <Separator className="my-12" />
+
+            <div className="p-6 md:p-0">
+                <div className="flex items-center gap-2">
+                    <Award className="h-6 w-6 text-yellow-400" />
+                    <h1 className="text-2xl font-semibold leading-none tracking-tight">Unlocked Titles</h1>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                    Special accolades earned for significant accomplishments. You can equip a title from the Settings page.
+                </p>
+            </div>
+            <div className="p-6 md:p-0 pt-6">
+                {unlockedTitles.length === 0 ? (
+                     <div className="text-center text-muted-foreground py-10">
+                        <p>No titles unlocked yet.</p>
+                     </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {unlockedTitles.map(title => (
+                            <TitleCard key={title.id} title={title} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
         </div>
       </main>
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
