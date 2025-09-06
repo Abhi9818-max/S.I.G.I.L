@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, Eye, MoreVertical, Pencil, UserX, Star, Shield, Swords } from 'lucide-react';
+import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, Eye, MoreVertical, Pencil, UserX, Star, Shield, Swords, Search } from 'lucide-react';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
