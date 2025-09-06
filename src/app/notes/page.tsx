@@ -6,17 +6,14 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { StickyNote, Trash2, PlusCircle } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string) => void; index: number }) => {
-  // Use a cycling index for the images, assuming a certain number of images exist.
-  // This will cycle through notes1.jpeg, notes2.jpeg, etc.
-  const imageNumber = (index % 10) + 1; // Assuming you have at least 10 images (notes1.jpeg to notes10.jpeg)
+  const imageNumber = (index % 10) + 1;
   const imageUrl = `/notes/notes${imageNumber}.jpeg`;
 
   return (
@@ -29,14 +26,14 @@ const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col p-4 text-white">
-            <div className="flex-grow">
-                <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
-            </div>
-            <div className="flex justify-end">
+            <div className="flex-grow flex justify-end">
                  <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/20" onClick={() => onDelete(note.id)}>
                     <Trash2 className="h-4 w-4" />
                     <span className="sr-only">Delete note</span>
                 </Button>
+            </div>
+            <div>
+                <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
             </div>
         </div>
     </Card>
@@ -48,7 +45,6 @@ export default function NotesPage() {
   const { userData } = useAuth();
   const { addNote, deleteNote } = useUserRecords();
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   const notes = userData?.notes || [];
@@ -56,9 +52,8 @@ export default function NotesPage() {
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      addNote({ title, content });
+      addNote({ title, content: '' }); // Content is not used in the card, so passing empty string
       setTitle('');
-      setContent('');
       setShowForm(false);
     }
   };
