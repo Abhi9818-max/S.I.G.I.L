@@ -27,7 +27,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter as AlertDialogFooterComponent } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useRouter } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -176,7 +175,7 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
     );
 };
 
-const RequestsPopoverContent = ({ defaultTab }: { defaultTab: 'incoming' | 'sent' }) => {
+const RequestsPopoverContent = ({ view }: { view: 'incoming' | 'sent' }) => {
     const { 
         incomingRequests, 
         pendingRequests, 
@@ -199,21 +198,20 @@ const RequestsPopoverContent = ({ defaultTab }: { defaultTab: 'incoming' | 'sent
         </div>
     );
 
+    const title = view === 'incoming' ? "Incoming Requests" : "Sent Requests";
+    const hasIncoming = incomingRequests.length > 0 || incomingAllianceInvitations.length > 0 || incomingAllianceChallenges.length > 0;
+    const hasSent = pendingRequests.length > 0;
+
     return (
         <PopoverContent className="w-80 p-0" align="end">
-            <Tabs defaultValue={defaultTab} className="w-full">
-                <div className="p-4 pb-0">
-                    <h4 className="font-medium leading-none">Requests &amp; Invitations</h4>
-                    <TabsList className="grid w-full grid-cols-2 mt-4">
-                        <TabsTrigger value="incoming">Incoming</TabsTrigger>
-                        <TabsTrigger value="sent">Sent</TabsTrigger>
-                    </TabsList>
-                </div>
-                <ScrollArea className="h-96 pr-3 mt-4">
-                    <div className="p-4 pt-0">
-                    <TabsContent value="incoming">
+            <div className="p-4 pb-2">
+                <h4 className="font-medium leading-none">{title}</h4>
+            </div>
+            <ScrollArea className="h-96 pr-3 mt-2">
+                <div className="p-4 pt-0">
+                    {view === 'incoming' && (
                         <div className="space-y-4">
-                            {incomingRequests.length === 0 && incomingAllianceInvitations.length === 0 && incomingAllianceChallenges.length === 0 && renderEmptyState("No incoming requests.")}
+                            {!hasIncoming && renderEmptyState("No incoming requests.")}
                             {incomingRequests.map(req => (
                                 <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
                                     <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.senderId, req.senderPhotoURL)} /><AvatarFallback>{req.senderUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.senderUsername}</p><p className="text-xs text-muted-foreground">Friend Request</p></div></div>
@@ -233,10 +231,10 @@ const RequestsPopoverContent = ({ defaultTab }: { defaultTab: 'incoming' | 'sent
                                 </CardContent></Card>
                             ))}
                         </div>
-                    </TabsContent>
-                    <TabsContent value="sent">
+                    )}
+                    {view === 'sent' && (
                         <div className="space-y-4">
-                            {pendingRequests.length === 0 && renderEmptyState("You haven't sent any friend requests.")}
+                            {!hasSent && renderEmptyState("You haven't sent any friend requests.")}
                             {pendingRequests.map(req => (
                                 <Card key={req.id}><CardContent className="p-3 flex items-center justify-between">
                                     <div className="flex items-center gap-3"><Avatar><AvatarImage src={getAvatarForId(req.recipientId, req.recipientPhotoURL)} /><AvatarFallback>{req.recipientUsername.charAt(0)}</AvatarFallback></Avatar><div><p className="font-semibold">{req.recipientUsername}</p><p className="text-xs text-muted-foreground">Request Sent</p></div></div>
@@ -244,10 +242,9 @@ const RequestsPopoverContent = ({ defaultTab }: { defaultTab: 'incoming' | 'sent
                                 </CardContent></Card>
                             ))}
                         </div>
-                    </TabsContent>
-                    </div>
-                </ScrollArea>
-            </Tabs>
+                    )}
+                </div>
+            </ScrollArea>
         </PopoverContent>
     );
 };
@@ -383,7 +380,7 @@ export default function FriendsPage() {
                                         {incomingNotificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{incomingNotificationCount}</Badge>}
                                     </Button>
                                 </PopoverTrigger>
-                                <RequestsPopoverContent defaultTab="incoming" />
+                                <RequestsPopoverContent view="incoming" />
                             </Popover>
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -392,7 +389,7 @@ export default function FriendsPage() {
                                         {sentNotificationCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{sentNotificationCount}</Badge>}
                                     </Button>
                                 </PopoverTrigger>
-                                <RequestsPopoverContent defaultTab="sent" />
+                                <RequestsPopoverContent view="sent" />
                             </Popover>
                             {!showSearch && (
                                 <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
