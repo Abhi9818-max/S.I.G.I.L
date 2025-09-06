@@ -15,30 +15,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => void }) => {
   return (
-    <Card className="flex flex-col h-full overflow-hidden">
-      <CardHeader className="p-0">
-        <div className="relative w-full h-40">
-          <Image 
-            src="https://picsum.photos/400/200" 
+    <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group">
+        <Image 
+            src="https://picsum.photos/400/500" 
             alt="Note image" 
             fill 
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint="abstract background"
-          />
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 flex flex-col p-4 text-white">
+            <div className="flex-grow">
+                <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
+                <p className="text-sm text-white/80 mt-1 whitespace-pre-wrap text-shadow">
+                    {note.content}
+                </p>
+            </div>
+            <div className="flex justify-end">
+                 <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/20" onClick={() => onDelete(note.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete note</span>
+                </Button>
+            </div>
         </div>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <CardTitle className="mb-2">{note.title}</CardTitle>
-        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-          {note.content}
-        </p>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive ml-auto" onClick={() => onDelete(note.id)}>
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete note</span>
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
@@ -107,7 +106,7 @@ export default function NotesPage() {
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {notes.map((note) => (
             <div
               key={note.id}
