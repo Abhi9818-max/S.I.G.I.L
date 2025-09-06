@@ -161,8 +161,9 @@ const FriendCard3D = ({ friend, onEdit, onUnfriend, router }: { friend: Friend, 
                     </Card>
                 </Link>
                 <div 
-                    className="absolute top-2 right-2 z-10 md:hidden"
-                    onContextMenu={handleInteractionStart}
+                    className="absolute top-2 right-2 z-10"
+                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 >
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -267,8 +268,8 @@ export default function FriendsPage() {
     const renderSuggestion = (suggestion: SearchedUser) => {
       const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
       return (
-        <div key={suggestion.uid} className="flex items-center justify-between p-2">
-            <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 hover:bg-muted/80 rounded-md p-1 -m-1 transition-colors flex-grow">
+        <div key={suggestion.uid} className="flex items-center justify-between p-2 hover:bg-muted/80 rounded-md -m-2 transition-colors">
+            <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 flex-grow">
                 <Avatar>
                     <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
                     <AvatarFallback>{suggestion.username.charAt(0).toUpperCase()}</AvatarFallback>
@@ -367,6 +368,25 @@ export default function FriendsPage() {
                                 </div>
                             )}
                         </div>
+                         <Accordion type="single" collapsible className="w-full pt-4">
+                            <AccordionItem value="suggestions">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <Star className="h-5 w-5 text-primary" />
+                                        <h3 className="text-lg font-semibold leading-none tracking-tight">Suggestions</h3>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    {suggestedFriends.length === 0 ? (
+                                        <p className="text-center text-muted-foreground py-4">No suggestions right now. Try searching!</p>
+                                    ) : (
+                                        <div className="space-y-3 pt-2">
+                                            {suggestedFriends.map(renderSuggestion)}
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </div>
                      <div className="flex-1 space-y-8 order-2 lg:order-1">
                         {/* Friends Carousel */}
@@ -396,23 +416,6 @@ export default function FriendsPage() {
                                             </div>
                                             <ScrollBar orientation="horizontal" className="invisible"/>
                                         </ScrollArea>
-                                    )}
-                                </AccordionContent>
-                            </AccordionItem>
-                            <AccordionItem value="suggestions">
-                                <AccordionTrigger>
-                                    <div className="flex items-center gap-2">
-                                        <Star className="h-6 w-6 text-primary" />
-                                        <h2 className="text-2xl font-semibold leading-none tracking-tight">Suggestions</h2>
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    {suggestedFriends.length === 0 ? (
-                                        <p className="text-center text-muted-foreground py-4">No suggestions right now. Try searching!</p>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {suggestedFriends.map(renderSuggestion)}
-                                        </div>
                                     )}
                                 </AccordionContent>
                             </AccordionItem>
