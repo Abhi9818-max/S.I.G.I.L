@@ -97,7 +97,6 @@ export default function NotesPage() {
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <StickyNote className="h-6 w-6 text-primary" />
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)} aria-label="Search notes">
