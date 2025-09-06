@@ -212,7 +212,7 @@ export default function FriendsPage() {
     const [unfriendingFriend, setUnfriendingFriend] = useState<Friend | null>(null);
     const router = useRouter();
 
-    const handleSearch = async () => {
+    const handleSearch = () => {
         if (!usernameQuery.trim() || usernameQuery.trim().toLowerCase() === userData?.username.toLowerCase()) {
             setSearchMessage("Please enter a valid username other than your own.");
             setSearchedUser(null);
