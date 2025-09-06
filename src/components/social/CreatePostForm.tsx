@@ -42,7 +42,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onCreatePost }) => {
       <Textarea
         {...form.register('content')}
         placeholder="What's on your mind?"
-        className="bg-card"
+        className="bg-transparent border-0 border-b-2 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary transition-colors"
       />
       {form.formState.errors.content && (
         <p className="text-sm text-destructive">{form.formState.errors.content.message}</p>
