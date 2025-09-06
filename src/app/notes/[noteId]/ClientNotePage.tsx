@@ -96,45 +96,8 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
-      <main className="flex-grow container mx-auto p-4 md:p-8 space-y-6">
-        <div className="flex items-center justify-end">
-          <div className="flex items-center gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="ghost" onClick={handleCancelEdit}>
-                  <X className="mr-2 h-4 w-4" /> Cancel
-                </Button>
-                <Button onClick={handleSave}>
-                  <Save className="mr-2 h-4 w-4" /> Save
-                </Button>
-              </>
-            ) : (
-               <Button variant="outline" onClick={() => setIsEditing(true)}>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </Button>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="icon" className="h-10 w-10">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your note.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-        <div className="max-w-3xl mx-auto space-y-4">
+      <main className="flex-grow container mx-auto p-4 md:p-8 space-y-6 flex flex-col">
+        <div className="max-w-3xl mx-auto space-y-4 flex-grow w-full">
           {isEditing ? (
             <Input
               value={title}
@@ -158,6 +121,45 @@ const ClientNotePage = ({ noteId }: { noteId: string }) => {
           )}
         </div>
       </main>
+       <footer className="sticky bottom-0 bg-background/80 backdrop-blur-sm border-t py-2">
+            <div className="container mx-auto flex items-center justify-end">
+                <div className="flex items-center gap-2">
+                    {isEditing ? (
+                    <>
+                        <Button variant="ghost" onClick={handleCancelEdit}>
+                        <X className="mr-2 h-4 w-4" /> Cancel
+                        </Button>
+                        <Button onClick={handleSave}>
+                        <Save className="mr-2 h-4 w-4" /> Save
+                        </Button>
+                    </>
+                    ) : (
+                    <Button variant="outline" onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                    )}
+                    <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon" className="h-10 w-10">
+                        <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your note.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </div>
+       </footer>
     </div>
   );
 };
