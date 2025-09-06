@@ -134,6 +134,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'title',
     icon: Dumbbell,
     isTitle: true,
+    costSP: 250,
+    costTaskId: 'exercise',
     check: ({ getAggregateSumForTask }) => getAggregateSumForTask('exercise') >= 100,
   },
   {
@@ -143,6 +145,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     category: 'title',
     icon: Briefcase,
     isTitle: true,
+    costSP: 500,
+    costTaskId: 'work',
     check: ({ getAggregateSumForTask }) => getAggregateSumForTask('work') >= 250,
   },
   {

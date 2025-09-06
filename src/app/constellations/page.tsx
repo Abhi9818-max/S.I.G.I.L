@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SkillNode, Achievement } from '@/types';
+import type { SkillNode, Achievement, TaskDefinition } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { ACHIEVEMENTS } from '@/lib/achievements';
 import { Separator } from '@/components/ui/separator';
@@ -28,7 +28,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, taskColor, availablePoints
 
   return (
     <div className={cn(
-        "p-4 border rounded-lg flex flex-col justify-between transition-all", 
+        "p-4 border rounded-lg flex flex-col justify-between transition-all h-full", 
         isUnlocked ? 'border-primary/60 bg-primary/10' : 'bg-card',
         !isUnlocked && !canAfford ? 'opacity-50' : ''
       )}>
@@ -36,7 +36,7 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, taskColor, availablePoints
         <h4 className="font-semibold text-md mb-1">{skill.name}</h4>
         <p className="text-sm text-muted-foreground mb-3">{skill.description}</p>
       </div>
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2 mt-auto">
         <div className="text-xs font-mono p-1 px-2 rounded-md bg-muted">
             Cost: <span className="font-bold" style={{color: taskColor}}>{skill.cost} SP</span>
         </div>
@@ -65,21 +65,59 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, taskColor, availablePoints
   );
 };
 
-const TitleCard = ({ title, isUnlocked }: { title: Achievement; isUnlocked: boolean; }) => {
+const TitleCard = ({ 
+    title, 
+    isUnlocked,
+    onUnlock,
+    canAfford,
+    taskColor
+}: { 
+    title: Achievement; 
+    isUnlocked: boolean;
+    onUnlock?: () => void;
+    canAfford?: boolean;
+    taskColor?: string;
+}) => {
     const Icon = title.icon;
+    const canBePurchased = title.costSP && onUnlock;
+
     return (
-        <Card className={cn("p-4 flex items-center gap-4 transition-colors", isUnlocked ? 'bg-card hover:bg-muted/50' : 'bg-card/50 opacity-60')}>
-            <div className={cn("p-3 rounded-full", isUnlocked ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground")}>
-                <Icon className="h-6 w-6" />
+        <Card className={cn("p-4 flex flex-col justify-between transition-colors h-full", isUnlocked ? 'bg-card hover:bg-muted/50' : 'bg-card/50 opacity-60', !isUnlocked && !canAfford && canBePurchased ? 'opacity-50' : '')}>
+            <div className="flex items-start gap-4">
+                <div className={cn("p-3 rounded-full", isUnlocked ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground")}>
+                    <Icon className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                    <p className="font-semibold">{title.name}</p>
+                    <p className="text-xs text-muted-foreground">{title.description}</p>
+                </div>
+                {isUnlocked ? 
+                    <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" /> : 
+                    !canBePurchased && <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                }
             </div>
-            <div>
-                <p className="font-semibold">{title.name}</p>
-                <p className="text-xs text-muted-foreground">{title.description}</p>
-            </div>
-            {!isUnlocked && (
-              <div className="ml-auto">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
+            {canBePurchased && !isUnlocked && (
+                <div className="flex flex-col items-center gap-2 mt-4">
+                    <div className="text-xs font-mono p-1 px-2 rounded-md bg-muted">
+                        Cost: <span className="font-bold" style={{color: taskColor}}>{title.costSP} SP</span>
+                    </div>
+                     <Button
+                      onClick={onUnlock}
+                      disabled={!canAfford}
+                      className="w-full mt-2"
+                      size="sm"
+                    >
+                      {canAfford ? (
+                        <>
+                          <Unlock className="mr-2 h-4 w-4" /> Unlock
+                        </>
+                      ) : (
+                         <>
+                          <Lock className="mr-2 h-4 w-4" /> Unlock
+                        </>
+                      )}
+                    </Button>
+                </div>
             )}
         </Card>
     )
@@ -92,7 +130,10 @@ export default function ConstellationsPage() {
     unlockSkill, 
     isSkillUnlocked,
     getUserLevelInfo,
-    unlockedAchievements
+    unlockedAchievements,
+    claimAchievement,
+    taskDefinitions,
+    unlockTitleWithSP,
   } = useUserRecords();
   const { toast } = useToast();
   const [currentYear, setCurrentYear] = useState<number | null>(null);
@@ -117,6 +158,24 @@ export default function ConstellationsPage() {
     }
   };
 
+  const handleUnlockTitle = (title: Achievement) => {
+    if (!title.costSP || !title.costTaskId) return;
+
+    const success = unlockTitleWithSP(title.id, title.costTaskId, title.costSP);
+    if (success) {
+      toast({
+        title: "✨ Title Unlocked!",
+        description: `You have successfully unlocked "${title.name}".`,
+      });
+    } else {
+        toast({
+        title: "Unlock Failed",
+        description: "Not enough Skill Points or title is already unlocked.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const levelInfo = getUserLevelInfo();
   const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
   
@@ -125,6 +184,12 @@ export default function ConstellationsPage() {
   const allTitles = useMemo(() => {
     return ACHIEVEMENTS.filter(a => a.isTitle);
   }, []);
+
+  const getTaskColor = (taskId: string | undefined): string => {
+    if (!taskId) return 'hsl(var(--primary))';
+    const task = taskDefinitions.find(t => t.id === taskId);
+    return task?.color || 'hsl(var(--primary))';
+  }
 
   return (
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -198,7 +263,7 @@ export default function ConstellationsPage() {
                     <h1 className="text-2xl font-semibold leading-none tracking-tight">Titles</h1>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                    Special accolades earned for significant accomplishments. You can equip a title from the Settings page.
+                    Special accolades earned for significant accomplishments or purchased with SP. You can equip a title from the Settings page.
                 </p>
             </div>
             <div className="p-6 md:p-0 pt-6">
@@ -208,13 +273,26 @@ export default function ConstellationsPage() {
                      </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {allTitles.map(title => (
-                            <TitleCard 
-                              key={title.id} 
-                              title={title} 
-                              isUnlocked={unlockedAchievements.includes(title.id)}
-                            />
-                        ))}
+                        {allTitles.map(title => {
+                            const isUnlocked = unlockedAchievements.includes(title.id);
+                            let canAfford = false;
+                            let availablePoints = 0;
+                            if (title.costSP && title.costTaskId) {
+                                availablePoints = getAvailableSkillPoints(title.costTaskId);
+                                canAfford = availablePoints >= title.costSP;
+                            }
+                            
+                            return (
+                                <TitleCard 
+                                  key={title.id} 
+                                  title={title} 
+                                  isUnlocked={isUnlocked}
+                                  onUnlock={title.costSP ? () => handleUnlockTitle(title) : undefined}
+                                  canAfford={canAfford}
+                                  taskColor={getTaskColor(title.costTaskId)}
+                                />
+                            )
+                        })}
                     </div>
                 )}
             </div>

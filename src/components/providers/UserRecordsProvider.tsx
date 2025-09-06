@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note } from '@/types';
+import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -104,6 +104,7 @@ interface UserRecordsContextType {
   // Constellations
   getAvailableSkillPoints: (taskId: string) => number;
   unlockSkill: (skillId: string, taskId: string, cost: number) => boolean;
+  unlockTitleWithSP: (titleId: string, taskId: string, cost: number) => boolean;
   isSkillUnlocked: (skillId: string) => boolean;
   constellations: Constellation[];
   // Insights
@@ -721,6 +722,18 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     return false;
   }, [getAvailableSkillPoints, isSkillUnlocked, updateUserDataInDb, spentSkillPoints, unlockedSkills]);
+  
+  const unlockTitleWithSP = useCallback((titleId: string, taskId: string, cost: number): boolean => {
+    const availablePoints = getAvailableSkillPoints(taskId);
+    if (availablePoints >= cost && !unlockedAchievements.includes(titleId)) {
+        const updatedPoints = { ...spentSkillPoints, [taskId]: (spentSkillPoints[taskId] || 0) + cost };
+        const updatedAchievements = [...unlockedAchievements, titleId];
+        updateUserDataInDb({ spentSkillPoints: updatedPoints, unlockedAchievements: updatedAchievements });
+      return true;
+    }
+    return false;
+  }, [getAvailableSkillPoints, unlockedAchievements, updateUserDataInDb, spentSkillPoints]);
+
 
   const constellations = useMemo(() => CONSTELLATIONS, []);
 
@@ -850,7 +863,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const nowClaimable: string[] = [];
     ACHIEVEMENTS.forEach(ach => {
       // An achievement is claimable if its conditions are met AND it's not already unlocked or pending claim.
-      if (!unlockedAchievements.includes(ach.id) && !claimableAchievements.includes(ach.id) && ach.check(context)) {
+      if (!unlockedAchievements.includes(ach.id) && !claimableAchievements.includes(ach.id) && !ach.costSP && ach.check(context)) {
         nowClaimable.push(ach.id);
       }
     });
@@ -1029,6 +1042,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     isUserDataLoaded,
     getAvailableSkillPoints,
     unlockSkill,
+    unlockTitleWithSP,
     isSkillUnlocked,
     constellations,
     getTaskDistribution,
@@ -1082,6 +1096,7 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       isUserDataLoaded,
       getAvailableSkillPoints,
       unlockSkill,
+      unlockTitleWithSP,
       isSkillUnlocked,
       constellations,
       getTaskDistribution,

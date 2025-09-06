@@ -172,6 +172,8 @@ export interface Achievement {
   isSecret?: boolean; // If true, hide details until unlocked
   isTitle?: boolean; // If true, can be displayed as a user title
   isClaimable?: boolean;
+  costSP?: number;
+  costTaskId?: string;
   check: (context: {
     levelInfo: UserLevelInfo;
     streaks: Record<string, number>;
