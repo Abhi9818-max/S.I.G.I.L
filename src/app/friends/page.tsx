@@ -267,7 +267,7 @@ export default function FriendsPage() {
     const renderSuggestion = (suggestion: SearchedUser) => {
       const isPending = pendingRequests.some(req => req.recipientId === suggestion.uid);
       return (
-        <div key={suggestion.uid} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+        <div key={suggestion.uid} className="flex items-center justify-between p-2">
             <Link href={`/friends/${suggestion.uid}`} className="flex items-center gap-3 hover:bg-muted/80 rounded-md p-1 -m-1 transition-colors flex-grow">
                 <Avatar>
                     <AvatarImage src={getAvatarForId(suggestion.uid, suggestion.photoURL)} />
