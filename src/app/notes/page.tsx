@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { StickyNote, Trash2, PlusCircle } from 'lucide-react';
+import { StickyNote, Trash2, PlusCircle, Search } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
@@ -55,8 +55,15 @@ export default function NotesPage() {
   const { addNote, deleteNote } = useUserRecords();
   const [title, setTitle] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
-  const notes = userData?.notes || [];
+  const allNotes = userData?.notes || [];
+
+  const filteredNotes = allNotes.filter(note => 
+    note.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,10 +82,26 @@ export default function NotesPage() {
           <div className="flex items-center gap-2">
             <StickyNote className="h-6 w-6 text-primary" />
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
-            <PlusCircle className="h-6 w-6"/>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)} aria-label="Search notes">
+              <Search className="h-6 w-6"/>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
+              <PlusCircle className="h-6 w-6"/>
+            </Button>
+          </div>
         </div>
+
+        {showSearch && (
+          <div className="w-full max-w-lg mx-auto animate-fade-in-up">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search notes by title or content..."
+              className="bg-background"
+            />
+          </div>
+        )}
         
         {showForm && (
           <div className="w-full max-w-lg mx-auto animate-fade-in-up">
@@ -102,7 +125,7 @@ export default function NotesPage() {
         )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {notes.map((note, index) => (
+          {filteredNotes.map((note, index) => (
             <div
               key={note.id}
             >
@@ -111,10 +134,10 @@ export default function NotesPage() {
           ))}
         </div>
         
-        {notes.length === 0 && !showForm && (
+        {filteredNotes.length === 0 && !showForm && (
           <div className="text-center text-muted-foreground py-10 col-span-full">
-            <p>No notes yet.</p>
-            <p className="text-sm">Click the plus icon to add your first note.</p>
+            <p>No notes found.</p>
+            <p className="text-sm">{searchQuery ? 'Try a different search term.' : 'Click the plus icon to add your first note.'}</p>
           </div>
         )}
       </main>
