@@ -27,9 +27,6 @@ const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => vo
         <div className="absolute inset-0 flex flex-col p-4 text-white">
             <div className="flex-grow">
                 <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
-                <p className="text-sm text-white/80 mt-1 whitespace-pre-wrap text-shadow">
-                    {note.content}
-                </p>
             </div>
             <div className="flex justify-end">
                  <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/20" onClick={() => onDelete(note.id)}>
