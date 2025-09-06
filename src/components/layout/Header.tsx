@@ -25,7 +25,6 @@ import { Avatar as AvatarPrimitive, AvatarImage, AvatarFallback } from '@/compon
 import LevelDetailsModal from './LevelDetailsModal';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatDistanceToNowStrict, parseISO } from 'date-fns';
 
@@ -157,7 +156,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
   
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = (notifications || []).filter(n => !n.isRead).length;
 
   const handleAction = (actionType: 'accept' | 'decline', notif: Notification) => {
       if (!notif.originalRequest) return;
