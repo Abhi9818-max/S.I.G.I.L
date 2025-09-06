@@ -200,7 +200,7 @@ const RequestsDialog = ({ isOpen, onOpenChange, defaultTab }: { isOpen: boolean,
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-sm">
                 <DialogHeader><DialogTitle>Requests &amp; Invitations</DialogTitle></DialogHeader>
                 <Tabs defaultValue={defaultTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
@@ -472,7 +472,7 @@ export default function FriendsPage() {
                     {/* Suggestions Section */}
                     <Accordion type="single" collapsible className="w-full pt-4" defaultValue="suggestions">
                          <AccordionItem value="suggestions">
-                            <AccordionTrigger className="bg-muted/50 px-3 rounded-md">
+                            <AccordionTrigger>
                                 <div className="flex items-center gap-2">
                                     <Star className="h-5 w-5 text-primary" />
                                     <h3 className="text-lg font-semibold leading-none tracking-tight">Suggestions</h3>
