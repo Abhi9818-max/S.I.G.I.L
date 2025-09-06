@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement, Notification } from '@/types';
@@ -42,9 +41,6 @@ import {
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
-import { useAlliance } from './AllianceProvider';
-import { useFriends } from './FriendProvider';
-
 
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
@@ -139,32 +135,11 @@ interface UserRecordsContextType {
 const UserRecordsContext = React.createContext<UserRecordsContextType | undefined>(undefined);
 
 export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userData: authUserData, isUserDataLoaded, isGuest } = useAuth();
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, userData: authUserData, isUserDataLoaded, isGuest, updateUserDataInDb: authUpdateUserDataInDb } = useAuth();
   const { toast } = useToast();
-  const { userAlliances, updateAllianceProgress, updateMemberContribution } = useAlliance();
-  const { createActivityNotificationForFriends } = useFriends();
 
-  useEffect(() => {
-    if (isUserDataLoaded && authUserData) {
-      // Data migration for tasks without a status
-      const needsMigration = authUserData.taskDefinitions?.some(task => !task.status);
-      if (needsMigration && authUserData.taskDefinitions) {
-        const migratedTasks = authUserData.taskDefinitions.map(task => 
-          task.status ? task : { ...task, status: 'active' as TaskStatus }
-        );
-        const migratedUserData = { ...authUserData, taskDefinitions: migratedTasks };
-        setUserData(migratedUserData);
-        if (user) {
-          updateUserDataInDb({ taskDefinitions: migratedTasks });
-        }
-      } else {
-        setUserData(authUserData);
-      }
-    } else if (isUserDataLoaded) {
-      setUserData(authUserData);
-    }
-  }, [authUserData, isUserDataLoaded, user]);
+  const updateUserDataInDb = authUpdateUserDataInDb;
+  const userData = authUserData;
 
   const records = useMemo(() => userData?.records || [], [userData]);
   
@@ -204,39 +179,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const reputation = useMemo(() => userData?.reputation || {}, [userData]);
   const aetherShards = useMemo(() => userData?.aetherShards || 0, [userData]);
   const notes = useMemo(() => userData?.notes || [], [userData]);
-
-  const updateUserDataInDb = useCallback(async (dataToUpdate: Partial<UserData>) => {
-    const getNewState = (prevData: UserData | null) => {
-      const newState = { ...(prevData || {} as UserData), ...dataToUpdate };
-      return newState as UserData;
-    }
-    setUserData(getNewState);
-
-    if (isGuest) {
-      const guestDataString = localStorage.getItem('guest-userData');
-      const guestData = guestDataString ? JSON.parse(guestDataString) : {};
-      const updatedGuestData = { ...guestData, ...dataToUpdate };
-      localStorage.setItem('guest-userData', JSON.stringify(updatedGuestData));
-      return;
-    }
-    
-    if (user) {
-      if (!db) {
-        console.error("Firestore DB is not initialized");
-        return;
-      }
-      
-      const userDocRef = doc(db!, 'users', user.uid);
-      try {
-        const sanitizedData = removeUndefinedValues(dataToUpdate);
-        if (sanitizedData && Object.keys(sanitizedData).length > 0) {
-           await setDoc(userDocRef, sanitizedData, { merge: true });
-        }
-      } catch (error) {
-        console.error("Error updating user data in DB:", error);
-      }
-    }
-  }, [user, isGuest]);
 
   const getTaskDefinitionById = useCallback((taskId: string): TaskDefinition | undefined => {
     return taskDefinitions.find(task => task.id === taskId);
@@ -387,31 +329,12 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
               const updatedReputation = { ...reputation, [faction.id]: newRep };
               dataToUpdate.reputation = updatedReputation;
             }
-
-            // Check for alliance progress
-            if(userAlliances && userAlliances.length > 0) {
-                const now = new Date();
-                const relevantAlliance = userAlliances.find(a => 
-                    a.taskId === newRecord.taskType &&
-                    isWithinInterval(now, { start: parseISO(a.startDate), end: parseISO(a.endDate) })
-                );
-
-                if (relevantAlliance) {
-                    updateAllianceProgress(relevantAlliance.id, newRecord.value);
-                    updateMemberContribution(relevantAlliance.id, user.uid, recordXp);
-                }
-            }
-            
-            // Create notifications for friends
-            const unitLabel = task.unit === 'custom' ? task.customUnitName : task.unit;
-            const activityMessage = `completed ${newRecord.value} ${unitLabel || ''} of ${task.name}`;
-            createActivityNotificationForFriends(activityMessage);
         }
     }
     
     updateUserDataInDb(dataToUpdate);
 
-  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, userAlliances, updateAllianceProgress, updateMemberContribution, user, userData, createActivityNotificationForFriends]);
+  }, [records, updateUserDataInDb, taskMastery, getTaskDefinitionById, getUserLevelInfo, reputation, calculateXpForRecord, user, userData]);
 
   const updateRecord = useCallback((entry: RecordEntry) => {
       // This is complex because we would need to reverse old XP/Rep and apply new.
@@ -685,11 +608,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         reputation: {},
     };
     updateUserDataInDb(resetData);
-    // Force a re-evaluation of the user data to ensure UI updates
-    setUserData(prev => ({
-        ...(prev ?? ({} as UserData)),
-        ...resetData
-    }));
   }, [updateUserDataInDb]);
 
   const useFreezeCrystal = useCallback(() => {

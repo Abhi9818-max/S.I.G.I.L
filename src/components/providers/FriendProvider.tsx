@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { collection, query, where, getDocs, doc, setDoc, writeBatch, getDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, addDoc, onSnapshot, Unsubscribe, documentId, limit, or, and, runTransaction, DocumentReference, orderBy, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
-import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry, Post, Comment, Notification } from '@/types';
+import type { SearchedUser, FriendRequest, Friend, UserData, RelationshipProposal, Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, AllianceStatus, MarketplaceListing, RecordEntry, Post, Comment, Notification, NotificationType } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { ACHIEVEMENTS } from '@/lib/achievements';
@@ -80,6 +80,33 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [globalListings, setGlobalListings] = useState<MarketplaceListing[]>([]);
     const [userListings, setUserListings] = useState<MarketplaceListing[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
+
+    const createNotification = useCallback(async (
+        recipientId: string,
+        type: NotificationType,
+        message: string,
+        link?: string,
+        originalRequest?: any
+    ) => {
+        if (!user || !userData || !db) return;
+        if (recipientId === user.uid) return; // Don't notify yourself
+
+        const notificationRef = doc(collection(db, 'notifications'));
+        const newNotification: Notification = {
+            id: notificationRef.id,
+            recipientId,
+            senderId: user.uid,
+            senderUsername: userData.username,
+            senderPhotoURL: userData.photoURL,
+            type,
+            message,
+            link: link || `/friends/${user.uid}`,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            ...(originalRequest && { originalRequest }),
+        };
+        await setDoc(notificationRef, newNotification);
+    }, [user, userData]);
 
     // Marketplace listeners
     useEffect(() => {
@@ -254,7 +281,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(requestRef, newRequest);
-    }, [user, userData]);
+        await createNotification(recipient.uid, 'friend_request', 'sent you a friend request.', `/friends/${user.uid}`, { ...newRequest, id: requestId });
+    }, [user, userData, createNotification]);
 
     const acceptFriendRequest = useCallback(async (request: FriendRequest) => {
         if (!user || !userData || !db) {
@@ -283,13 +311,14 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         try {
             await batch.commit();
+            await createNotification(request.senderId, 'friend_activity', 'accepted your friend request!', `/friends/${user.uid}`);
             toast({ title: 'Friend Added', description: `You are now friends with ${request.senderUsername}.` });
         } catch (error) {
             console.error("Failed to accept friend request:", error);
             toast({ title: 'Error', description: 'Could not accept the friend request.', variant: 'destructive' });
         }
 
-    }, [user, userData, toast]);
+    }, [user, userData, toast, createNotification]);
 
     const declineFriendRequest = useCallback(async (requestId: string) => {
         if (!db) return;
@@ -404,7 +433,8 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         await setDoc(existingProposalRef, proposalData);
-    }, [user, userData]);
+        await createNotification(friendId, 'relationship_proposal', `proposed that you become their ${correspondingRelationship}.`, `/friends/${user.uid}`, { ...proposalData, id: proposalId });
+    }, [user, userData, createNotification]);
     
     const acceptRelationshipProposal = useCallback(async (proposal: RelationshipProposal) => {
         if (!user || !db) return;
@@ -420,8 +450,9 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         batch.delete(proposalRef);
 
         await batch.commit();
+        await createNotification(proposal.senderId, 'friend_activity', `accepted your relationship proposal!`, `/friends/${user.uid}`);
         toast({ title: "Relationship Updated!", description: `You are now ${proposal.correspondingRelationship} with ${proposal.senderUsername}.` });
-    }, [user, toast]);
+    }, [user, toast, createNotification]);
 
     const declineRelationshipProposal = useCallback(async (proposalId: string) => {
         if (!db) return;
@@ -582,20 +613,12 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             parentId: parentId
         };
         
-        if (postAuthorId !== user.uid) {
-             const notification: Omit<Notification, 'id'> = {
-                recipientId: postAuthorId,
-                senderId: user.uid,
-                senderUsername: userData.username,
-                senderPhotoURL: userData.photoURL,
-                type: 'comment_on_post',
-                message: parentId ? `replied to your comment on a post.` : `commented on your post.`,
-                link: `/friends/${postAuthorId}`,
-                isRead: false,
-                createdAt: new Date().toISOString(),
-            };
-            await addDoc(collection(db, 'notifications'), notification);
-        }
+        await createNotification(
+            postAuthorId,
+            'comment_on_post',
+            parentId ? 'replied to your comment.' : 'commented on your post.',
+            `/friends/${postAuthorId}`
+        );
 
         const postAuthorRef = doc(db, 'users', postAuthorId);
         await runTransaction(db, async (transaction) => {
@@ -611,7 +634,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             });
             transaction.update(postAuthorRef, { posts: updatedPosts });
         });
-    }, [user, userData, db]);
+    }, [user, userData, db, createNotification]);
 
     const toggleLike = useCallback(async (postId: string, postAuthorId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");
@@ -687,7 +710,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const batch = writeBatch(db);
         friends.forEach(friend => {
             const notificationRef = doc(collection(db!, 'notifications'));
-            const notification: Omit<Notification, 'id'> = {
+            const newNotification: Omit<Notification, 'id'> = {
                 recipientId: friend.uid,
                 senderId: user.uid,
                 senderUsername: userData.username,
@@ -698,7 +721,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 isRead: false,
                 createdAt: new Date().toISOString(),
             };
-            batch.set(notificationRef, notification);
+            batch.set(notificationRef, newNotification);
         });
         
         await batch.commit();

@@ -9,6 +9,7 @@ import type { Alliance, AllianceMember, AllianceInvitation, AllianceChallenge, A
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { useUserRecords } from './UserRecordsProvider';
+import { useFriends } from './FriendProvider';
 
 interface AllianceContextType {
     createAlliance: (allianceData: Omit<Alliance, 'id' | 'creatorId' | 'members' | 'progress' | 'memberIds' | 'createdAt' | 'status'>) => Promise<string>;
@@ -40,6 +41,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
     const { user, userData, updateUserDataInDb } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
+    const { createNotification } = useFriends();
 
     const [userAlliances, setUserAlliances] = useState<Alliance[]>([]);
     const [incomingAllianceInvitations, setIncomingAllianceInvitations] = useState<AllianceInvitation[]>([]);
@@ -201,8 +203,9 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         };
 
         await setDoc(inviteRef, newInvite);
+        await createNotification(recipientId, 'alliance_invite', `invited you to join the alliance "${allianceName}".`, `/alliances`, { ...newInvite, id: invitationId });
 
-    }, [user, userData]);
+    }, [user, userData, createNotification]);
 
     const acceptAllianceInvitation = useCallback(async (invitation: AllianceInvitation) => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
@@ -225,9 +228,10 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
 
         await deleteDoc(doc(db!, 'alliance_invitations', invitation.id));
+        await createNotification(invitation.senderId, 'friend_activity', `accepted your invitation to join ${invitation.allianceName}!`, `/alliances/${invitation.allianceId}`);
         toast({ title: "Joined Alliance!", description: `You are now a member of ${invitation.allianceName}.` });
         router.push(`/alliances/${invitation.allianceId}`);
-    }, [user, userData, toast, router]);
+    }, [user, userData, toast, router, createNotification]);
     
     const declineAllianceInvitation = useCallback(async (invitationId: string) => {
         if (!db) return;
@@ -291,7 +295,8 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         };
 
         await setDoc(challengeRef, newChallenge);
-    }, [user]);
+        await createNotification(challengedAlliance.creatorId, 'alliance_challenge', `has challenged your alliance "${challengedAlliance.name}" to a duel!`, `/alliances`, { ...newChallenge, id: challengeId });
+    }, [user, createNotification]);
 
     const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
         if (!db) return;
@@ -321,8 +326,9 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
 
         await batch.commit();
+        await createNotification(challenge.challengerCreatorId, 'friend_activity', `accepted your challenge! The battle between your alliances has begun.`, `/alliances/${challenge.challengerAllianceId}`);
         toast({ title: "Challenge Accepted!", description: `The battle with ${challenge.challengerAllianceName} begins.` });
-    }, [toast]);
+    }, [toast, createNotification]);
 
     const declineAllianceChallenge = useCallback(async (challengeId: string) => {
         if (!db) return;
