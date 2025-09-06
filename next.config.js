@@ -8,6 +8,11 @@ const nextConfig = {
     loader: 'default',
     unoptimized: true, // Keep this if you want unoptimized images
   },
+  experimental: {
+    // This can help with ChunkLoadError in some development environments
+    // by changing how files are loaded.
+    appDir: true,
+  },
 };
 
 module.exports = nextConfig;

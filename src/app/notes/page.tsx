@@ -23,7 +23,7 @@ const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => vo
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             data-ai-hint="abstract background"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col p-4 text-white">
             <div className="flex-grow">
                 <h3 className="text-lg font-bold text-shadow">{note.title}</h3>
@@ -51,7 +51,7 @@ export default function NotesPage() {
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim() && content.trim()) {
+    if (title.trim()) {
       addNote({ title, content });
       setTitle('');
       setContent('');
@@ -86,15 +86,6 @@ export default function NotesPage() {
                   required
                 />
               </div>
-              <div>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Note content..."
-                  className="bg-background"
-                  required
-                />
-              </div>
               <Button type="submit" className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Note
@@ -123,3 +114,4 @@ export default function NotesPage() {
     </div>
   );
 }
+
