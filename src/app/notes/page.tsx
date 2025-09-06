@@ -6,12 +6,13 @@ import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { StickyNote, Trash2, PlusCircle, Search } from 'lucide-react';
+import { StickyNote, Trash2, PlusCircle, Search, X } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string) => void; index: number }) => {
   const imageNumber = (index % 10) + 1;
@@ -79,31 +80,38 @@ export default function NotesPage() {
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <StickyNote className="h-6 w-6 text-primary" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)} aria-label="Search notes">
-              <Search className="h-6 w-6"/>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
-              <PlusCircle className="h-6 w-6"/>
-            </Button>
-          </div>
+          {showSearch ? (
+            <div className="w-full flex items-center gap-2 animate-fade-in">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search notes by title or content..."
+                className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 flex-grow"
+                autoFocus
+              />
+              <Button variant="ghost" size="icon" onClick={() => {setShowSearch(false); setSearchQuery('');}} aria-label="Close search">
+                <X className="h-6 w-6"/>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <StickyNote className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)} aria-label="Search notes">
+                  <Search className="h-6 w-6"/>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowForm(!showForm)} aria-label="Add new note">
+                  <PlusCircle className="h-6 w-6"/>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
-
-        {showSearch && (
-          <div className="w-full max-w-lg mx-auto animate-fade-in-up">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notes by title or content..."
-              className="bg-background"
-            />
-          </div>
-        )}
         
-        {showForm && (
+        {showForm && !showSearch && (
           <div className="w-full max-w-lg mx-auto animate-fade-in-up">
             <form onSubmit={handleAddNote} className="space-y-4 mb-8 p-4 border rounded-lg bg-card">
               <h2 className="text-lg font-semibold">Create a New Note</h2>
