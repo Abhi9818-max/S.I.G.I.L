@@ -10,7 +10,6 @@ import { UserSearch, UserPlus, Users, Mail, Check, X, Hourglass, ChevronDown, He
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useFriends } from '@/components/providers/FriendProvider';
-import { useAlliance } from '@/components/providers/AllianceProvider';
 import type { SearchedUser, FriendRequest, RelationshipProposal, AllianceInvitation, Friend, Alliance, AllianceChallenge } from '@/types';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -330,6 +329,7 @@ export default function FriendsPage() {
     const [searchedUser, setSearchedUser] = useState<SearchedUser | null>(null);
     const [isPending, startTransition] = useTransition();
     const [searchMessage, setSearchMessage] = useState<string | null>(null);
+    const [showSearch, setShowSearch] = useState(false);
     const { toast } = useToast();
     const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
     const [unfriendingFriend, setUnfriendingFriend] = useState<Friend | null>(null);
@@ -427,11 +427,36 @@ export default function FriendsPage() {
                 <div className="flex flex-col lg:flex-row lg:gap-8">
                     <div className="lg:w-1/3 space-y-4 order-1 lg:order-2 mb-8 lg:mb-0">
                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <UserSearch className="h-6 w-6 text-primary" />
-                                <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
-                            </div>
+                            {showSearch ? (
+                                <div className="relative w-full max-w-sm animate-fade-in">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Enter username..."
+                                        value={usernameQuery}
+                                        onChange={(e) => setUsernameQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSearch();
+                                        }}
+                                        className="bg-transparent border-white/50 rounded-full h-11 pl-10 pr-4 focus-visible:ring-primary/50"
+                                        autoFocus
+                                        onBlur={() => {
+                                            if (!usernameQuery) setShowSearch(false);
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <UserSearch className="h-6 w-6 text-primary" />
+                                    <h2 className="text-2xl font-semibold leading-none tracking-tight">Find Friends</h2>
+                                </div>
+                            )}
+
                              <div className="flex items-center gap-2">
+                                {!showSearch && (
+                                    <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
+                                        <Search className="h-6 w-6" />
+                                    </Button>
+                                )}
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant="ghost" size="icon" className="relative">
@@ -469,27 +494,6 @@ export default function FriendsPage() {
                             </div>
                         </div>
                         <div className="space-y-3">
-                            <div className="relative w-full max-w-sm">
-                                <Input
-                                    placeholder="Enter username..."
-                                    value={usernameQuery}
-                                    onChange={(e) => setUsernameQuery(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSearch();
-                                        }
-                                    }}
-                                    className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
-                                />
-                                <button 
-                                    onClick={handleSearch} 
-                                    disabled={isPending}
-                                    className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
-                                >
-                                    <Search className="h-5 w-5" />
-                                </button>
-                            </div>
-
                             {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
                             {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                             {searchedUser && (
