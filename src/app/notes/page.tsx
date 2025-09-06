@@ -13,15 +13,19 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => void }) => {
+const NoteCard = ({ note, onDelete, index }: { note: Note; onDelete: (id: string) => void; index: number }) => {
+  // Use a cycling index for the images, assuming a certain number of images exist.
+  // This will cycle through notes1.jpeg, notes2.jpeg, etc.
+  const imageNumber = (index % 10) + 1; // Assuming you have at least 10 images (notes1.jpeg to notes10.jpeg)
+  const imageUrl = `/notes/notes${imageNumber}.jpeg`;
+
   return (
     <Card className="relative aspect-[4/5] w-full overflow-hidden rounded-lg group">
         <Image 
-            src="https://picsum.photos/400/500" 
-            alt="Note image" 
+            src={imageUrl}
+            alt={`Note background for ${note.title}`}
             fill 
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="abstract background"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex flex-col p-4 text-white">
@@ -95,11 +99,11 @@ export default function NotesPage() {
         )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {notes.map((note) => (
+          {notes.map((note, index) => (
             <div
               key={note.id}
             >
-              <NoteCard note={note} onDelete={deleteNote} />
+              <NoteCard note={note} onDelete={deleteNote} index={index} />
             </div>
           ))}
         </div>
@@ -114,4 +118,3 @@ export default function NotesPage() {
     </div>
   );
 }
-
