@@ -5,8 +5,9 @@ import React, { useState } from 'react';
 import Header from '@/components/layout/Header';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { Button } from '@/components/ui/button';
-import { StickyNote, Trash2, ChevronUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { StickyNote, Trash2, PlusCircle } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
@@ -76,6 +77,15 @@ export default function NotesPage() {
 
   const notes = userData?.notes || [];
 
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (title.trim() && content.trim()) {
+      addNote({ title, content });
+      setTitle('');
+      setContent('');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-background">
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
@@ -83,6 +93,34 @@ export default function NotesPage() {
         <div className="flex items-center gap-2">
           <StickyNote className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-semibold">Notes</h1>
+        </div>
+
+        <div className="w-full max-w-lg mx-auto">
+          <form onSubmit={handleAddNote} className="space-y-4 mb-8 p-4 border rounded-lg bg-card">
+            <h2 className="text-lg font-semibold">Create a New Note</h2>
+            <div>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Note Title"
+                className="bg-background"
+                required
+              />
+            </div>
+            <div>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Note content..."
+                className="bg-background"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Note
+            </Button>
+          </form>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
