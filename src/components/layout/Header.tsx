@@ -73,7 +73,7 @@ const NotificationItem = ({ notification, onAction }: { notification: Notificati
                 <p className="text-xs text-muted-foreground">{formatDistanceToNowStrict(parseISO(notification.createdAt), { addSuffix: true })}</p>
             </div>
         </div>
-        {(notification.type !== 'friend_activity' && notification.type !== 'comment_on_post') && (
+        {(notification.type === 'friend_request' || notification.type === 'relationship_proposal' || notification.type === 'alliance_invite' || notification.type === 'alliance_challenge') && (
              <div className="flex gap-1 self-end mt-2">
                 <Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAction('accept', notification)}><Check className="h-4 w-4"/></Button>
                 <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onAction('decline', notification)}><X className="h-4 w-4"/></Button>
