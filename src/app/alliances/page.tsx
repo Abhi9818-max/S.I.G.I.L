@@ -120,6 +120,7 @@ export default function AlliancesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   
   const handlePinToggle = (e: React.MouseEvent, allianceId: string) => {
     e.preventDefault();
@@ -201,23 +202,35 @@ export default function AlliancesPage() {
                     <Swords className="h-6 w-6 text-primary" />
                     <h2 className="text-2xl font-semibold">Challenge an Alliance</h2>
                 </div>
+                 {!showSearch && (
+                  <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
+                    <Search className="h-6 w-6" />
+                  </Button>
+                )}
               </div>
-              <div className="relative w-full max-w-sm">
-                <Input 
-                  placeholder="Search for an alliance..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
-                />
-                <button 
-                  onClick={handleSearch} 
-                  disabled={isSearching}
-                  className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
-              </div>
+             
+              {showSearch && (
+                <div className="relative w-full max-w-sm animate-fade-in-up">
+                    <Input 
+                      placeholder="Search for an alliance..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      className="bg-transparent border-white/50 rounded-full h-11 pl-4 pr-10 focus-visible:ring-primary/50"
+                      autoFocus
+                      onBlur={() => {
+                          if (!searchQuery) setShowSearch(false);
+                      }}
+                    />
+                    <button 
+                      onClick={handleSearch} 
+                      disabled={isSearching}
+                      className="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Search className="h-5 w-5" />
+                    </button>
+                  </div>
+              )}
 
               {isSearching && <p className="text-sm text-muted-foreground">Searching...</p>}
 
