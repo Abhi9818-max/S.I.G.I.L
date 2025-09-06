@@ -615,22 +615,6 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const toggleLike = useCallback(async (postId: string, postAuthorId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");
-
-        // Optimistic update
-        if (postAuthorId === user.uid && userData) {
-             const updatedPosts = (userData.posts || []).map(post => {
-                if (post.id === postId) {
-                    const likes = post.likes || [];
-                    const isLiked = likes.includes(user.uid);
-                    const newLikes = isLiked
-                        ? likes.filter(uid => uid !== user.uid)
-                        : [...likes, user.uid];
-                    return { ...post, likes: newLikes };
-                }
-                return post;
-            });
-            updateUserDataInDb({ posts: updatedPosts });
-        }
         
         const postAuthorRef = doc(db, 'users', postAuthorId);
          await runTransaction(db, async (transaction) => {
@@ -651,7 +635,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             });
             transaction.update(postAuthorRef, { posts: updatedPosts });
         });
-    }, [user, userData, updateUserDataInDb, db]);
+    }, [user, db]);
     
     const toggleCommentLike = useCallback(async (postId: string, postAuthorId: string, commentId: string) => {
         if (!user || !db) throw new Error("You must be logged in.");

@@ -47,6 +47,8 @@ import { calculateUserLevelInfo, getContributionLevel } from '@/lib/config';
 import { XP_CONFIG } from '@/lib/xp-config';
 import PostCard from '@/components/social/PostCard';
 import CreatePostForm from '@/components/social/CreatePostForm';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type Props = {
   friendId: string;
@@ -233,31 +235,50 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   }, [friendData, calculateXpForRecord]);
 
   useEffect(() => {
-    const fetchFriendData = async () => {
-      if (friendId) {
-        try {
-          const data = isFriend || isOwnProfile ? await getFriendData(friendId) : await getPublicUserData(friendId);
-          if (data) {
-            setFriendData(data);
-            if (!data.posts || data.posts.length === 0) {
-              setViewMode('details');
-            }
-          } else {
-            toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
-            router.push('/friends');
-          }
-        } catch (error) {
-          console.error("Error fetching friend data:", error);
-          toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
-          router.push('/friends');
-        } finally {
-          setIsLoading(false);
+    if (!friendId || !db) return;
+  
+    const userDocRef = doc(db, 'users', friendId);
+  
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      setIsLoading(true);
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserData;
+        const canView = isFriend || isOwnProfile || data.privacySettings?.activity === 'everyone';
+        
+        if (!canView) {
+          // If profile becomes private, only show public data
+          setFriendData({
+            username: data.username,
+            photoURL: data.photoURL,
+            bio: data.bio,
+            privacySettings: data.privacySettings,
+            equippedTitleId: data.equippedTitleId,
+          });
+        } else {
+           setFriendData(data);
         }
-      }
-    };
+        
+        if (viewMode === 'details' && (!data.posts || data.posts.length === 0)) {
+            setViewMode('details');
+        } else if (viewMode === 'details') {
+            setViewMode('feed');
+        }
 
-    fetchFriendData();
-  }, [friendId, getFriendData, getPublicUserData, isFriend, isOwnProfile, router, toast, user?.uid]);
+      } else {
+        toast({ title: 'Error', description: 'User data not found.', variant: 'destructive' });
+        router.push('/friends');
+      }
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching friend data:", error);
+      toast({ title: 'Error', description: 'Could not fetch user data.', variant: 'destructive' });
+      router.push('/friends');
+      setIsLoading(false);
+    });
+  
+    return () => unsubscribe();
+  
+  }, [friendId, isFriend, isOwnProfile, router, toast]);
 
   const friendPacts = useMemo(() => {
     if (!friendData?.todoItems) return [];
