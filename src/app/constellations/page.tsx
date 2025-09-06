@@ -204,7 +204,6 @@ export default function ConstellationsPage() {
               <Sparkles className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-semibold leading-none tracking-tight">Constellations of Skill</h1>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Spend Skill Points (SP) earned from tasks to unlock permanent nodes. Currently, unlocking skills is foundational; passive bonuses will be activated in a future update.</p>
           </div>
           <div className="p-6 md:p-0 pt-6">
             {constellations.length === 0 ? (
