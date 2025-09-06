@@ -62,6 +62,7 @@ interface FriendContextType {
     notifications: Notification[];
     markNotificationsAsRead: () => void;
     createActivityNotificationForFriends: (message: string) => Promise<void>;
+    createNotification: (recipientId: string, type: NotificationType, message: string, link?: string, originalRequest?: any) => Promise<void>;
 }
 
 const FriendContext = createContext<FriendContextType | undefined>(undefined);
@@ -138,15 +139,25 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
 
         const notificationsRef = collection(db, 'notifications');
-        const q = query(notificationsRef, where('recipientId', '==', user.uid), orderBy('createdAt', 'desc'), limit(50));
+        const q = query(notificationsRef, where('recipientId', '==', user.uid), limit(50));
         
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+            // Sort client-side
+            notifs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setNotifications(notifs);
+        }, (error) => {
+            console.error("Error fetching notifications:", error);
+            // This toast is for debugging and can be removed in production
+            toast({
+              title: "Notification Error",
+              description: "Could not fetch notifications. The database query might need an index.",
+              variant: "destructive",
+            });
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, toast]);
 
     const fetchFriendsAndRequests = useCallback(async () => {
         if (!user || !db) return;
@@ -764,6 +775,7 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             notifications,
             markNotificationsAsRead,
             createActivityNotificationForFriends,
+            createNotification,
         }}>
             {children}
         </FriendContext.Provider>
