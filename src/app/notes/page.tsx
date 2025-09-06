@@ -11,61 +11,26 @@ import { StickyNote, Trash2, PlusCircle } from 'lucide-react';
 import type { Note } from '@/types';
 import { useAuth } from '@/components/providers/AuthProvider';
 import Image from 'next/image';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const NoteCard = ({ note, onDelete }: { note: Note; onDelete: (id: string) => void }) => {
   return (
-    <div className="bg-white dark:bg-card rounded-3xl shadow-lg overflow-hidden flex flex-col w-full max-w-sm mx-auto">
-      <div className="relative h-56">
-        <Image
-          src="/notes/notes27.jpeg"
-          alt={note.title}
-          fill
-          className="object-cover"
-          data-ai-hint="fantasy city street"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 p-4 w-full flex justify-between items-end">
-            <div>
-                <h3 className="text-white text-xl font-bold">{note.title}</h3>
-                <p className="text-white/80 text-sm">Silverpine Mountains</p>
-            </div>
-            <Button variant="secondary" size="sm" className="bg-white/90 text-black hover:bg-white">Start Route</Button>
-        </div>
-      </div>
-      <div className="p-6 flex-grow">
-          <h4 className="font-bold text-lg">Embercrest Summit Trail</h4>
-          <p className="text-xs text-muted-foreground">1886 by Helen Rowe & Elias Mendez</p>
-          <div className="flex justify-between items-center my-4">
-              <div className="text-center">
-                  <p className="font-bold text-lg">12.4km</p>
-                  <p className="text-xs text-muted-foreground">Distance</p>
-              </div>
-               <div className="text-center">
-                  <p className="font-bold text-lg">870m</p>
-                  <p className="text-xs text-muted-foreground">Elevation</p>
-              </div>
-               <div className="text-center">
-                  <p className="font-bold text-lg">4h 45m</p>
-                  <p className="text-xs text-muted-foreground">Duration</p>
-              </div>
-               <div className="w-24 h-16 bg-muted rounded-lg flex items-center justify-center">
-                  <svg width="60" height="30" viewBox="0 0 100 50" className="stroke-current text-muted-foreground/50" strokeWidth="3" fill="none">
-                      <path d="M 0 40 C 10 50, 20 30, 30 40 S 50 60, 60 40 S 80 20, 90 30, 100 40, 100 40" />
-                  </svg>
-               </div>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {note.content}
-          </p>
-      </div>
-      <div className="flex justify-between items-center p-4 border-t dark:border-border">
-         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => onDelete(note.id)}>
+    <Card className="flex flex-col h-full">
+      <CardHeader>
+        <CardTitle>{note.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+          {note.content}
+        </p>
+      </CardContent>
+      <CardFooter>
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive ml-auto" onClick={() => onDelete(note.id)}>
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete note</span>
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 
