@@ -89,7 +89,7 @@ const RequestsPopover = ({ notifications, onAction }: any) => (
             <div className="p-4 space-y-4">
                 <h4 className="font-medium leading-none">Notifications</h4>
                 <Separator />
-                {(notifications || []).length > 0 ? (
+                {notifications.length > 0 ? (
                     notifications.map((notif: Notification) => (
                         <NotificationItem key={notif.id} notification={notif} onAction={onAction} />
                     ))
@@ -124,7 +124,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     declineFriendRequest,
     acceptRelationshipProposal, 
     declineRelationshipProposal,
-    notifications,
+    notifications = [],
     markNotificationsAsRead,
   } = useFriends();
   const {
@@ -158,7 +158,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
   
-  const unreadCount = (notifications || []).filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const handleAction = (actionType: 'accept' | 'decline', notif: Notification) => {
       if (!notif.originalRequest) return;
