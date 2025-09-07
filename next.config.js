@@ -3,7 +3,8 @@
 const nextConfig = {
   // This is required to allow the Next.js dev server to accept requests from
   // the Firebase Studio environment.
-  allowedDevOrigins: ["*.cloudworkstations.dev"],
+  // Using a more permissive setting for development to avoid cross-origin issues.
+  allowedDevOrigins: ['**'],
   images: {
     loader: 'default',
     unoptimized: true, // Keep this if you want unoptimized images
