@@ -207,6 +207,8 @@ export default function AlliancesPage() {
 
     const pinned = activeAlliances.filter(a => pinnedIds.has(a.id));
     const unpinned = activeAlliances.filter(a => !pinnedIds.has(a.id));
+    
+    // FIX: An alliance you created should be eligible to challenge, even if it's already in a challenge.
     const myCreated = activeAlliances.filter(a => a.creatorId === user?.uid);
     
     return { pinned, unpinned, completed: completedAlliances, myCreatedAlliances: myCreated };
