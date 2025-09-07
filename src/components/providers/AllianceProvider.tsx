@@ -179,8 +179,8 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
                 const opponentAllianceRef = doc(db!, 'alliances', allianceData.opponentDetails.allianceId);
                 // Opponent wins by forfeit. Set their view of opponent's progress to 0 and clear challenge.
                 batch.update(opponentAllianceRef, {
-                    'opponentDetails.opponentProgress': 0,
-                    'activeChallengeId': null
+                    'opponentDetails.opponentProgress': 0, // Opponent's opponent (us) is gone
+                    'activeChallengeId': null // Clear the challenge ID
                 });
             }
     
@@ -276,14 +276,16 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (!db) return [];
         const alliancesRef = collection(db!, 'alliances');
         const q = query(
-            alliancesRef, 
-            where('status', '==', 'ongoing'),
+            alliancesRef,
             where('name', '>=', name),
             where('name', '<=', name + '\uf8ff'),
             limit(10)
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alliance));
+        const allResults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alliance));
+        
+        // Filter out completed alliances on the client side
+        return allResults.filter(alliance => alliance.status === 'ongoing');
     }, []);
 
     const sendAllianceChallenge = useCallback(async (challengerAlliance: Alliance, challengedAlliance: Alliance) => {
