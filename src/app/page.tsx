@@ -37,7 +37,7 @@ const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
 const LOCAL_STORAGE_KEY_TOUR_SEEN = 'sigil-tour-seen-interactive';
 
-function HomePageContent() {
+export default function HomePage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
   const [isManageTasksModalOpen, setIsManageTasksModalOpen] = useState(false);
@@ -298,11 +298,5 @@ function HomePageContent() {
           </div>
       </div>
     </div>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <HomePageContent />
   );
 }
