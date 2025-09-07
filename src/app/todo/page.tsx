@@ -54,6 +54,7 @@ export default function TodoPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const pactCardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadClickCount, setDownloadClickCount] = useState(0);
   const { toast } = useToast();
 
   const { todoItems, addTodoItem, checkMissedDares, toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
@@ -67,7 +68,7 @@ export default function TodoPage() {
     try {
       const createdAtDate = parseISO(item.createdAt);
       return isSameDay(createdAtDate, selectedDate);
-    } catch (e) {
+    } catch (e) => {
       return false;
     }
   });
@@ -121,6 +122,20 @@ export default function TodoPage() {
   const completedCount = displayedPacts.filter(p => p.completed).length;
   const totalCount = displayedPacts.length;
 
+  const handleDownloadClick = () => {
+    const newCount = downloadClickCount + 1;
+    setDownloadClickCount(newCount);
+
+    if (newCount === 3) {
+      toast({
+        title: "Generating Image...",
+        description: "Your pacts card is being prepared for download.",
+      });
+      setIsDownloading(true);
+      setDownloadClickCount(0);
+    }
+  };
+
   return (
     <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
@@ -139,9 +154,6 @@ export default function TodoPage() {
                  <Button variant="ghost" size="icon" onClick={() => setShowAddForm(!showAddForm)}>
                     <Pencil className="h-5 w-5" />
                  </Button>
-                 <Button variant="ghost" size="icon" onClick={() => setIsDownloading(true)}>
-                    <Download className="h-5 w-5" />
-                 </Button>
                  <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -158,7 +170,11 @@ export default function TodoPage() {
                       />
                     </PopoverContent>
                   </Popover>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30">
+                <div 
+                  className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-black/30 cursor-pointer"
+                  onClick={handleDownloadClick}
+                  title="Click 3 times to download"
+                >
                   <span className="text-sm font-semibold text-white">{completedCount}/{totalCount}</span>
                 </div>
               </div>
