@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -20,18 +19,22 @@ interface TaskProgressCardProps {
 const TaskProgressCard: React.FC<TaskProgressCardProps> = ({ task, records, endDate, months, orientation = 'vertical' }) => {
   const start = subMonths(endDate, months - 1);
   const monthIntervals = eachMonthOfInterval({ start: start, end: endDate });
+  
+  const isHorizontal = orientation === 'horizontal';
 
   return (
     <div className={cn(
         "bg-background rounded-2xl shadow-2xl p-6 flex font-sans border border-white/10",
-        orientation === 'vertical' ? 'w-[400px] flex-col' : 'h-[400px] flex-row'
+        isHorizontal ? 'h-auto flex-col' : 'w-[400px] flex-col',
+        months === 3 && isHorizontal && 'w-[800px]',
+        months === 6 && isHorizontal && 'w-[800px]',
+        months === 12 && isHorizontal && 'w-[1050px]'
     )}>
       <header className={cn(
-          "flex items-center gap-3",
-          orientation === 'vertical' ? 'mb-4' : 'mr-6 flex-col text-center border-r border-white/10 pr-6'
+          "flex items-center gap-3 mb-4",
       )}>
-        <Target className="h-10 w-10" style={{ color: task.color }} />
-        <div className={cn(orientation === 'vertical' ? '' : 'flex flex-col items-center')}>
+        <Target className="h-10 w-10 flex-shrink-0" style={{ color: task.color }} />
+        <div>
           <h2 className="text-xl font-bold text-white" style={{ color: task.color }}>{task.name}</h2>
           <p className="text-sm text-white/70">
             {format(start, 'MMM yyyy')} - {format(endDate, 'MMM yyyy')}
@@ -41,10 +44,10 @@ const TaskProgressCard: React.FC<TaskProgressCardProps> = ({ task, records, endD
 
       <main className={cn(
           "space-y-4",
-          orientation === 'horizontal' && 'flex-1 grid gap-4',
-          months === 3 && orientation === 'horizontal' && 'grid-cols-3',
-          months === 6 && orientation === 'horizontal' && 'grid-cols-3 grid-rows-2',
-          months === 12 && orientation === 'horizontal' && 'grid-cols-4 grid-rows-3'
+          isHorizontal && 'flex-1 grid gap-4',
+          isHorizontal && months === 3 && 'grid-cols-3',
+          isHorizontal && months === 6 && 'grid-cols-3',
+          isHorizontal && months === 12 && 'grid-cols-4'
       )}>
         {monthIntervals.map(month => {
           const monthName = format(month, 'MMMM');
@@ -54,7 +57,7 @@ const TaskProgressCard: React.FC<TaskProgressCardProps> = ({ task, records, endD
           const daysArray = Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1;
             const dateStr = format(new Date(month.getFullYear(), month.getMonth(), day), 'yyyy-MM-dd');
-            const dayRecords = records.filter(r => r.date === dateStr);
+            const dayRecords = records.filter(r => r.date === dateStr && r.taskType === task.id);
             const dayValue = dayRecords.reduce((sum, r) => sum + r.value, 0);
             const level = getContributionLevel(dayValue, task.intensityThresholds);
             return { day, value: dayValue, level };
@@ -89,7 +92,7 @@ const TaskProgressCard: React.FC<TaskProgressCardProps> = ({ task, records, endD
 
       <footer className={cn(
           "text-center pt-4 mt-auto border-t border-white/10",
-          orientation === 'horizontal' && 'hidden'
+          isHorizontal && 'mt-6'
       )}>
         <p className="font-bold text-base text-white/90">S.I.G.I.L.</p>
         <p className="text-xs text-white/50">Task Summary</p>
