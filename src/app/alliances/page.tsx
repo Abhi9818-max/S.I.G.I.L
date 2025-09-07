@@ -313,20 +313,8 @@ export default function AlliancesPage() {
                 </div>
               )}
             </div>
-            
-            {completed.length > 0 && (
-              <div className="space-y-4 pt-8">
-                 <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-6 w-6 text-green-400" />
-                    <h2 className="text-2xl font-semibold">Completed Alliances</h2>
-                </div>
-                {renderAllianceSection(completed)}
-              </div>
-            )}
-            
-          </div>
 
-           <div className="space-y-4">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Users className="h-6 w-6 text-primary" />
@@ -348,6 +336,19 @@ export default function AlliancesPage() {
                     </div>
                 )}
             </div>
+          </div>
+
+           <div className="lg:col-start-1 lg:col-span-2 space-y-8">
+            {completed.length > 0 && (
+              <div className="space-y-4 pt-8">
+                 <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-6 w-6 text-green-400" />
+                    <h2 className="text-2xl font-semibold">Completed Alliances</h2>
+                </div>
+                {renderAllianceSection(completed)}
+              </div>
+            )}
+           </div>
         </div>
       </main>
     </div>
