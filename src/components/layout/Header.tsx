@@ -64,6 +64,8 @@ type MobileMenuLink = (NavLink & { isSeparator?: never }) | { isSeparator: true;
 const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick }) => {
   const { getUserLevelInfo } = useUserRecords(); 
   const { user, userData, logout } = useAuth();
+  const { incomingRequests } = useFriends();
+  const { incomingAllianceInvitations, incomingAllianceChallenges } = useAlliance();
   
   const [isLevelDetailsModalOpen, setIsLevelDetailsModalOpen] = useState(false);
   const pathname = usePathname();
@@ -108,6 +110,9 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
   ];
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid || '');
+  
+  const hasIncomingNotifications = incomingRequests.length > 0 || incomingAllianceInvitations.length > 0 || incomingAllianceChallenges.length > 0;
+
 
   return (
     <>
@@ -134,17 +139,24 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
           <div className="hidden md:flex items-center gap-2">
             {navLinks.map(link => {
               const isActive = pathname.startsWith(link.href);
+              const showDot = link.href === "/friends" && hasIncomingNotifications;
               return (
                 <Link
                   href={link.href}
                   key={link.href}
                   className={cn(
-                    "inline-flex items-center justify-center whitespace-nowrap rounded-none border-b-2 px-3 py-2 text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+                    "relative inline-flex items-center justify-center whitespace-nowrap rounded-none border-b-2 px-3 py-2 text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
                     isActive ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:border-border"
                   )}
                 >
                   <link.icon className="mr-1.5 h-4 w-4" />
                   {link.label}
+                  {showDot && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
                 </Link>
               )
             })}
