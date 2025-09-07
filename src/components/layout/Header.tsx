@@ -194,9 +194,13 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
   ];
 
   const mobileMenuLinks: MobileMenuLink[] = [
-    ...navLinks,
+    { href: "/timer", label: "Timer", icon: Timer },
+    { href: "/notes", label: "Notes", icon: StickyNote },
     { isSeparator: true },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/reputation", label: "Reputation", icon: Users },
+    { href: "/insights", label: "Insights", icon: BarChart2 },
+    { href: "/constellations", label: "Constellations", icon: Sparkles },
+    { href: "/tiers", label: "Tiers", icon: Star },
   ];
 
   const userAvatar = userData?.photoURL || getAvatarForId(user?.uid || '');
@@ -294,12 +298,6 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                 <DropdownMenuItem onClick={() => setIsLevelDetailsModalOpen(true)} className="flex items-center w-full">
-                  <Award className="mr-2 h-4 w-4" />
-                  View Level Details
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-
                 {isHomePage && (
                   <>
                     <DropdownMenuItem onClick={onManageTasksClick} className="flex items-center w-full">
