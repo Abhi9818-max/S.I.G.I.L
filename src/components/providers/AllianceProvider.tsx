@@ -177,10 +177,10 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             // Handle active challenges
             if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
                 const opponentAllianceRef = doc(db!, 'alliances', allianceData.opponentDetails.allianceId);
-                // Opponent wins by forfeit. Set their view of opponent's progress to 0.
+                // Opponent wins by forfeit. Set their view of opponent's progress to 0 and clear challenge.
                 batch.update(opponentAllianceRef, {
                     'opponentDetails.opponentProgress': 0,
-                    'activeChallengeId': null // The challenge is over
+                    'activeChallengeId': null
                 });
             }
     
@@ -275,7 +275,9 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
     const searchAlliances = useCallback(async (name: string): Promise<Alliance[]> => {
         if (!db) return [];
         const alliancesRef = collection(db!, 'alliances');
-        const q = query(alliancesRef, 
+        const q = query(
+            alliancesRef, 
+            where('status', '==', 'ongoing'),
             where('name', '>=', name),
             where('name', '<=', name + '\uf8ff'),
             limit(10)
