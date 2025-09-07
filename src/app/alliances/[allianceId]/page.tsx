@@ -185,11 +185,13 @@ export default function AlliancePage({ params }: AlliancePageProps) {
             setMembers(membersWithStatus);
         } else {
             setAlliance(null);
+            setMembers([]);
         }
         setLoading(false);
     }, (error) => {
         console.error("Error fetching alliance data:", error);
         setAlliance(null);
+        setMembers([]);
         setLoading(false);
     });
 
@@ -566,7 +568,5 @@ export default function AlliancePage({ params }: AlliancePageProps) {
     </>
   );
 }
-
-    
 
     
