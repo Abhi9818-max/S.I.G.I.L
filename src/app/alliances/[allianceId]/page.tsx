@@ -1,8 +1,9 @@
 import ClientAlliancePage from './ClientAlliancePage';
 
-type Params = { allianceId: string };
+type AlliancePageProps = {
+  params: { allianceId: string };
+};
 
-export default async function AlliancePage({ params }: { params: Promise<Params> }) {
-  const { allianceId } = await params;
-  return <ClientAlliancePage allianceId={allianceId} />;
+export default function AlliancePage({ params }: AlliancePageProps) {
+  return <ClientAlliancePage allianceId={params.allianceId} />;
 }
