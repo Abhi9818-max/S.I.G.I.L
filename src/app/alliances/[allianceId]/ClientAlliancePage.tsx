@@ -376,18 +376,17 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" style={{ color: alliance.taskColor }} />
-              <span>Objective: {alliance.taskName}</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="p-4 rounded-lg bg-card/50">
+            <div className="flex items-center gap-3 mb-3">
+                <Target className="h-6 w-6" style={{ color: alliance.taskColor }} />
+                <h3 className="font-semibold text-lg" style={{ color: alliance.taskColor }}>
+                    Objective: {alliance.taskName}
+                </h3>
+            </div>
             <div className="space-y-2">
               <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
+                <span className="font-mono">{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()}</span>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -396,8 +395,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </div>
         
         {alliance.activeChallengeId && alliance.opponentDetails && (
           <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
