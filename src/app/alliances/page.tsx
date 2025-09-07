@@ -19,6 +19,7 @@ import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toPng } from 'html-to-image';
 import AllianceCard from '@/components/alliances/AllianceCard';
+import { isPast, parseISO } from 'date-fns';
 
 
 // Simple hash function to get a number from a string
@@ -72,12 +73,15 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
             onMouseLeave={handleMouseLeave}
         >
             <div className="relative w-full h-full group">
-                <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100">
+                 <div 
+                    className="absolute top-2 right-2 z-20 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                >
                     <Button 
                         size="icon" 
                         variant="secondary"
                         className={cn("h-8 w-8", isPinned && "bg-primary text-primary-foreground")}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPinToggle(e, alliance.id); }}
+                        onClick={(e) => onPinToggle(e, alliance.id)}
                         aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
                     >
                         {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
@@ -86,7 +90,7 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
                         size="icon" 
                         variant="secondary"
                         className="h-8 w-8"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(alliance); }}
+                        onClick={(e) => onDownload(alliance)}
                         aria-label="Download alliance card"
                     >
                         <Download className="h-4 w-4" />
@@ -143,17 +147,29 @@ export default function AlliancesPage() {
     togglePinAlliance(allianceId);
   }
 
-  const { pinned, unpinned } = useMemo(() => {
+  const { pinned, unpinned, completed } = useMemo(() => {
     const pinnedIds = new Set(userData?.pinnedAllianceIds || []);
     const alliancesWithMemberData = userAlliances.map(alliance => ({
       ...alliance,
       members: alliance.members || [],
     }));
+
+    const activeAlliances = alliancesWithMemberData.filter(a => {
+        const isEnded = isPast(parseISO(a.endDate));
+        const isObjectiveMet = a.progress >= a.target;
+        return !isEnded && !isObjectiveMet;
+    });
+
+    const completedAlliances = alliancesWithMemberData.filter(a => {
+        const isEnded = isPast(parseISO(a.endDate));
+        const isObjectiveMet = a.progress >= a.target;
+        return isEnded || isObjectiveMet;
+    });
+
+    const pinned = activeAlliances.filter(a => pinnedIds.has(a.id));
+    const unpinned = activeAlliances.filter(a => !pinnedIds.has(a.id));
     
-    const pinned = alliancesWithMemberData.filter(a => pinnedIds.has(a.id));
-    const unpinned = alliancesWithMemberData.filter(a => !pinnedIds.has(a.id));
-    
-    return { pinned, unpinned };
+    return { pinned, unpinned, completed: completedAlliances };
   }, [userAlliances, userData?.pinnedAllianceIds]);
 
   const handleSearch = async () => {
@@ -281,7 +297,7 @@ export default function AlliancesPage() {
                 <div className="space-y-2 pt-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
                   {searchResults.map(result => (
-                    <div key={result.id} className="p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3">
+                     <div key={result.id} className="p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3">
                        <div className="flex justify-between items-center">
                           <div>
                             <p className="font-semibold">{result.name}</p>
@@ -297,6 +313,17 @@ export default function AlliancesPage() {
                 </div>
               )}
             </div>
+            
+            {completed.length > 0 && (
+              <div className="space-y-4 pt-8">
+                 <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-6 w-6 text-green-400" />
+                    <h2 className="text-2xl font-semibold">Completed Alliances</h2>
+                </div>
+                {renderAllianceSection(completed)}
+              </div>
+            )}
+            
           </div>
 
            <div className="space-y-4">
@@ -311,8 +338,8 @@ export default function AlliancesPage() {
                   </Link>
                 </Button>
               </div>
-                {userAlliances.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">You are not part of any alliance.</p>
+                {(pinned.length === 0 && unpinned.length === 0) ? (
+                    <p className="text-center text-muted-foreground py-4">You are not part of any active alliance.</p>
                 ) : (
                     <div className="space-y-6">
                         {pinned.length > 0 && renderAllianceSection(pinned, "Pinned")}
