@@ -15,7 +15,7 @@ import { useSettings } from '@/components/providers/SettingsProvider';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
-import type { UserLevelInfo, Quote, TaskDefinition, RecordEntry } from '@/types';
+import type { UserLevelInfo, TaskDefinition, RecordEntry } from '@/types'
 import { TIER_INFO } from '@/lib/config';
 import { QUOTES } from '@/lib/quotes';
 import TodoListCard from '@/components/todo/TodoListCard';
