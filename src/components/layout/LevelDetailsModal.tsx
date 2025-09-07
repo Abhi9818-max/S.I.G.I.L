@@ -30,6 +30,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
     levelName,
     tierName,
     tierIcon,
+    tierSlug,
     progressPercentage,
     valueTowardsNextLevel,
     pointsForNextLevel,
@@ -58,7 +59,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
 
   const handleBadgeClick = () => {
     onOpenChange(false);
-    router.push('/tiers');
+    router.push(`/tiers?scrollTo=${tierSlug}`);
   };
 
   return (

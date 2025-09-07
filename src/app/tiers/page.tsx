@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,13 @@ import { TIER_INFO } from '@/lib/config';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { cn } from '@/lib/utils';
 import { CornerDownLeft, Star } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 const TierCard = ({ tier, index, isCurrentTier, isClicked, onClick }: { tier: typeof TIER_INFO[0], index: number, isCurrentTier: boolean, isClicked: boolean, onClick: () => void }) => {
   const customCropTiers = ['unknown-blades', 'doompath-heralds', 'elders-of-dust'];
   return (
     <Card 
+        id={`tier-card-${tier.slug}`}
         onClick={onClick}
         className={cn(
             "flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer",
@@ -56,6 +58,23 @@ export default function TiersPage() {
     const [clickedTierSlug, setClickedTierSlug] = useState<string | null>(null);
     const levelInfo = getUserLevelInfo();
     const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
+    const searchParams = useSearchParams();
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const slugToScroll = searchParams.get('scrollTo');
+        if (slugToScroll && scrollContainerRef.current) {
+            const element = document.getElementById(`tier-card-${slugToScroll}`);
+            if (element) {
+                // Use a timeout to ensure the page has rendered and elements are in place
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setClickedTierSlug(slugToScroll);
+                    setTimeout(() => setClickedTierSlug(null), 1000);
+                }, 100);
+            }
+        }
+    }, [searchParams]);
 
     const handleCardClick = (slug: string) => {
         setClickedTierSlug(slug);
@@ -68,7 +87,7 @@ export default function TiersPage() {
                 onAddRecordClick={() => {}} 
                 onManageTasksClick={() => {}}
             />
-            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up">
+            <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up" ref={scrollContainerRef}>
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold tracking-tight text-primary flex items-center justify-center gap-3"><Star className="h-8 w-8"/> Tiers of S.I.G.I.L.</h1>
                     <p className="text-lg text-muted-foreground mt-2">The path of progression, from Ashborn to Endborne.</p>
