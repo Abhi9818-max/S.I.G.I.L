@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useTransition } from 'react';
@@ -400,7 +401,7 @@ export default function FriendsPage() {
                         {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
                         {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                         {searchedUser && (
-                            <div className="mt-4 p-4 border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/50">
+                            <div className="mt-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
                                     <Avatar>
                                         <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
