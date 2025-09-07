@@ -385,7 +385,7 @@ export default function HomePage() {
             {isDownloadingBreakdown && (
                 <div className="w-[450px] p-6 bg-background border border-border rounded-lg">
                     <div className="mb-4">
-                        <h2 className="text-2xl font-semibold text-foreground">Daily Time Breakdown</h2>
+                        <h2 className="text-2xl font-semibold text-foreground">Shit Done Today</h2>
                     </div>
                     <DailyTimeBreakdownChart 
                         hideFooter={true} 
