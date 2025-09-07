@@ -401,34 +401,30 @@ export default function FriendsPage() {
                         {isPending && <p className="text-sm text-muted-foreground mt-3">Searching...</p>}
                         {searchMessage && <p className="text-sm text-muted-foreground mt-3">{searchMessage}</p>}
                         {searchedUser && (
-                            <div className="mt-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
-                                        <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="font-medium">{searchedUser.username}</span>
+                            <Link href={`/friends/${searchedUser.uid}`} className="block">
+                                <div className="mt-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 -m-4 p-4 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar>
+                                            <AvatarImage src={getAvatarForId(searchedUser.uid, searchedUser.photoURL)} />
+                                            <AvatarFallback>{searchedUser.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium">{searchedUser.username}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
+                                        {isAlreadyFriend ? (
+                                            <Badge variant="secondary">Already Friends</Badge>
+                                        ) : hasIncomingRequest ? (
+                                            <Badge variant="outline">Check incoming</Badge>
+                                        ) : requestAlreadySent ? (
+                                            <Badge variant="outline">Request Sent</Badge>
+                                        ) : (
+                                            <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
+                                                <UserPlus className="h-4 w-4 mr-2" /> Add Friend
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href={`/friends/${searchedUser.uid}`}>
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            View Profile
-                                        </Link>
-                                    </Button>
-                                    {isAlreadyFriend ? (
-                                        <Badge variant="secondary">Already Friends</Badge>
-                                    ) : hasIncomingRequest ? (
-                                        <Badge variant="outline">Check incoming</Badge>
-                                    ) : requestAlreadySent ? (
-                                        <Badge variant="outline">Request Sent</Badge>
-                                    ) : (
-                                        <Button size="sm" onClick={() => handleSendRequest(searchedUser)}>
-                                            <UserPlus className="h-4 w-4 mr-2" /> Add Friend
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
+                            </Link>
                         )}
                     </div>
                 </div>
