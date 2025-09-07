@@ -7,6 +7,8 @@ import { Home, Users, ShieldCheck, ListChecks, Settings, Timer, StickyNote } fro
 import { cn } from '@/lib/utils';
 import { useFriends } from '@/components/providers/FriendProvider';
 import { useAlliance } from '@/components/providers/AllianceProvider';
+import { useTodos } from '@/components/providers/TodoProvider';
+import { isToday, parseISO } from 'date-fns';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -20,8 +22,13 @@ export default function BottomNavBar() {
   const pathname = usePathname();
   const { incomingRequests } = useFriends();
   const { incomingAllianceInvitations, incomingAllianceChallenges } = useAlliance();
+  const { todoItems } = useTodos();
 
-  const hasIncomingNotifications = incomingRequests.length > 0 || incomingAllianceInvitations.length > 0 || incomingAllianceChallenges.length > 0;
+  const hasFriendNotifications = incomingRequests.length > 0 || incomingAllianceInvitations.length > 0 || incomingAllianceChallenges.length > 0;
+  
+  const hasIncompletePactsToday = todoItems.some(
+    item => !item.completed && isToday(parseISO(item.createdAt))
+  );
 
   // Hide the nav bar on the login page
   if (pathname === '/login') {
@@ -34,7 +41,13 @@ export default function BottomNavBar() {
     >
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true);
-        const showDot = item.href === '/friends' && hasIncomingNotifications;
+        
+        let showDot = false;
+        if (item.href === '/friends') {
+          showDot = hasFriendNotifications;
+        } else if (item.href === '/todo') {
+          showDot = hasIncompletePactsToday;
+        }
 
         return (
           <Link
