@@ -264,7 +264,7 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 gap-6">
                   {dashboardSettings.showTimeBreakdownChart && (
-                      <div className="animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                      <div className="animate-fade-in-up mt-8" style={{ animationDelay: '500ms' }}>
                           <div className="mb-4">
                               <h2 className="text-2xl font-semibold">Shit Done Today</h2>
                               <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
