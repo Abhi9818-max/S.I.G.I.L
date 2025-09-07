@@ -258,9 +258,10 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
            setFriendData(data);
         }
         
-        if (viewMode === 'details' && (!data.posts || data.posts.length === 0)) {
+        // Set default view based on posts
+        if (!data.posts || data.posts.length === 0) {
             setViewMode('details');
-        } else if (viewMode === 'details') {
+        } else {
             setViewMode('feed');
         }
 
@@ -278,7 +279,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   
     return () => unsubscribe();
   
-  }, [friendId, isFriend, isOwnProfile, router, toast, viewMode]);
+  }, [friendId, isFriend, isOwnProfile, router, toast]);
 
   const friendPacts = useMemo(() => {
     if (!friendData?.todoItems) return [];
