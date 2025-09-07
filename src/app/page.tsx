@@ -15,7 +15,7 @@ import { useSettings } from '@/components/providers/SettingsProvider';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
-import type { UserLevelInfo, Quote, TaskDefinition } from '@/types';
+import type { UserLevelInfo, Quote, TaskDefinition, RecordEntry } from '@/types';
 import { TIER_INFO } from '@/lib/config';
 import { QUOTES } from '@/lib/quotes';
 import TodoListCard from '@/components/todo/TodoListCard';
@@ -54,6 +54,7 @@ export default function HomePage() {
     getUserLevelInfo, 
     awardTierEntryBonus,
     getRecordsForDateRange,
+    records,
   } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
@@ -385,9 +386,12 @@ export default function HomePage() {
                 <div className="w-[450px] p-6 bg-background border border-border rounded-lg">
                     <div className="mb-4">
                         <h2 className="text-2xl font-semibold text-foreground">Daily Time Breakdown</h2>
-                        <p className="text-sm text-muted-foreground">{format(new Date(), 'MMMM d, yyyy')}</p>
                     </div>
-                    <DailyTimeBreakdownChart hideFooter={true} />
+                    <DailyTimeBreakdownChart 
+                        hideFooter={true} 
+                        records={records}
+                        taskDefinitions={taskDefinitions}
+                    />
                      <div className="text-center pt-4 mt-4 border-t border-border">
                         <p className="font-bold text-lg text-foreground/90">S.I.G.I.L.</p>
                     </div>
