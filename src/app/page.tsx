@@ -11,12 +11,11 @@ import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
-import type { UserLevelInfo } from '@/types';
+import type { UserLevelInfo, Quote, TaskDefinition } from '@/types';
 import { TIER_INFO } from '@/lib/config';
-import type { Quote } from '@/lib/quotes';
 import { QUOTES } from '@/lib/quotes';
 import TodoListCard from '@/components/todo/TodoListCard';
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,7 @@ import InteractiveTour from '@/components/layout/InteractiveTour';
 import { useSearchParams } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import QuoteDisplayCard from '@/components/layout/QuoteDisplayCard';
+import TaskProgressCard from '@/components/records/TaskProgressCard';
 
 const LOCAL_STORAGE_KEY_SHOWN_TIER_TOASTS = 'shownTierWelcomeToasts';
 const LOCAL_STORAGE_QUOTE_KEY = 'dailyQuote';
@@ -44,18 +44,21 @@ export default function HomePage() {
   const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
+  const [taskToDownload, setTaskToDownload] = useState<TaskDefinition | null>(null);
   
   const { isUserDataLoaded } = useAuth();
   const { 
     taskDefinitions, 
     getUserLevelInfo, 
     awardTierEntryBonus,
+    getRecordsForDateRange,
   } = useUserRecords();
   const { dashboardSettings } = useSettings();
   const { toast } = useToast();
   const { checkMissedDares } = useTodos();
   const searchParams = useSearchParams();
   const quoteCardRef = useRef<HTMLDivElement>(null);
+  const taskCardRef = useRef<HTMLDivElement>(null);
 
   // Tour State
   const [isTourActive, setIsTourActive] = useState(false);
@@ -179,6 +182,33 @@ export default function HomePage() {
       });
   }, [quoteCardRef, toast, quote]);
 
+  const handleTaskTripleClick = useCallback((task: TaskDefinition) => {
+    setTaskToDownload(task);
+  }, []);
+
+  useEffect(() => {
+    if (taskToDownload && taskCardRef.current) {
+      toPng(taskCardRef.current, { cacheBust: true, pixelRatio: 2 })
+        .then((dataUrl) => {
+          const link = document.createElement('a');
+          const monthStr = format(new Date(), 'yyyy-MM');
+          link.download = `sigil-task-${taskToDownload.name.replace(/\s+/g, '-')}-${monthStr}.png`;
+          link.href = dataUrl;
+          link.click();
+        })
+        .catch((err) => {
+          console.error("Could not generate task card image", err);
+          toast({
+            title: "Download Failed",
+            description: "Could not generate the task card image.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setTaskToDownload(null);
+        });
+    }
+  }, [taskToDownload, toast]);
 
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
@@ -206,6 +236,7 @@ export default function HomePage() {
   
   const showStatsPanel = dashboardSettings.showTotalLast30Days || dashboardSettings.showCurrentStreak || dashboardSettings.showDailyConsistency || dashboardSettings.showHighGoalStat;
 
+  const currentMonthRecords = getRecordsForDateRange(startOfMonth(new Date()), endOfMonth(new Date()));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -229,6 +260,7 @@ export default function HomePage() {
             taskDefinitions={taskDefinitions}
             selectedTaskId={selectedTaskFilterId}
             onSelectTask={(taskId) => setSelectedTaskFilterId(taskId)}
+            onTaskTripleClick={handleTaskTripleClick}
           />
         )}
         
@@ -291,10 +323,19 @@ export default function HomePage() {
         S.I.G.I.L. &copy; {currentYear}
       </footer>
       
-      {/* Offscreen element for image generation */}
+      {/* Offscreen elements for image generation */}
       <div className="fixed -left-[9999px] top-0">
           <div ref={quoteCardRef}>
               <QuoteDisplayCard quote={quote} />
+          </div>
+          <div ref={taskCardRef}>
+            {taskToDownload && (
+              <TaskProgressCard 
+                task={taskToDownload} 
+                records={currentMonthRecords.filter(r => r.taskType === taskToDownload.id)}
+                month={new Date()}
+              />
+            )}
           </div>
       </div>
     </div>

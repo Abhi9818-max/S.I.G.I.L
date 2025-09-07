@@ -6,15 +6,39 @@ import { Button } from '@/components/ui/button';
 import type { TaskDefinition } from '@/types';
 import { ListFilter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskFilterBarProps {
   taskDefinitions: TaskDefinition[];
   selectedTaskId: string | null;
   onSelectTask: (taskId: string | null) => void;
+  onTaskTripleClick?: (task: TaskDefinition) => void;
 }
 
-const TaskFilterBar: React.FC<TaskFilterBarProps> = ({ taskDefinitions, selectedTaskId, onSelectTask }) => {
+const TaskFilterBar: React.FC<TaskFilterBarProps> = ({ taskDefinitions, selectedTaskId, onSelectTask, onTaskTripleClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [clickTimestamps, setClickTimestamps] = useState<number[]>([]);
+  const { toast } = useToast();
+
+  const handleTaskClick = (task: TaskDefinition) => {
+    onSelectTask(task.id);
+    
+    if (!onTaskTripleClick) return;
+
+    const now = Date.now();
+    const newTimestamps = [...clickTimestamps, now].filter(ts => now - ts < 1000); // Keep clicks within 1 second
+
+    if (newTimestamps.length === 3) {
+      toast({
+        title: "Generating Card...",
+        description: "Your monthly task summary is being prepared.",
+      });
+      onTaskTripleClick(task);
+      setClickTimestamps([]); // Reset after successful triple click
+    } else {
+      setClickTimestamps(newTimestamps);
+    }
+  };
 
   return (
     <div className="mb-4 p-3 rounded-lg shadow-md bg-card">
@@ -46,7 +70,7 @@ const TaskFilterBar: React.FC<TaskFilterBarProps> = ({ taskDefinitions, selected
               key={task.id}
               variant={selectedTaskId === task.id ? 'default' : 'outline'}
               size="sm"
-              onClick={() => onSelectTask(task.id)}
+              onClick={() => handleTaskClick(task)}
               className={cn(
                   "transition-all text-foreground/90",
                   selectedTaskId === task.id && "shadow-md text-primary-foreground brightness-110"
