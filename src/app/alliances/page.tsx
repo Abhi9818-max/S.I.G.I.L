@@ -9,7 +9,7 @@ import { Card, CardTitle, CardDescription, CardContent } from '@/components/ui/c
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff, Download, XCircle } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff, Download, XCircle, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge, AllianceMember, UserData } from '@/types';
 import Link from 'next/link';
@@ -193,17 +193,8 @@ export default function AlliancesPage() {
       members: alliance.members || [],
     }));
 
-    const activeAlliances = alliancesWithMemberData.filter(a => {
-        const isEnded = isPast(parseISO(a.endDate));
-        const isObjectiveMet = a.progress >= a.target;
-        return !isEnded && !isObjectiveMet;
-    });
-
-    const completedAlliances = alliancesWithMemberData.filter(a => {
-        const isEnded = isPast(parseISO(a.endDate));
-        const isObjectiveMet = a.progress >= a.target;
-        return isEnded || isObjectiveMet;
-    });
+    const activeAlliances = alliancesWithMemberData.filter(a => a.status === 'ongoing');
+    const completedAlliances = alliancesWithMemberData.filter(a => a.status !== 'ongoing');
 
     const pinned = activeAlliances.filter(a => pinnedIds.has(a.id));
     const unpinned = activeAlliances.filter(a => !pinnedIds.has(a.id));
@@ -330,11 +321,13 @@ export default function AlliancesPage() {
                   {searchResults.map(result => (
                      <div key={result.id} className="p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3">
                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-semibold">{result.name}</p>
-                            <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
-                          </div>
-                          <Button size="sm" onClick={() => handleChallengeClick(result)}>
+                          <Link href={`/alliances/${result.id}`} className="flex-grow">
+                             <div>
+                               <p className="font-semibold hover:underline">{result.name}</p>
+                               <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
+                             </div>
+                          </Link>
+                          <Button size="sm" onClick={() => handleChallengeClick(result)} className="ml-4">
                             <Swords className="h-4 w-4 mr-2"/>
                             Challenge
                           </Button>
@@ -390,3 +383,5 @@ export default function AlliancesPage() {
     </>
   );
 }
+
+    
