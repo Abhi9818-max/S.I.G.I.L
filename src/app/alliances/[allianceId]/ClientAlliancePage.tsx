@@ -313,7 +313,7 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-lg border-2 border-primary/20 object-cover" />
+              <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-full border-2 border-primary/20 object-cover" />
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold">{alliance.name}</h1>
                 <p className="text-muted-foreground mt-1">{alliance.description}</p>
