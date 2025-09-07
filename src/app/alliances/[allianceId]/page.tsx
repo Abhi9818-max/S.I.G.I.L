@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download, Pencil } from 'lucide-react';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download, Pencil, Trophy } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -332,6 +332,52 @@ export default function AlliancePage({ params }: AlliancePageProps) {
   const isPinned = (userData?.pinnedAllianceIds || []).includes(alliance.id);
   const isAllianceEnded = isPast(parseISO(alliance.endDate));
 
+  const ChallengeResult = () => {
+    if (!isAllianceEnded || !alliance.opponentDetails) return null;
+  
+    const myProgress = alliance.progress;
+    const opponentProgress = alliance.opponentDetails.opponentProgress || 0;
+    let winnerName = "";
+  
+    if (myProgress > opponentProgress) {
+      winnerName = alliance.name;
+    } else if (opponentProgress > myProgress) {
+      winnerName = alliance.opponentDetails.allianceName;
+    }
+  
+    return (
+      <Card className="border-green-400/50 bg-green-400/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-400">
+            <Trophy className="h-5 w-5" />
+            Challenge Concluded
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {winnerName ? (
+            <p className="text-center text-lg">
+              Victor: <span className="font-bold">{winnerName}</span>
+            </p>
+          ) : (
+            <p className="text-center text-lg font-bold">The challenge ended in a draw!</p>
+          )}
+           <div className="space-y-3 mt-4">
+               <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.name}</p>
+                  <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
+                  <p className="text-xs text-right mt-1">{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()}</p>
+               </div>
+               <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.opponentDetails.allianceName}</p>
+                  <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
+                  <p className="text-xs text-right mt-1">{alliance.opponentDetails.opponentProgress?.toLocaleString() ?? 0} / {alliance.target.toLocaleString()}</p>
+               </div>
+            </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <>
     <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
@@ -403,32 +449,34 @@ export default function AlliancePage({ params }: AlliancePageProps) {
             </div>
         </div>
         
-        {alliance.activeChallengeId && alliance.opponentDetails && !isAllianceEnded && (
-          <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <Swords className="h-5 w-5" />
-                Active Challenge
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm mb-4">
-                Versus: <span className="font-bold">{alliance.opponentDetails.allianceName}</span>
-              </p>
-              <div className="space-y-3">
-                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.name}</p>
-                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
-                    <p className="text-xs text-right mt-1">{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()}</p>
-                 </div>
-                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.opponentDetails.allianceName}</p>
-                    <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
-                    <p className="text-xs text-right mt-1">{alliance.opponentDetails.opponentProgress?.toLocaleString() ?? 0} / {alliance.target.toLocaleString()}</p>
-                 </div>
-              </div>
-            </CardContent>
-          </Card>
+        {alliance.activeChallengeId && alliance.opponentDetails && (
+            isAllianceEnded ? <ChallengeResult /> : (
+              <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <Swords className="h-5 w-5" />
+                    Active Challenge
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm mb-4">
+                    Versus: <span className="font-bold">{alliance.opponentDetails.allianceName}</span>
+                  </p>
+                  <div className="space-y-3">
+                     <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.name}</p>
+                        <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
+                        <p className="text-xs text-right mt-1">{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()}</p>
+                     </div>
+                     <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{alliance.opponentDetails.allianceName}</p>
+                        <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
+                        <p className="text-xs text-right mt-1">{alliance.opponentDetails.opponentProgress?.toLocaleString() ?? 0} / {alliance.target.toLocaleString()}</p>
+                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
         )}
 
         <div>
@@ -520,3 +568,5 @@ export default function AlliancePage({ params }: AlliancePageProps) {
     </>
   );
 }
+
+    
