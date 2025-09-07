@@ -38,7 +38,7 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
   return (
     <div className="w-[450px] h-auto bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
         <header className="flex items-center gap-4 mb-4">
-             <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-primary/20">
+             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20">
                 <Image src={photoURL} alt={name} fill className="object-cover" />
             </div>
             <div>
