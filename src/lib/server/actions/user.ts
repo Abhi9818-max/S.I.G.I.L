@@ -1,6 +1,3 @@
-
-'use server';
-
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { SearchedUser } from '@/types';
