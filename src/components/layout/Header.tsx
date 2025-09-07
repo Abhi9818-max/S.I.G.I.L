@@ -132,14 +132,22 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-2">
-            {navLinks.map(link => (
-              <Button asChild key={link.href} variant={pathname === link.href ? "secondary" : "ghost"} size="sm">
-                <Link href={link.href}>
+            {navLinks.map(link => {
+              const isActive = pathname.startsWith(link.href);
+              return (
+                <Link
+                  href={link.href}
+                  key={link.href}
+                  className={cn(
+                    "inline-flex items-center justify-center whitespace-nowrap rounded-none border-b-2 px-3 py-2 text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+                    isActive ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:border-border"
+                  )}
+                >
                   <link.icon className="mr-1.5 h-4 w-4" />
                   {link.label}
                 </Link>
-              </Button>
-            ))}
+              )
+            })}
             
             {isHomePage && (
               <>
