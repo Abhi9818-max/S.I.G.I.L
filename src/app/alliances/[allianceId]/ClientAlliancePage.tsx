@@ -334,10 +334,10 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div
-                className={cn('relative', isCreator && 'cursor-pointer')}
+                className={cn('relative h-24 w-24', isCreator && 'cursor-pointer')}
                 onDoubleClick={handleImageDoubleClick}
               >
-                  <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-full border-2 border-primary/20 object-cover" />
+                  <Image src={alliance.photoURL} alt={alliance.name} fill className="rounded-full border-2 border-primary/20 object-cover" />
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold">{alliance.name}</h1>
