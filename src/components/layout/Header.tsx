@@ -47,61 +47,6 @@ const getAvatarForId = (id: string, url?: string | null) => {
     return `/avatars/avatar${avatarNumber}.jpeg`;
 };
 
-const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-        case 'friend_request': return <UserIcon className="h-4 w-4 text-blue-400" />;
-        case 'relationship_proposal': return <Heart className="h-4 w-4 text-pink-400" />;
-        case 'alliance_invite': return <ShieldCheck className="h-4 w-4 text-cyan-400" />;
-        case 'alliance_challenge': return <Swords className="h-4 w-4 text-red-500" />;
-        case 'friend_activity': return <Activity className="h-4 w-4 text-green-400" />;
-        case 'comment_on_post': return <MessageSquare className="h-4 w-4 text-purple-400" />;
-        default: return <Bell className="h-4 w-4" />;
-    }
-}
-
-
-const NotificationItem = ({ notification, onAction }: { notification: Notification, onAction: (actionType: 'accept' | 'decline', notif: Notification) => void }) => (
-    <div className="flex flex-col p-2 rounded-md bg-muted/50">
-        <div className="flex items-start gap-2">
-            <Link href={notification.link || '#'}>
-                <AvatarPrimitive className="h-8 w-8 mt-1"><AvatarImage src={getAvatarForId(notification.senderId, notification.senderPhotoURL)}/><AvatarFallback>{notification.senderUsername.charAt(0)}</AvatarFallback></AvatarPrimitive>
-            </Link>
-            <div className="flex-1">
-                <p className="text-sm">
-                    <Link href={notification.link || '#'} className="font-semibold">{notification.senderUsername}</Link> {notification.message}
-                </p>
-                <p className="text-xs text-muted-foreground">{formatDistanceToNowStrict(parseISO(notification.createdAt), { addSuffix: true })}</p>
-            </div>
-        </div>
-        {(notification.type === 'friend_request' || notification.type === 'relationship_proposal' || notification.type === 'alliance_invite' || notification.type === 'alliance_challenge') && (
-             <div className="flex gap-1 self-end mt-2">
-                <Button size="icon" className="h-7 w-7 bg-green-600 hover:bg-green-500" onClick={() => onAction('accept', notification)}><Check className="h-4 w-4"/></Button>
-                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={() => onAction('decline', notification)}><X className="h-4 w-4"/></Button>
-            </div>
-        )}
-    </div>
-);
-
-
-const RequestsPopover = ({ notifications, onAction }: any) => (
-    <PopoverContent className="w-80 p-0" align="end">
-        <ScrollArea className="h-96">
-            <div className="p-4 space-y-4">
-                <h4 className="font-medium leading-none">Notifications</h4>
-                <Separator />
-                {notifications.length > 0 ? (
-                    notifications.map((notif: Notification) => (
-                        <NotificationItem key={notif.id} notification={notif} onAction={onAction} />
-                    ))
-                ) : (
-                    <p className="text-xs text-center text-muted-foreground p-2">No new notifications.</p>
-                )}
-            </div>
-        </ScrollArea>
-    </PopoverContent>
-);
-
-
 interface HeaderProps {
   onAddRecordClick: () => void;
   onManageTasksClick: () => void;
@@ -119,21 +64,7 @@ type MobileMenuLink = (NavLink & { isSeparator?: never }) | { isSeparator: true;
 const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick }) => {
   const { getUserLevelInfo } = useUserRecords(); 
   const { user, userData, logout } = useAuth();
-  const { 
-    acceptFriendRequest, 
-    declineFriendRequest,
-    acceptRelationshipProposal, 
-    declineRelationshipProposal,
-    notifications = [],
-    markNotificationsAsRead,
-  } = useFriends();
-  const {
-    acceptAllianceInvitation,
-    declineAllianceInvitation,
-    acceptAllianceChallenge,
-    declineAllianceChallenge,
-  } = useAlliance();
-
+  
   const [isLevelDetailsModalOpen, setIsLevelDetailsModalOpen] = useState(false);
   const pathname = usePathname();
   const [levelInfo, setLevelInfo] = useState<UserLevelInfo | null>(null);
@@ -158,29 +89,6 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
 
   const headerTierClass = levelInfo ? `header-tier-group-${levelInfo.tierGroup}` : 'header-tier-group-1';
   
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const handleAction = (actionType: 'accept' | 'decline', notif: Notification) => {
-      if (!notif.originalRequest) return;
-      
-      switch (notif.type) {
-        case 'friend_request':
-          actionType === 'accept' ? acceptFriendRequest(notif.originalRequest as FriendRequest) : declineFriendRequest(notif.id);
-          break;
-        case 'relationship_proposal':
-          actionType === 'accept' ? acceptRelationshipProposal(notif.originalRequest as RelationshipProposal) : declineRelationshipProposal(notif.id);
-          break;
-        case 'alliance_invite':
-          actionType === 'accept' ? acceptAllianceInvitation(notif.originalRequest as AllianceInvitation) : declineAllianceInvitation(notif.id);
-          break;
-        case 'alliance_challenge':
-          actionType === 'accept' ? acceptAllianceChallenge(notif.originalRequest as AllianceChallenge) : declineAllianceChallenge(notif.id);
-          break;
-        default:
-          break;
-      }
-  };
-
   const navLinks: NavLink[] = [
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/alliances", label: "Alliances", icon: ShieldCheck },
@@ -248,19 +156,6 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
                 </Button>
               </>
             )}
-
-            <Popover onOpenChange={(open) => { if (open && unreadCount > 0) markNotificationsAsRead(); }}>
-              <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative">
-                      <Bell className="h-5 w-5"/>
-                      {unreadCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadCount}</Badge>}
-                  </Button>
-              </PopoverTrigger>
-              <RequestsPopover 
-                  notifications={notifications}
-                  onAction={handleAction}
-              />
-            </Popover>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
