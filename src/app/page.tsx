@@ -21,7 +21,7 @@ import { QUOTES } from '@/lib/quotes';
 import TodoListCard from '@/components/todo/TodoListCard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Calendar } from 'lucide-react';
+import { Calendar, Download } from 'lucide-react';
 import ProgressOverTimeChart from '@/components/progress/ProgressOverTimeChart';
 import DailyTimeBreakdownChart from '@/components/dashboard/DailyTimeBreakdownChart';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -62,7 +62,6 @@ export default function HomePage() {
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const taskCardRef = useRef<HTMLDivElement>(null);
   const breakdownCardRef = useRef<HTMLDivElement>(null);
-  const [breakdownClickCount, setBreakdownClickCount] = useState(0);
 
   // Tour State
   const [isTourActive, setIsTourActive] = useState(false);
@@ -214,18 +213,12 @@ export default function HomePage() {
     }
   }, [taskToDownload, toast]);
   
-  const handleBreakdownCardClick = () => {
-    const newCount = breakdownClickCount + 1;
-    setBreakdownClickCount(newCount);
-
-    if (newCount === 3) {
-      toast({
-        title: "Generating Card...",
-        description: "Your daily breakdown card is being prepared.",
-      });
-      setIsDownloadingBreakdown(true);
-      setBreakdownClickCount(0); // Reset after triggering
-    }
+  const handleBreakdownCardDownload = () => {
+    toast({
+      title: "Generating Card...",
+      description: "Your daily breakdown card is being prepared.",
+    });
+    setIsDownloadingBreakdown(true);
   };
 
   useEffect(() => {
@@ -341,9 +334,14 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 gap-6">
                   {dashboardSettings.showTimeBreakdownChart && (
                       <div className="animate-fade-in-up mt-8" style={{ animationDelay: '500ms' }}>
-                          <div className="mb-4 cursor-pointer" onClick={handleBreakdownCardClick}>
-                              <h2 className="text-2xl font-semibold">Shit Done Today</h2>
-                              <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
+                          <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-semibold">Shit Done Today</h2>
+                                <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={handleBreakdownCardDownload} aria-label="Download breakdown card">
+                                <Download className="h-5 w-5" />
+                            </Button>
                           </div>
                           <DailyTimeBreakdownChart />
                       </div>
@@ -400,3 +398,4 @@ export default function HomePage() {
     </div>
   );
 }
+
