@@ -14,11 +14,11 @@ const QuoteDisplayCard: React.FC<QuoteDisplayCardProps> = ({ quote }) => {
   }
 
   return (
-    <div className="w-[400px] h-[400px] bg-[#F5F5F3] p-6 flex flex-col justify-center items-center font-serif">
+    <div className="w-[400px] h-[400px] bg-[#F5F5F3] p-8 flex flex-col justify-center font-serif">
       <p className="text-xl text-center text-[#1C1C1C]">
         "{quote.text}"
       </p>
-      <footer className="mt-4 text-base text-center text-[#1C1C1C]/80">
+      <footer className="w-full mt-4 text-base text-right text-[#1C1C1C]/80">
         — {quote.author}
       </footer>
     </div>
