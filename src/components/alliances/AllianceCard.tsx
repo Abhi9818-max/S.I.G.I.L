@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -7,23 +8,6 @@ import { Progress } from '@/components/ui/progress';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
-
-// Simple hash function to get a number from a string
-const simpleHash = (s: string) => {
-  let hash = 0;
-  for (let i = 0; i < s.length; i++) {
-    const char = s.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-};
-
-const getAvatarForId = (id: string, url?: string | null) => {
-  if (url) return url;
-  const avatarNumber = (simpleHash(id) % 41) + 1;
-  return `/avatars/avatar${avatarNumber}.jpeg`;
-};
 
 interface AllianceCardProps {
   alliance: Alliance;
@@ -87,31 +71,6 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
                 </span>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2 text-white flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Members ({members.length})
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {members.slice(0, 8).map(member => {
-              const src = getAvatarForId(member.uid, member.photoURL);
-              return (
-                <Avatar key={member.uid}>
-                  <AvatarImage src={src} alt={member.username} />
-                  <AvatarFallback>
-                    {member.username.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              );
-            })}
-            {members.length > 8 && (
-              <Avatar>
-                <AvatarFallback>+{members.length - 8}</AvatarFallback>
-              </Avatar>
-            )}
           </div>
         </div>
       </main>
