@@ -48,22 +48,24 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
         </header>
         
         <main className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/50 border border-white/10">
-                <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-5 w-5" style={{ color: taskColor }} />
-                    <h3 className="font-semibold text-lg text-white" style={{ color: taskColor }}>Objective: {taskName}</h3>
+            <div className="p-4 rounded-lg bg-card/50">
+                <div className="flex items-center gap-3 mb-3">
+                    <Target className="h-6 w-6" style={{ color: taskColor }} />
+                    <h3 className="font-semibold text-lg" style={{ color: taskColor }}>
+                        Objective: {taskName}
+                    </h3>
                 </div>
-                <div className="space-y-2 mt-4">
-                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
-                    <div className="flex justify-between text-sm text-white/60">
-                        <span>{progress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
-                        <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                                {timeRemaining >= 0 ? `${timeRemaining} days left` : 'Ended'}
-                            </span>
-                        </div>
+                <div className="space-y-2">
+                  <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span className="font-mono">{progress.toLocaleString()} / {target.toLocaleString()}</span>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {timeRemaining >= 0 ? `${timeRemaining} days left` : 'Ended'}
+                      </span>
                     </div>
+                  </div>
                 </div>
             </div>
 
@@ -73,7 +75,7 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
                     {members.slice(0, 8).map(member => (
                         <Avatar key={member.uid}>
                             <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
-                            <AvatarFallback>{(member.nickname || member.username).charAt(0).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback>{(member.username || '').charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     ))}
                     {members.length > 8 && (
