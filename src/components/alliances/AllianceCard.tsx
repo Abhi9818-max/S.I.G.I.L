@@ -54,7 +54,7 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
                     <h3 className="font-semibold text-lg text-white" style={{ color: taskColor }}>Objective: {taskName}</h3>
                 </div>
                 <div className="space-y-2 mt-4">
- <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
+                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
                     <div className="flex justify-between text-sm text-white/60">
                         <span>{progress.toLocaleString()} / {target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
                         <div className="flex items-center gap-1">

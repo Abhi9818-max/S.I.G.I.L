@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge, AllianceMember, UserData } from '@/types';
 import Link from 'next/link';
@@ -17,6 +17,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toPng } from 'html-to-image';
+import AllianceCard from '@/components/alliances/AllianceCard';
 
 
 // Simple hash function to get a number from a string
@@ -42,7 +44,7 @@ const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) =>
     return `/alliances/alliance${avatarNumber}.jpeg`;
 }
 
-const AllianceCard3D = ({ alliance, isPinned, onPinToggle }: { alliance: Alliance & { members: AllianceMember[] }, isPinned: boolean, onPinToggle: (e: React.MouseEvent, allianceId: string) => void }) => {
+const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { alliance: Alliance & { members: AllianceMember[] }, isPinned: boolean, onPinToggle: (e: React.MouseEvent, allianceId: string) => void, onDownload: (alliance: Alliance & { members: AllianceMember[] }) => void }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -69,9 +71,9 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle }: { alliance: Allianc
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full group">
                 <Link href={`/alliances/${alliance.id}`} className="block w-full h-full">
-                    <Card className="overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-2xl w-full h-full card-3d-content">
+                    <Card className="overflow-hidden group-hover:shadow-2xl w-full h-full card-3d-content">
                         <div className="relative w-full h-full">
                             <Image 
                                 src={getAllianceImage(alliance)}
@@ -99,15 +101,26 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle }: { alliance: Allianc
                         </div>
                     </Card>
                 </Link>
-                <Button 
-                    size="icon" 
-                    variant="secondary"
-                    className={cn("absolute top-2 right-2 z-10 h-8 w-8 transition-opacity opacity-60 group-hover:opacity-100", isPinned && "bg-primary text-primary-foreground opacity-100")}
-                    onClick={(e) => onPinToggle(e, alliance.id)}
-                    aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
-                >
-                    {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                </Button>
+                <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100">
+                    <Button 
+                        size="icon" 
+                        variant="secondary"
+                        className={cn("h-8 w-8", isPinned && "bg-primary text-primary-foreground")}
+                        onClick={(e) => onPinToggle(e, alliance.id)}
+                        aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
+                    >
+                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                        size="icon" 
+                        variant="secondary"
+                        className="h-8 w-8"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(alliance); }}
+                        aria-label="Download alliance card"
+                    >
+                        <Download className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
          </div>
     );
@@ -121,6 +134,8 @@ export default function AlliancesPage() {
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [allianceToDownload, setAllianceToDownload] = useState<(Alliance & { members: AllianceMember[] }) | null>(null);
+  const allianceCardRef = useRef<HTMLDivElement>(null);
   
   const handlePinToggle = (e: React.MouseEvent, allianceId: string) => {
     e.preventDefault();
@@ -169,6 +184,33 @@ export default function AlliancesPage() {
       toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
+  
+  const handleDownloadRequest = (alliance: Alliance & { members: AllianceMember[] }) => {
+    setAllianceToDownload(alliance);
+  };
+  
+  useEffect(() => {
+    if (allianceToDownload && allianceCardRef.current) {
+        toPng(allianceCardRef.current, { cacheBust: true, pixelRatio: 2 })
+            .then((dataUrl) => {
+                const link = document.createElement('a');
+                link.download = `sigil-alliance-${allianceToDownload.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+                link.href = dataUrl;
+                link.click();
+            })
+            .catch((err) => {
+                console.error("Could not generate alliance card image", err);
+                toast({
+                    title: "Download Failed",
+                    description: "Could not generate the alliance card image.",
+                    variant: "destructive",
+                });
+            })
+            .finally(() => {
+                setAllianceToDownload(null);
+            });
+    }
+  }, [allianceToDownload, toast]);
 
   const renderAllianceSection = (alliances: (Alliance & { members: AllianceMember[] })[], title?: string) => (
     <div className="space-y-4">
@@ -181,6 +223,7 @@ export default function AlliancesPage() {
                         alliance={alliance}
                         isPinned={(userData?.pinnedAllianceIds || []).includes(alliance.id)}
                         onPinToggle={handlePinToggle}
+                        onDownload={handleDownloadRequest}
                     />
                 ))}
             </div>
@@ -190,6 +233,7 @@ export default function AlliancesPage() {
   );
   
   return (
+    <>
     <div className={cn("min-h-screen flex flex-col")}>
       <Header onAddRecordClick={() => {}} onManageTasksClick={() => {}} />
       <main className="flex-grow container mx-auto p-4 md:p-8 animate-fade-in-up space-y-8">
@@ -237,7 +281,7 @@ export default function AlliancesPage() {
                 <div className="space-y-2 pt-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
                   {searchResults.map(result => (
-                    <div key={result.id} className="-m-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div key={result.id} className="p-3 rounded-lg hover:bg-muted/50 transition-colors -mx-3">
                        <div className="flex justify-between items-center">
                           <div>
                             <p className="font-semibold">{result.name}</p>
@@ -280,5 +324,12 @@ export default function AlliancesPage() {
         </div>
       </main>
     </div>
+    {/* Offscreen card for image generation */}
+    <div className="fixed -left-[9999px] top-0">
+        <div ref={allianceCardRef}>
+            {allianceToDownload && <AllianceCard alliance={allianceToDownload} />}
+        </div>
+    </div>
+    </>
   );
 }
