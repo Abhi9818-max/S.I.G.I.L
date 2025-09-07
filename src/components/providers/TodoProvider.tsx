@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { TodoItem } from '@/types';
@@ -291,8 +292,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* FIXED: Removed onInteractOutside prop that doesn't exist */}
-      <AlertDialog open={insultDialog.isOpen} onOpenChange={() => {}}>
+      <AlertDialog open={insultDialog.isOpen} onOpenChange={(open) => !open && handleCloseInsultDialog()}>
         <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()}>
             <AlertDialogHeader>
                 <AlertDialogTitle>{insultDialog.title}</AlertDialogTitle>
