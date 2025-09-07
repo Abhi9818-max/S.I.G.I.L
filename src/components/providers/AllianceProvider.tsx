@@ -30,6 +30,7 @@ interface AllianceContextType {
     acceptAllianceChallenge: (challenge: AllianceChallenge) => Promise<void>;
     declineAllianceChallenge: (challengeId: string) => Promise<void>;
     updateAlliance: (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => Promise<void>;
+    updateAlliancePhoto: (allianceId: string, photoURL: string) => Promise<void>;
     updateAllianceProgress: (allianceId: string, value: number) => Promise<void>;
     updateMemberContribution: (allianceId: string, memberId: string, xpValue: number) => Promise<void>;
     togglePinAlliance: (allianceId: string) => Promise<void>;
@@ -343,6 +344,12 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         await updateDoc(allianceRef, data);
     }, []);
 
+    const updateAlliancePhoto = useCallback(async (allianceId: string, photoURL: string) => {
+        if (!db) return;
+        const allianceRef = doc(db, 'alliances', allianceId);
+        await updateDoc(allianceRef, { photoURL });
+    }, []);
+
     const updateAllianceProgress = useCallback(async (allianceId: string, value: number) => {
         if (!user || !db) throw new Error("Authentication required.");
         
@@ -433,6 +440,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             acceptAllianceChallenge,
             declineAllianceChallenge,
             updateAlliance,
+            updateAlliancePhoto,
             updateAllianceProgress,
             updateMemberContribution,
             togglePinAlliance,

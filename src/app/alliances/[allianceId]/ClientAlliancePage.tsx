@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ClientHeader from '@/components/ClientHeader';
 import { differenceInDays, parseISO, formatDistanceToNowStrict, isPast } from 'date-fns';
 import Link from 'next/link';
-import { doc, getDoc, collection, query, where, documentId, getDocs, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
 import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download } from 'lucide-react';
@@ -27,6 +27,7 @@ import { useAlliance } from '@/components/providers/AllianceProvider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toPng } from 'html-to-image';
 import AllianceCard from '@/components/alliances/AllianceCard';
+import AllianceImageSelectionDialog from '@/components/alliances/AllianceImageSelectionDialog';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -145,11 +146,12 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<AllianceInvitation[]>([]);
   const [allianceToDownload, setAllianceToDownload] = useState<Alliance | null>(null);
+  const [isImageSelectionOpen, setIsImageSelectionOpen] = useState(false);
   const allianceCardRef = useRef<HTMLDivElement>(null);
 
   const { user, userData } = useAuth();
   const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
-  const { sendAllianceInvitation, getPendingAllianceInvitesFor, togglePinAlliance } = useAlliance();
+  const { sendAllianceInvitation, getPendingAllianceInvitesFor, togglePinAlliance, updateAlliancePhoto } = useAlliance();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -271,6 +273,25 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
   }, [allianceToDownload, toast]);
 
+  const isCreator = user?.uid === alliance?.creatorId;
+
+  const handleImageDoubleClick = () => {
+    if (isCreator) {
+        setIsImageSelectionOpen(true);
+    }
+  };
+  
+  const handleImageSelect = async (newUrl: string) => {
+    if (alliance) {
+      await updateAlliancePhoto(alliance.id, newUrl);
+      toast({
+        title: "Emblem Updated",
+        description: "The alliance emblem has been changed.",
+      });
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
@@ -303,7 +324,6 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const opponentProgressPercentage = alliance.opponentDetails?.opponentProgress 
     ? Math.min(100, (alliance.opponentDetails.opponentProgress / alliance.target) * 100)
     : 0;
-  const isCreator = user?.uid === alliance.creatorId;
   const isPinned = (userData?.pinnedAllianceIds || []).includes(alliance.id);
 
   return (
@@ -313,7 +333,12 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-full border-2 border-primary/20 object-cover" />
+              <div
+                className={cn('relative', isCreator && 'cursor-pointer')}
+                onDoubleClick={handleImageDoubleClick}
+              >
+                  <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-full border-2 border-primary/20 object-cover" />
+              </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold">{alliance.name}</h1>
                 <p className="text-muted-foreground mt-1">{alliance.description}</p>
@@ -464,6 +489,14 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             {allianceToDownload && <AllianceCard alliance={allianceToDownload} />}
         </div>
     </div>
+    {alliance && isCreator && (
+      <AllianceImageSelectionDialog
+        isOpen={isImageSelectionOpen}
+        onOpenChange={setIsImageSelectionOpen}
+        onSelect={handleImageSelect}
+        currentPhotoURL={alliance.photoURL}
+      />
+    )}
     </>
   );
 }
