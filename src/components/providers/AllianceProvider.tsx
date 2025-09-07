@@ -159,22 +159,37 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const deleteAllCreatedAlliances = useCallback(async () => {
         if (!user || !db) throw new Error("Authentication required.");
-
+    
         const alliancesRef = collection(db!, 'alliances');
         const q = query(alliancesRef, where('creatorId', '==', user.uid));
         const querySnapshot = await getDocs(q);
-
+    
         if (querySnapshot.empty) {
             toast({ title: "No Alliances Found", description: "You have not created any alliances to delete." });
             return;
         }
-
+    
         const batch = writeBatch(db!);
-        querySnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-
+    
+        for (const docSnap of querySnapshot.docs) {
+            const allianceData = docSnap.data() as Alliance;
+    
+            // Handle active challenges
+            if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
+                const opponentAllianceRef = doc(db!, 'alliances', allianceData.opponentDetails.allianceId);
+                // Opponent wins by forfeit. Set their view of opponent's progress to 0.
+                batch.update(opponentAllianceRef, {
+                    'opponentDetails.opponentProgress': 0,
+                    'activeChallengeId': null // The challenge is over
+                });
+            }
+    
+            // Delete the alliance itself
+            batch.delete(docSnap.ref);
+        }
+    
         await batch.commit();
+        toast({ title: "Alliances Deleted", description: "All alliances created by you have been removed." });
     }, [user, toast]);
 
     const sendAllianceInvitation = useCallback(async (allianceId: string, allianceName: string, recipientId: string) => {
