@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { Alliance } from '@/types';
-import { Shield, Target, Calendar, Users } from 'lucide-react';
+import { Shield, Target, Calendar, Users, Swords } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,10 +25,15 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
     members,
     progress,
     photoURL,
+    activeChallengeId,
+    opponentDetails,
   } = alliance;
 
   const progressPercentage = Math.min((progress / target) * 100, 100);
   const timeRemaining = differenceInDays(parseISO(endDate), new Date());
+  const opponentProgressPercentage = opponentDetails?.opponentProgress
+    ? Math.min((opponentDetails.opponentProgress / target) * 100, 100)
+    : 0;
 
   return (
     <div className="w-[450px] h-auto bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
@@ -73,6 +78,31 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
             </div>
           </div>
         </div>
+
+        {activeChallengeId && opponentDetails && (
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/50">
+            <div className="flex items-center gap-2 text-destructive mb-3">
+              <Swords className="h-5 w-5" />
+              <h3 className="font-semibold text-lg">Active Challenge</h3>
+            </div>
+             <p className="text-sm mb-4 text-white">
+                Versus: <span className="font-bold">{opponentDetails.allianceName}</span>
+              </p>
+              <div className="space-y-3">
+                 <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{name}</p>
+                    <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: taskColor }} />
+                    <p className="text-xs text-right mt-1 text-muted-foreground">{progress.toLocaleString()} / {target.toLocaleString()}</p>
+                 </div>
+                 <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{opponentDetails.allianceName}</p>
+                    <Progress value={opponentProgressPercentage} indicatorClassName="transition-all duration-500 bg-destructive" />
+                    <p className="text-xs text-right mt-1 text-muted-foreground">{opponentDetails.opponentProgress?.toLocaleString() ?? 0} / {target.toLocaleString()}</p>
+                 </div>
+              </div>
+          </div>
+        )}
+
       </main>
 
       <footer className="text-center pt-4 mt-auto border-t border-white/10">
