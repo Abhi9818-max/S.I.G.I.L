@@ -24,6 +24,7 @@ interface DailyTimeBreakdownChartProps {
   hideFooter?: boolean;
   records?: RecordEntry[];
   taskDefinitions?: TaskDefinition[];
+  isDownload?: boolean;
 }
 
 const getDailyTimeBreakdown = (
@@ -119,7 +120,7 @@ const renderLegend = (props: any) => {
 }
 
 
-const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
+const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp, isDownload = false }) => {
     const userRecordsContext = useUserRecords();
     const { dashboardSettings } = useSettings();
     
@@ -239,7 +240,7 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
                     {isChartEmpty ? (
                          <div className="flex items-center justify-center h-full text-muted-foreground">No time logged today.</div>
                     ) : (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width={isDownload ? 400 : "100%"} height={isDownload ? 300 : "100%"}>
                             <PieChart>
                                 <Tooltip content={<CustomTooltip />} />
                                 <Pie

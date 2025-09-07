@@ -391,6 +391,7 @@ export default function HomePage() {
                         hideFooter={true} 
                         records={records}
                         taskDefinitions={taskDefinitions}
+                        isDownload={true}
                     />
                      <div className="text-center pt-4 mt-4 border-t border-border">
                         <p className="font-bold text-lg text-foreground/90">S.I.G.I.L.</p>
@@ -402,4 +403,3 @@ export default function HomePage() {
     </div>
   );
 }
-
