@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,8 @@ interface LevelDetailsModalProps {
 }
 
 const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenChange, levelInfo }) => {
+  const router = useRouter();
+
   if (!levelInfo) return null;
 
   const {
@@ -53,6 +56,11 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
   const progressColor = getProgressColor(tierGroup);
   const tierInfo = TIER_INFO.find(t => t.tierGroup === tierGroup);
 
+  const handleBadgeClick = () => {
+    onOpenChange(false);
+    router.push('/tiers');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm p-8 bg-[rgba(21,23,25,0.5)] border-white/10 shadow-2xl backdrop-blur-lg sm:rounded-3xl">
@@ -63,9 +71,13 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
           </p>
         </div>
 
-        <div className="relative my-8 flex flex-col items-center justify-center">
-            <div className="relative h-40 w-36">
-              <svg viewBox="0 0 144 160" className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_var(--glow-color)]" style={{ '--glow-color': progressColor } as React.CSSProperties}>
+        <button 
+          className="relative my-8 flex flex-col items-center justify-center group"
+          onClick={handleBadgeClick}
+          aria-label="View all tiers"
+        >
+            <div className="relative h-40 w-36 transition-transform duration-300 ease-in-out group-hover:scale-110">
+              <svg viewBox="0 0 144 160" className="absolute inset-0 w-full h-full drop-shadow-[0_0_12px_var(--glow-color)] transition-all duration-300" style={{ '--glow-color': progressColor } as React.CSSProperties}>
                 <defs>
                     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
                         <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
@@ -93,7 +105,7 @@ const LevelDetailsModal: React.FC<LevelDetailsModalProps> = ({ isOpen, onOpenCha
                 {tierInfo?.icon}
               </div>
             </div>
-        </div>
+        </button>
 
         <div className="space-y-4">
           <div className="relative">
