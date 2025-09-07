@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { isPast, parseISO } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 
 // Simple hash function to get a number from a string
@@ -42,6 +43,69 @@ const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) =>
     const avatarNumber = (simpleHash(alliance.id) % 21) + 1;
     return `/alliances/alliance${avatarNumber}.jpeg`;
 }
+
+const ChallengeDialog = ({
+  isOpen,
+  onOpenChange,
+  myAlliances,
+  challengedAlliance,
+  onConfirmChallenge,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  myAlliances: Alliance[];
+  challengedAlliance: Alliance | null;
+  onConfirmChallenge: (challenger: Alliance) => void;
+}) => {
+  if (!challengedAlliance) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Challenge {challengedAlliance.name}</DialogTitle>
+          <DialogDescription>
+            Select which of your alliances will issue the challenge.
+          </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-3">
+            {myAlliances.length > 0 ? (
+              myAlliances.map((alliance) => (
+                <button
+                  key={alliance.id}
+                  onClick={() => onConfirmChallenge(alliance)}
+                  className="w-full text-left p-3 rounded-lg hover:bg-muted/80 transition-colors flex items-center gap-4"
+                >
+                  <div className="relative h-12 w-12 flex-shrink-0">
+                    <Image
+                      src={getAllianceImage(alliance as Alliance & { members: AllianceMember[] })}
+                      alt={alliance.name}
+                      fill
+                      className="rounded-md object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-semibold">{alliance.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {alliance.memberIds.length} members
+                    </p>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground p-4">
+                You do not have any alliances you created to send a challenge
+                from.
+              </p>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 
 const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: AllianceMember[] } }) => {
     const cardRef = useRef<HTMLDivElement>(null);
@@ -119,8 +183,10 @@ export default function AlliancesPage() {
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [isChallengeDialogOpen, setIsChallengeDialogOpen] = useState(false);
+  const [challengedAlliance, setChallengedAlliance] = useState<Alliance | null>(null);
 
-  const { pinned, unpinned, completed } = useMemo(() => {
+  const { pinned, unpinned, completed, myCreatedAlliances } = useMemo(() => {
     const pinnedIds = new Set(userData?.pinnedAllianceIds || []);
     const alliancesWithMemberData = userAlliances.map(alliance => ({
       ...alliance,
@@ -141,9 +207,10 @@ export default function AlliancesPage() {
 
     const pinned = activeAlliances.filter(a => pinnedIds.has(a.id));
     const unpinned = activeAlliances.filter(a => !pinnedIds.has(a.id));
+    const myCreated = activeAlliances.filter(a => a.creatorId === user?.uid);
     
-    return { pinned, unpinned, completed: completedAlliances };
-  }, [userAlliances, userData?.pinnedAllianceIds]);
+    return { pinned, unpinned, completed: completedAlliances, myCreatedAlliances: myCreated };
+  }, [userAlliances, userData?.pinnedAllianceIds, user?.uid]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -159,18 +226,37 @@ export default function AlliancesPage() {
     }
   };
 
-  const handleChallenge = async (challengedAlliance: Alliance) => {
-    const myAlliance = userAlliances.find(a => a.creatorId === user?.uid);
-    if (!myAlliance) {
-      toast({ title: "No Alliance Found", description: "You must be the creator of an alliance to send challenges.", variant: "destructive" });
+  const handleChallengeClick = (allianceToChallenge: Alliance) => {
+    if (myCreatedAlliances.length === 0) {
+      toast({
+        title: "No Alliance to Challenge With",
+        description: "You must be the creator of an active alliance to send challenges.",
+        variant: "destructive",
+      });
       return;
     }
+    setChallengedAlliance(allianceToChallenge);
+    setIsChallengeDialogOpen(true);
+  };
+  
+  const handleConfirmChallenge = async (challengerAlliance: Alliance) => {
+    if (!challengedAlliance) return;
 
     try {
-      await sendAllianceChallenge(myAlliance, challengedAlliance);
-      toast({ title: "Challenge Sent!", description: `Your challenge has been sent to ${challengedAlliance.name}.` });
+      await sendAllianceChallenge(challengerAlliance, challengedAlliance);
+      toast({
+        title: "Challenge Sent!",
+        description: `Your challenge has been sent to ${challengedAlliance.name}.`,
+      });
     } catch (e) {
-      toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
+      toast({
+        title: "Challenge Failed",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+        setIsChallengeDialogOpen(false);
+        setChallengedAlliance(null);
     }
   };
 
@@ -246,7 +332,7 @@ export default function AlliancesPage() {
                             <p className="font-semibold">{result.name}</p>
                             <p className="text-xs text-muted-foreground">{result.memberIds.length} members</p>
                           </div>
-                          <Button size="sm" onClick={() => handleChallenge(result)}>
+                          <Button size="sm" onClick={() => handleChallengeClick(result)}>
                             <Swords className="h-4 w-4 mr-2"/>
                             Challenge
                           </Button>
@@ -292,6 +378,13 @@ export default function AlliancesPage() {
         </div>
       </main>
     </div>
+    <ChallengeDialog
+      isOpen={isChallengeDialogOpen}
+      onOpenChange={setIsChallengeDialogOpen}
+      myAlliances={myCreatedAlliances}
+      challengedAlliance={challengedAlliance}
+      onConfirmChallenge={handleConfirmChallenge}
+    />
     </>
   );
 }
