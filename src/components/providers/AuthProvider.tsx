@@ -397,13 +397,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const showLoadingScreen = loading || (pathname !== '/login' && !isUserDataLoaded && !isGuest);
 
   if (showLoadingScreen) {
-    return (
-      <AuthContext.Provider value={{ user, isAuthenticated: !!user, isGuest, login, logout, setupCredentials, updateProfilePicture, updateBio, equipTitle, updatePrivacySetting, updateUserDataInDb, userData, loading: showLoadingScreen, isUserDataLoaded }}>
-        <div className="flex items-center justify-center min-h-screen bg-black">
-          <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized />
-        </div>
-      </AuthContext.Provider>
-    );
+    return null;
   }
 
   return (
