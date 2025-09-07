@@ -108,6 +108,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else if (user) {
             if (!db) {
               console.error("Firestore DB is not initialized");
+              setIsUserDataLoaded(true); // Still allow app to render if db fails
               return;
             }
             setIsUserDataLoaded(false);
