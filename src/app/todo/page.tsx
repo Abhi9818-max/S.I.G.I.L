@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTodos } from '@/components/providers/TodoProvider';
-import { ListChecks, PlusCircle, RotateCcw, CalendarIcon, Pencil } from 'lucide-react';
+import { ListChecks, PlusCircle, RotateCcw, CalendarIcon, Pencil, Download } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
@@ -13,6 +13,9 @@ import { format, isToday, isSameDay, parseISO, addDays, subDays } from 'date-fns
 import PactList from '@/components/todo/PactList';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toPng } from 'html-to-image';
+import PactCard from '@/components/todo/PactCard';
+import { useToast } from '@/hooks/use-toast';
 
 const AddPactForm = ({ onAddItem, newItemText, setNewItemText }: any) => {
   const handleAddItemKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -49,6 +52,9 @@ export default function TodoPage() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddForm, setShowAddForm] = useState(false);
+  const pactCardRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const { todoItems, addTodoItem, checkMissedDares, toggleTodoItem, deleteTodoItem, toggleDareCompleted } = useTodos();
   const { getUserLevelInfo } = useUserRecords();
@@ -70,6 +76,30 @@ export default function TodoPage() {
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+  
+  useEffect(() => {
+    if (isDownloading && pactCardRef.current) {
+        toPng(pactCardRef.current, { cacheBust: true, pixelRatio: 2 })
+            .then((dataUrl) => {
+                const link = document.createElement('a');
+                link.download = `sigil-pacts-${format(selectedDate, 'yyyy-MM-dd')}.png`;
+                link.href = dataUrl;
+                link.click();
+            })
+            .catch((err) => {
+                console.error("Could not generate pacts card image", err);
+                toast({
+                    title: "Download Failed",
+                    description: "Could not generate the pacts card image.",
+                    variant: "destructive",
+                });
+            })
+            .finally(() => {
+                setIsDownloading(false);
+            });
+    }
+  }, [isDownloading, selectedDate, toast]);
+
 
   const handleAddItem = () => {
     if (newItemText.trim()) {
@@ -92,6 +122,7 @@ export default function TodoPage() {
   const totalCount = displayedPacts.length;
 
   return (
+    <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
        <Header 
         onAddRecordClick={() => {}} 
@@ -107,6 +138,9 @@ export default function TodoPage() {
               <div className="flex items-center gap-2">
                  <Button variant="ghost" size="icon" onClick={() => setShowAddForm(!showAddForm)}>
                     <Pencil className="h-5 w-5" />
+                 </Button>
+                 <Button variant="ghost" size="icon" onClick={() => setIsDownloading(true)}>
+                    <Download className="h-5 w-5" />
                  </Button>
                  <Popover>
                     <PopoverTrigger asChild>
@@ -146,5 +180,12 @@ export default function TodoPage() {
         S.I.G.I.L. Pacts &copy; {currentYear}
       </footer>
     </div>
+    {/* Offscreen card for image generation */}
+    <div className="fixed -left-[9999px] top-0">
+        <div ref={pactCardRef}>
+            {isDownloading && <PactCard pacts={displayedPacts} date={selectedDate} />}
+        </div>
+    </div>
+    </>
   );
 }
