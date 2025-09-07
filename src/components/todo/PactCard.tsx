@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { TodoItem } from '@/types';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { Check, Dumbbell, BookOpen, Droplets, Utensils, Sun, Moon, ListChecks, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,13 +25,14 @@ interface PactCardProps {
 
 const PactCard: React.FC<PactCardProps> = ({ pacts, date }) => {
     const completedCount = pacts.filter(p => p.completed).length;
+    const showDate = !isToday(date);
 
   return (
     <div className="w-[400px] h-auto bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
       <header className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-white">Daily Pacts</h2>
-          <p className="text-sm text-white/70">{format(date, "EEEE, MMMM d, yyyy")}</p>
+          {showDate && <p className="text-sm text-white/70">{format(date, "EEEE, MMMM d, yyyy")}</p>}
         </div>
         <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-primary">{completedCount}/{pacts.length}</span>
