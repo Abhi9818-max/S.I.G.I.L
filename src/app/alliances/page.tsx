@@ -72,8 +72,8 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
             onMouseLeave={handleMouseLeave}
         >
             <div className="relative w-full h-full group">
-                <Link href={`/alliances/${alliance.id}`} className="block w-full h-full">
-                    <Card className="overflow-hidden group-hover:shadow-2xl w-full h-full card-3d-content">
+                <Link href={`/alliances/${alliance.id}`} className="block w-full h-full card-3d-content overflow-hidden rounded-lg group-hover:shadow-2xl">
+                    <Card className="w-full h-full border-0 rounded-lg">
                         <div className="relative w-full h-full">
                             <Image 
                                 src={getAllianceImage(alliance)}
