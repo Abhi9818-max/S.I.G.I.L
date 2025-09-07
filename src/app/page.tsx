@@ -46,7 +46,6 @@ export default function HomePage() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [taskToDownload, setTaskToDownload] = useState<TaskDefinition | null>(null);
-  const [isDownloadingBreakdown, setIsDownloadingBreakdown] = useState(false);
   
   const { isUserDataLoaded } = useAuth();
   const { 
@@ -62,7 +61,6 @@ export default function HomePage() {
   const searchParams = useSearchParams();
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const taskCardRef = useRef<HTMLDivElement>(null);
-  const breakdownCardRef = useRef<HTMLDivElement>(null);
 
   // Tour State
   const [isTourActive, setIsTourActive] = useState(false);
@@ -214,36 +212,6 @@ export default function HomePage() {
     }
   }, [taskToDownload, toast]);
   
-  const handleBreakdownCardDownload = () => {
-    toast({
-      title: "Generating Card...",
-      description: "Your daily breakdown card is being prepared.",
-    });
-    setIsDownloadingBreakdown(true);
-  };
-
-  useEffect(() => {
-    if (isDownloadingBreakdown && breakdownCardRef.current) {
-        toPng(breakdownCardRef.current, { cacheBust: true, pixelRatio: 2 })
-            .then((dataUrl) => {
-                const link = document.createElement('a');
-                link.download = `sigil-breakdown-${format(new Date(), 'yyyy-MM-dd')}.png`;
-                link.href = dataUrl;
-                link.click();
-            })
-            .catch((err) => {
-                console.error("Could not generate breakdown card image", err);
-                toast({
-                    title: "Download Failed",
-                    description: "Could not generate the breakdown card.",
-                    variant: "destructive",
-                });
-            })
-            .finally(() => {
-                setIsDownloadingBreakdown(false);
-            });
-    }
-  }, [isDownloadingBreakdown, toast]);
 
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
@@ -340,9 +308,6 @@ export default function HomePage() {
                                 <h2 className="text-2xl font-semibold">Shit Done Today</h2>
                                 <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={handleBreakdownCardDownload} aria-label="Download breakdown card">
-                                <Download className="h-5 w-5" />
-                            </Button>
                           </div>
                           <DailyTimeBreakdownChart />
                       </div>
@@ -379,24 +344,6 @@ export default function HomePage() {
                 endDate={new Date()}
                 months={dashboardSettings.taskCardTimeRange || 1}
               />
-            )}
-          </div>
-          <div ref={breakdownCardRef}>
-            {isDownloadingBreakdown && (
-                <div className="w-[450px] p-6 bg-background border border-border rounded-lg">
-                    <div className="mb-4">
-                        <h2 className="text-2xl font-semibold text-foreground">Shit Done Today</h2>
-                    </div>
-                    <DailyTimeBreakdownChart 
-                        hideFooter={true} 
-                        records={records}
-                        taskDefinitions={taskDefinitions}
-                        isDownload={true}
-                    />
-                     <div className="text-center pt-4 mt-4 border-t border-border">
-                        <p className="font-bold text-lg text-foreground/90">S.I.G.I.L.</p>
-                    </div>
-                </div>
             )}
           </div>
       </div>

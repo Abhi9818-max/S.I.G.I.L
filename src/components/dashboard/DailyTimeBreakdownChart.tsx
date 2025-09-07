@@ -24,7 +24,6 @@ interface DailyTimeBreakdownChartProps {
   hideFooter?: boolean;
   records?: RecordEntry[];
   taskDefinitions?: TaskDefinition[];
-  isDownload?: boolean;
 }
 
 const getDailyTimeBreakdown = (
@@ -120,7 +119,7 @@ const renderLegend = (props: any) => {
 }
 
 
-const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp, isDownload = false }) => {
+const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
     const userRecordsContext = useUserRecords();
     const { dashboardSettings } = useSettings();
     
@@ -233,28 +232,6 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
 
     const isChartEmpty = pieData.length === 1 && pieData[0].name === 'Unallocated';
 
-    const ChartComponent = (
-        <PieChart width={isDownload ? 400 : undefined} height={isDownload ? 300 : undefined}>
-            <Tooltip content={<CustomTooltip />} />
-            <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius="60%"
-                outerRadius="80%"
-                fill="#8884d8"
-                dataKey="value"
-                nameKey="name"
-                strokeWidth={2}
-                stroke="hsl(var(--background))"
-            >
-                {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-            </Pie>
-        </PieChart>
-    );
-
     return (
         <div className="bg-transparent">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center min-h-[300px]">
@@ -262,7 +239,27 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
                     {isChartEmpty ? (
                          <div className="flex items-center justify-center h-full text-muted-foreground">No time logged today.</div>
                     ) : (
-                        isDownload ? ChartComponent : <ResponsiveContainer width="100%" height="100%">{ChartComponent}</ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Tooltip content={<CustomTooltip />} />
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius="60%"
+                                    outerRadius="80%"
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    nameKey="name"
+                                    strokeWidth={2}
+                                    stroke="hsl(var(--background))"
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
                     )}
                 </div>
                 <div className="flex flex-col justify-center gap-4">
