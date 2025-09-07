@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { calculateUserLevelInfo } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { doc, getDoc, collection, query, where, documentId, getDocs, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords } from 'lucide-react';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -25,6 +25,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAlliance } from '@/components/providers/AllianceProvider';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { toPng } from 'html-to-image';
+import AllianceCard from '@/components/alliances/AllianceCard';
 
 // Simple hash function to get a number from a string
 const simpleHash = (s: string) => {
@@ -142,10 +144,12 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
   const [loading, setLoading] = useState(true);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<AllianceInvitation[]>([]);
+  const [allianceToDownload, setAllianceToDownload] = useState<Alliance | null>(null);
+  const allianceCardRef = useRef<HTMLDivElement>(null);
 
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const { friends, pendingRequests, incomingRequests, sendFriendRequest } = useFriends();
-  const { sendAllianceInvitation, getPendingAllianceInvitesFor } = useAlliance();
+  const { sendAllianceInvitation, getPendingAllianceInvitesFor, togglePinAlliance } = useAlliance();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -240,6 +244,33 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     }
   };
 
+  const handleDownloadRequest = (alliance: Alliance) => {
+    setAllianceToDownload(alliance);
+  };
+  
+  useEffect(() => {
+    if (allianceToDownload && allianceCardRef.current) {
+        toPng(allianceCardRef.current, { cacheBust: true, pixelRatio: 2 })
+            .then((dataUrl) => {
+                const link = document.createElement('a');
+                link.download = `sigil-alliance-${allianceToDownload.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+                link.href = dataUrl;
+                link.click();
+            })
+            .catch((err) => {
+                console.error("Could not generate alliance card image", err);
+                toast({
+                    title: "Download Failed",
+                    description: "Could not generate the alliance card image.",
+                    variant: "destructive",
+                });
+            })
+            .finally(() => {
+                setAllianceToDownload(null);
+            });
+    }
+  }, [allianceToDownload, toast]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
@@ -273,18 +304,39 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
     ? Math.min(100, (alliance.opponentDetails.opponentProgress / alliance.target) * 100)
     : 0;
   const isCreator = user?.uid === alliance.creatorId;
+  const isPinned = (userData?.pinnedAllianceIds || []).includes(alliance.id);
 
   return (
     <>
     <div className={cn('min-h-screen flex flex-col bg-background', pageTierClass)}>
       <ClientHeader />
       <main className="flex-grow container mx-auto px-4 py-8 space-y-8">
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-lg border-2 border-primary/20 object-cover" />
-          <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold">{alliance.name}</h1>
-            <p className="text-muted-foreground mt-1">{alliance.description}</p>
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Image src={alliance.photoURL} alt={alliance.name} width={96} height={96} className="rounded-lg border-2 border-primary/20 object-cover" />
+              <div className="text-center sm:text-left">
+                <h1 className="text-3xl font-bold">{alliance.name}</h1>
+                <p className="text-muted-foreground mt-1">{alliance.description}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+                 <Button 
+                    size="icon" 
+                    variant="ghost"
+                    onClick={() => togglePinAlliance(alliance.id)}
+                    aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
+                >
+                    {isPinned ? <PinOff className="h-5 w-5 text-primary" /> : <Pin className="h-5 w-5" />}
+                </Button>
+                <Button 
+                    size="icon" 
+                    variant="ghost"
+                    onClick={() => handleDownloadRequest(alliance)}
+                    aria-label="Download alliance card"
+                >
+                    <Download className="h-5 w-5" />
+                </Button>
+            </div>
         </div>
 
         <div>
@@ -406,8 +458,12 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             onInvite={handleInviteFriend}
         />
     )}
+     {/* Offscreen card for image generation */}
+    <div className="fixed -left-[9999px] top-0">
+        <div ref={allianceCardRef}>
+            {allianceToDownload && <AllianceCard alliance={allianceToDownload} />}
+        </div>
+    </div>
     </>
   );
 }
-
-    

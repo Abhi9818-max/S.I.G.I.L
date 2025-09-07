@@ -5,7 +5,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Header from '@/components/layout/Header';
 import { useAlliance } from '@/components/providers/AllianceProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
@@ -17,8 +17,6 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toPng } from 'html-to-image';
-import AllianceCard from '@/components/alliances/AllianceCard';
 import { isPast, parseISO } from 'date-fns';
 
 
@@ -45,7 +43,7 @@ const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) =>
     return `/alliances/alliance${avatarNumber}.jpeg`;
 }
 
-const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { alliance: Alliance & { members: AllianceMember[] }, isPinned: boolean, onPinToggle: (e: React.MouseEvent, allianceId: string) => void, onDownload: (alliance: Alliance & { members: AllianceMember[] }) => void }) => {
+const AllianceCard3D = ({ alliance }: { alliance: Alliance & { members: AllianceMember[] } }) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const isEnded = isPast(parseISO(alliance.endDate));
     const isObjectiveMet = alliance.progress >= alliance.target;
@@ -75,85 +73,52 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <div className="relative w-full h-full group">
-                 <div 
-                    className="absolute top-2 right-2 z-20 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                >
-                    <Button 
-                        size="icon" 
-                        variant="secondary"
-                        className={cn("h-8 w-8", isPinned && "bg-primary text-primary-foreground")}
-                        onClick={(e) => onPinToggle(e, alliance.id)}
-                        aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
-                    >
-                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                    </Button>
-                    <Button 
-                        size="icon" 
-                        variant="secondary"
-                        className="h-8 w-8"
-                        onClick={(e) => onDownload(alliance)}
-                        aria-label="Download alliance card"
-                    >
-                        <Download className="h-4 w-4" />
-                    </Button>
-                </div>
-                <Link href={`/alliances/${alliance.id}`} className="block w-full h-full card-3d-content overflow-hidden rounded-lg group-hover:shadow-2xl">
-                    <Card className="w-full h-full border-0 rounded-lg">
-                        <div className="relative w-full h-full">
-                            <Image 
-                                src={getAllianceImage(alliance)}
-                                alt={alliance.name} 
-                                fill 
-                                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                            {isFailed && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-                                    <XCircle className="h-24 w-24 text-red-500/80" strokeWidth={1.5} />
-                                </div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
-                            <div className="absolute bottom-0 left-0 p-4 text-white">
-                                 <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
-                                 <div className="flex items-center mt-2 -space-x-2">
-                                    {alliance.members.slice(0, 4).map(member => (
-                                        <Avatar key={member.uid} className="h-6 w-6 border-2 border-background">
-                                            <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
-                                            <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    ))}
-                                    {alliance.members.length > 4 && (
-                                        <Avatar className="h-6 w-6 border-2 border-background">
-                                            <AvatarFallback className="text-xs">+{alliance.members.length - 4}</AvatarFallback>
-                                        </Avatar>
-                                    )}
-                                </div>
+            <Link href={`/alliances/${alliance.id}`} className="block w-full h-full card-3d-content overflow-hidden rounded-lg group hover:shadow-2xl">
+                <Card className="w-full h-full border-0 rounded-lg">
+                    <div className="relative w-full h-full">
+                        <Image 
+                            src={getAllianceImage(alliance)}
+                            alt={alliance.name} 
+                            fill 
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {isFailed && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                                <XCircle className="h-24 w-24 text-red-500/80" strokeWidth={1.5} />
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
+                        <div className="absolute bottom-0 left-0 p-4 text-white">
+                             <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
+                             <div className="flex items-center mt-2 -space-x-2">
+                                {alliance.members.slice(0, 4).map(member => (
+                                    <Avatar key={member.uid} className="h-6 w-6 border-2 border-background">
+                                        <AvatarImage src={getAvatarForId(member.uid, member.photoURL)} />
+                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                ))}
+                                {alliance.members.length > 4 && (
+                                    <Avatar className="h-6 w-6 border-2 border-background">
+                                        <AvatarFallback className="text-xs">+{alliance.members.length - 4}</AvatarFallback>
+                                    </Avatar>
+                                )}
                             </div>
                         </div>
-                    </Card>
-                </Link>
-            </div>
+                    </div>
+                </Card>
+            </Link>
          </div>
     );
 };
 
 export default function AlliancesPage() {
   const { user, userData } = useAuth();
-  const { userAlliances, searchAlliances, sendAllianceChallenge, togglePinAlliance } = useAlliance();
+  const { userAlliances, searchAlliances, sendAllianceChallenge } = useAlliance();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Alliance[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [allianceToDownload, setAllianceToDownload] = useState<(Alliance & { members: AllianceMember[] }) | null>(null);
-  const allianceCardRef = useRef<HTMLDivElement>(null);
-  
-  const handlePinToggle = (e: React.MouseEvent, allianceId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    togglePinAlliance(allianceId);
-  }
 
   const { pinned, unpinned, completed } = useMemo(() => {
     const pinnedIds = new Set(userData?.pinnedAllianceIds || []);
@@ -208,33 +173,6 @@ export default function AlliancesPage() {
       toast({ title: "Challenge Failed", description: (e as Error).message, variant: 'destructive' });
     }
   };
-  
-  const handleDownloadRequest = (alliance: Alliance & { members: AllianceMember[] }) => {
-    setAllianceToDownload(alliance);
-  };
-  
-  useEffect(() => {
-    if (allianceToDownload && allianceCardRef.current) {
-        toPng(allianceCardRef.current, { cacheBust: true, pixelRatio: 2 })
-            .then((dataUrl) => {
-                const link = document.createElement('a');
-                link.download = `sigil-alliance-${allianceToDownload.name.replace(/\s+/g, '-').toLowerCase()}.png`;
-                link.href = dataUrl;
-                link.click();
-            })
-            .catch((err) => {
-                console.error("Could not generate alliance card image", err);
-                toast({
-                    title: "Download Failed",
-                    description: "Could not generate the alliance card image.",
-                    variant: "destructive",
-                });
-            })
-            .finally(() => {
-                setAllianceToDownload(null);
-            });
-    }
-  }, [allianceToDownload, toast]);
 
   const renderAllianceSection = (alliances: (Alliance & { members: AllianceMember[] })[], title?: string) => (
     <div className="space-y-4">
@@ -245,9 +183,6 @@ export default function AlliancesPage() {
                     <AllianceCard3D
                         key={alliance.id}
                         alliance={alliance}
-                        isPinned={(userData?.pinnedAllianceIds || []).includes(alliance.id)}
-                        onPinToggle={handlePinToggle}
-                        onDownload={handleDownloadRequest}
                     />
                 ))}
             </div>
@@ -356,12 +291,6 @@ export default function AlliancesPage() {
           </div>
         </div>
       </main>
-    </div>
-    {/* Offscreen card for image generation */}
-    <div className="fixed -left-[9999px] top-0">
-        <div ref={allianceCardRef}>
-            {allianceToDownload && <AllianceCard alliance={allianceToDownload} />}
-        </div>
     </div>
     </>
   );
