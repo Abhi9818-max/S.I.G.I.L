@@ -28,12 +28,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Trash2, Pencil, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid, isPast } from 'date-fns';
 import type { RecordEntry, TaskDefinition } from '@/types';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 
 const createRecordSchema = (getTaskDefinitionById: (taskId: string) => TaskDefinition | undefined) => 
   z.object({
@@ -92,6 +93,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
     getTaskDefinitionById,
     awardBonusPoints,
   } = useUserRecords();
+  const { userAlliances } = useAlliance();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -99,8 +101,15 @@ const RecordModal: React.FC<RecordModalProps> = ({
   const dailyRecords = selectedDate ? getRecordsByDate(selectedDate) : [];
   
   const activeTaskDefinitions = useMemo(() => {
-    return taskDefinitions.filter(task => task.status === 'active');
-  }, [taskDefinitions]);
+    const completedAllianceTaskIds = new Set(
+        userAlliances
+            .filter(a => isPast(parseISO(a.endDate)))
+            .map(a => a.taskId)
+    );
+    return taskDefinitions.filter(task => 
+        task.status === 'active' && !completedAllianceTaskIds.has(task.id)
+    );
+  }, [taskDefinitions, userAlliances]);
 
   const recordSchema = useMemo(() => createRecordSchema(getTaskDefinitionById), [getTaskDefinitionById]);
 

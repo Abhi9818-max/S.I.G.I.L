@@ -330,6 +330,7 @@ export default function AlliancePage({ params }: AlliancePageProps) {
     ? Math.min(100, (alliance.opponentDetails.opponentProgress / alliance.target) * 100)
     : 0;
   const isPinned = (userData?.pinnedAllianceIds || []).includes(alliance.id);
+  const isAllianceEnded = isPast(parseISO(alliance.endDate));
 
   return (
     <>
@@ -402,7 +403,7 @@ export default function AlliancePage({ params }: AlliancePageProps) {
             </div>
         </div>
         
-        {alliance.activeChallengeId && alliance.opponentDetails && (
+        {alliance.activeChallengeId && alliance.opponentDetails && !isAllianceEnded && (
           <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
