@@ -171,6 +171,27 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
+                    <Link href="/constellations" className="flex items-center w-full">
+                        <Sparkles className="mr-2 h-4 w-4" /> Constellations
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href="/tiers" className="flex items-center w-full">
+                        <Star className="mr-2 h-4 w-4" /> Tiers
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/timer" className="flex items-center w-full">
+                        <Timer className="mr-2 h-4 w-4" /> Timer
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/insights" className="flex items-center w-full">
+                        <BarChart2 className="mr-2 h-4 w-4" /> Insights
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center w-full">
                         <Settings className="mr-2 h-4 w-4" /> Settings
                     </Link>
