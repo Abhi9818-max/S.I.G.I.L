@@ -46,6 +46,7 @@ export default function HomePage() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [taskToDownload, setTaskToDownload] = useState<TaskDefinition | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const { isUserDataLoaded } = useAuth();
   const { 
@@ -61,6 +62,8 @@ export default function HomePage() {
   const searchParams = useSearchParams();
   const quoteCardRef = useRef<HTMLDivElement>(null);
   const taskCardRef = useRef<HTMLDivElement>(null);
+  const timeBreakdownRef = useRef<HTMLDivElement>(null);
+  const [downloadClickCount, setDownloadClickCount] = useState(0);
 
   // Tour State
   const [isTourActive, setIsTourActive] = useState(false);
@@ -211,6 +214,31 @@ export default function HomePage() {
         });
     }
   }, [taskToDownload, toast]);
+
+  const handleDownloadTimeBreakdown = useCallback(() => {
+    if (timeBreakdownRef.current === null) return;
+    setIsDownloading(true);
+    setTimeout(() => {
+      toPng(timeBreakdownRef.current, { cacheBust: true, pixelRatio: 2 })
+        .then((dataUrl) => {
+          const link = document.createElement('a');
+          link.download = `sigil-time-breakdown-${format(new Date(), 'yyyy-MM-dd')}.png`;
+          link.href = dataUrl;
+          link.click();
+        })
+        .catch((err) => {
+          console.error("Could not generate time breakdown image", err);
+          toast({
+            title: "Download Failed",
+            description: "Could not generate the time breakdown image.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsDownloading(false);
+        });
+    }, 100);
+  }, [timeBreakdownRef, toast]);
   
 
   const handleDayClick = (date: string) => {
@@ -308,6 +336,9 @@ export default function HomePage() {
                                 <h2 className="text-2xl font-semibold">Shit Done Today</h2>
                                 <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
                             </div>
+                            <Button variant="ghost" size="icon" onClick={handleDownloadTimeBreakdown} aria-label="Download chart">
+                                <Download className="h-5 w-5" />
+                            </Button>
                           </div>
                           <DailyTimeBreakdownChart />
                       </div>
@@ -343,8 +374,21 @@ export default function HomePage() {
                 records={recordsForDownload.filter(r => r.taskType === taskToDownload.id)}
                 endDate={new Date()}
                 months={dashboardSettings.taskCardTimeRange || 1}
+                orientation={dashboardSettings.taskCardOrientation}
               />
             )}
+          </div>
+          <div ref={timeBreakdownRef}>
+              {isDownloading && (
+                <Card className="w-[800px] h-auto bg-background p-6 border border-white/10">
+                    <CardHeader>
+                        <CardTitle>Daily Time Breakdown</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <DailyTimeBreakdownChart date={new Date()} />
+                    </CardContent>
+                </Card>
+              )}
           </div>
       </div>
     </div>

@@ -803,6 +803,25 @@ export default function SettingsPage() {
                                 <SelectItem value="12">Last 12 Months</SelectItem>
                             </SelectContent>
                           </Select>
+                          { (dashboardSettings.taskCardTimeRange || 1) > 1 && (
+                            <div className="animate-fade-in-up mt-3">
+                              <Label className="font-normal">Card Orientation</Label>
+                              <RadioGroup 
+                                  value={dashboardSettings.taskCardOrientation || 'vertical'}
+                                  onValueChange={(value: 'vertical' | 'horizontal') => updateDashboardSetting('taskCardOrientation', value)}
+                                  className="mt-2 grid grid-cols-2 gap-2"
+                              >
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="vertical" id="r-vertical" />
+                                    <Label htmlFor="r-vertical" className="font-normal">Vertical</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="horizontal" id="r-horizontal" />
+                                    <Label htmlFor="r-horizontal" className="font-normal">Horizontal</Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                          )}
                        </div>
                       <Separator />
                        <div>

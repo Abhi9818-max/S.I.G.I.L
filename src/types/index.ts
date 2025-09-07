@@ -215,6 +215,7 @@ export interface DashboardSettings {
   dareCategory?: DareCategory;
   calendarView?: 'classic' | 'modern';
   taskCardTimeRange?: 1 | 3 | 6 | 12;
+  taskCardOrientation?: 'vertical' | 'horizontal';
 }
 
 // NEW: For Task Mastery

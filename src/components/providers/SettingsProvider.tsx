@@ -25,6 +25,7 @@ const defaultSettings: DashboardSettings = {
   profileCardStat: 'equippedTitle',
   dareCategory: 'standard',
   taskCardTimeRange: 1, // Default to 1 month
+  taskCardOrientation: 'vertical',
 };
 
 interface SettingsContextType {

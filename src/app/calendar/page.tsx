@@ -183,6 +183,7 @@ export default function CalendarPage() {
                 records={recordsForDownload}
                 endDate={dateForChart}
                 months={dashboardSettings.taskCardTimeRange || 1}
+                orientation={dashboardSettings.taskCardOrientation}
               />
             )}
           </div>
