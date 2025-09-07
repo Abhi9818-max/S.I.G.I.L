@@ -9,8 +9,9 @@ import RecordModal from '@/components/records/RecordModal';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { CornerDownLeft, ListFilter } from 'lucide-react';
-import { format, getYear, parseISO, isToday, startOfMonth, endOfMonth } from 'date-fns';
+import { format, getYear, parseISO, isToday, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -32,6 +33,7 @@ export default function CalendarPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
   const { getUserLevelInfo, taskDefinitions, records, getRecordsForDateRange } = useUserRecords();
+  const { dashboardSettings } = useSettings();
   const [selectedYear, setSelectedYear] = useState<number>(getYear(new Date()));
   const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
   const [dateForChart, setDateForChart] = useState<Date>(new Date());
@@ -92,12 +94,13 @@ export default function CalendarPage() {
     return Array.from(years).sort((a, b) => b - a);
   }, [records]);
   
-  const monthRecordsForDownload = useMemo(() => {
+  const recordsForDownload = useMemo(() => {
     if (!taskToDownload) return [];
-    const start = startOfMonth(dateForChart);
+    const months = dashboardSettings.taskCardTimeRange || 1;
     const end = endOfMonth(dateForChart);
+    const start = startOfMonth(subMonths(end, months - 1));
     return getRecordsForDateRange(start, end).filter(r => r.taskType === taskToDownload.id);
-  }, [taskToDownload, dateForChart, getRecordsForDateRange]);
+  }, [taskToDownload, dateForChart, getRecordsForDateRange, dashboardSettings.taskCardTimeRange]);
 
 
   return (
@@ -177,8 +180,9 @@ export default function CalendarPage() {
             {taskToDownload && (
               <TaskProgressCard 
                 task={taskToDownload} 
-                records={monthRecordsForDownload}
-                month={dateForChart}
+                records={recordsForDownload}
+                endDate={dateForChart}
+                months={dashboardSettings.taskCardTimeRange || 1}
               />
             )}
           </div>

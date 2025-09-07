@@ -24,6 +24,7 @@ const defaultSettings: DashboardSettings = {
   pieChartLabelFormat: 'percentage',
   profileCardStat: 'equippedTitle',
   dareCategory: 'standard',
+  taskCardTimeRange: 1, // Default to 1 month
 };
 
 interface SettingsContextType {

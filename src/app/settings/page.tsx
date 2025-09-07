@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -62,6 +63,7 @@ import PostCard from '@/components/social/PostCard';
 import TiersPage from '@/app/tiers/page';
 import ReputationPage from '@/app/reputation/page';
 import InsightsPage from '@/app/insights/page';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 // Simple hash function to get a number from a string for consistent default avatars
@@ -784,7 +786,26 @@ export default function SettingsPage() {
                           </RadioGroup>
                       </div>
                       <Separator />
-                      <div>
+                       <div>
+                          <Label className="font-normal">Downloadable Task Card Range</Label>
+                          <p className="text-xs text-muted-foreground mt-1">Set the time period for the downloadable task progress card.</p>
+                          <Select
+                            value={String(dashboardSettings.taskCardTimeRange || 1)}
+                            onValueChange={(value) => updateDashboardSetting('taskCardTimeRange', Number(value))}
+                          >
+                            <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Select time range..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="1">Last 1 Month</SelectItem>
+                                <SelectItem value="3">Last 3 Months</SelectItem>
+                                <SelectItem value="6">Last 6 Months</SelectItem>
+                                <SelectItem value="12">Last 12 Months</SelectItem>
+                            </SelectContent>
+                          </Select>
+                       </div>
+                      <Separator />
+                       <div>
                           <Label className="font-normal">Time Pie Chart Labels</Label>
                           <RadioGroup 
                               value={dashboardSettings.pieChartLabelFormat || 'percentage'}

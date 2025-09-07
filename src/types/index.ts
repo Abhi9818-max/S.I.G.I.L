@@ -214,6 +214,7 @@ export interface DashboardSettings {
   profileCardStat?: ProfileCardStat;
   dareCategory?: DareCategory;
   calendarView?: 'classic' | 'modern';
+  taskCardTimeRange?: 1 | 3 | 6 | 12;
 }
 
 // NEW: For Task Mastery

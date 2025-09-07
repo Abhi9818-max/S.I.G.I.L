@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -11,7 +12,7 @@ import ManageTasksModal from '@/components/manage-tasks/ManageTasksModal';
 import TaskFilterBar from '@/components/records/TaskFilterBar';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import type { UserLevelInfo, Quote, TaskDefinition } from '@/types';
@@ -236,7 +237,10 @@ export default function HomePage() {
   
   const showStatsPanel = dashboardSettings.showTotalLast30Days || dashboardSettings.showCurrentStreak || dashboardSettings.showDailyConsistency || dashboardSettings.showHighGoalStat;
 
-  const currentMonthRecords = getRecordsForDateRange(startOfMonth(new Date()), endOfMonth(new Date()));
+  const recordsForDownload = getRecordsForDateRange(
+    startOfMonth(subMonths(new Date(), (dashboardSettings.taskCardTimeRange || 1) - 1)),
+    endOfMonth(new Date())
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -332,8 +336,9 @@ export default function HomePage() {
             {taskToDownload && (
               <TaskProgressCard 
                 task={taskToDownload} 
-                records={currentMonthRecords.filter(r => r.taskType === taskToDownload.id)}
-                month={new Date()}
+                records={recordsForDownload.filter(r => r.taskType === taskToDownload.id)}
+                endDate={new Date()}
+                months={dashboardSettings.taskCardTimeRange || 1}
               />
             )}
           </div>
