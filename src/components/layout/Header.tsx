@@ -93,12 +93,8 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
     { href: "/friends", label: "Friends", icon: Users },
     { href: "/alliances", label: "Alliances", icon: ShieldCheck },
     { href: "/todo", label: "Pacts", icon: ListChecks },
-    { href: "/timer", label: "Timer", icon: Timer },
     { href: "/notes", label: "Notes", icon: StickyNote },
     { href: "/reputation", label: "Reputation", icon: Users },
-    { href: "/insights", label: "Insights", icon: BarChart2 },
-    { href: "/constellations", label: "Constellations", icon: Sparkles },
-    { href: "/tiers", label: "Tiers", icon: Star },
   ];
 
   const mobileMenuLinks: MobileMenuLink[] = [
