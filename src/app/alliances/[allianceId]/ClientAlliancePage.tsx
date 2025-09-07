@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Alliance, UserData, SearchedUser, AllianceInvitation, Friend, AllianceMember } from '@/types';
-import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download } from 'lucide-react';
+import { Target, Users, Calendar, UserPlus, Eye, Send, UserCheck, ShieldPlus, Crown, Swords, Pin, PinOff, Download, Pencil } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -334,10 +334,22 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div
-                className={cn('relative h-24 w-24', isCreator && 'cursor-pointer')}
-                onDoubleClick={handleImageDoubleClick}
-              >
-                  <Image src={alliance.photoURL} alt={alliance.name} fill className="rounded-full border-2 border-primary/20 object-cover" />
+                  className="relative group"
+                  onClick={isCreator ? () => setIsImageSelectionOpen(true) : undefined}
+                >
+                  <div className="relative h-24 w-24">
+                      <Image 
+                          src={alliance.photoURL} 
+                          alt={alliance.name} 
+                          fill 
+                          className="rounded-full border-2 border-primary/20 object-cover" 
+                      />
+                  </div>
+                  {isCreator && (
+                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                          <Pencil className="h-6 w-6 text-white" />
+                      </div>
+                  )}
               </div>
               <div className="text-center sm:text-left">
                 <h1 className="text-3xl font-bold">{alliance.name}</h1>
@@ -364,24 +376,28 @@ export default function ClientAlliancePage({ allianceId }: { allianceId: string 
             </div>
         </div>
 
-        <div>
-            <div className="flex items-center gap-2 mb-2">
-                <Target className="h-5 w-5" style={{ color: alliance.taskColor }} />
-                <h2 className="text-xl font-semibold">Objective: {alliance.taskName}</h2>
-            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" style={{ color: alliance.taskColor }} />
+              <span>Objective: {alliance.taskName}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-2">
-                 <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
-                 <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
-                    <div className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                            {daysLeft >= 0 ? `${formatDistanceToNowStrict(parseISO(alliance.endDate))} remaining` : 'Ended'}
-                        </span>
-                    </div>
+              <Progress value={progressPercentage} indicatorClassName="transition-all duration-500" style={{ backgroundColor: alliance.taskColor }} />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{alliance.progress.toLocaleString()} / {alliance.target.toLocaleString()} ({progressPercentage.toFixed(1)}%)</span>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    {daysLeft >= 0 ? `${formatDistanceToNowStrict(parseISO(alliance.endDate))} remaining` : 'Ended'}
+                  </span>
                 </div>
+              </div>
             </div>
-        </div>
+          </CardContent>
+        </Card>
         
         {alliance.activeChallengeId && alliance.opponentDetails && (
           <Card className="border-destructive/50 bg-destructive/10 animate-fade-in-up">
