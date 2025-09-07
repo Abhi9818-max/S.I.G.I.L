@@ -2,7 +2,7 @@
 
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell, User as UserIcon, Heart, Swords, Activity, MessageSquare } from 'lucide-react';
+import { TrendingUp, Settings, ListChecks, Menu as MenuIcon, AppWindow, Award, Sparkles, Server, BarChart2, Share2, Trophy, Target, ShieldCheck, LogOut, Users, Star, Gem, LucideProps, Timer, StickyNote, Mail, Hourglass, Check, X, Bell, User as UserIcon, Heart, Swords, Activity, MessageSquare, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LevelIndicator from './LevelIndicator'; 
 import { useUserRecords } from '@/components/providers/UserRecordsProvider'; 
@@ -151,7 +151,8 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
                   <Settings className="mr-1.5 h-4 w-4" />
                   Manage Tasks
                 </Button>
-                <Button onClick={onAddRecordClick} variant="secondary" size="sm">
+                <Button onClick={onAddRecordClick} variant="default" size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
                   Add Record
                 </Button>
               </>
@@ -200,6 +201,7 @@ const Header: React.FC<HeaderProps> = ({ onAddRecordClick, onManageTasksClick })
                       Manage Tasks
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={onAddRecordClick} className="flex items-center w-full">
+                      <PlusCircle className="mr-2 h-4 w-4" />
                       Add Record
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
