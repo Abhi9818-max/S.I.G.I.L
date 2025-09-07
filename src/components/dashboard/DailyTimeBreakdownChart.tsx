@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useSettings } from '@/components/providers/SettingsProvider';
@@ -83,6 +83,40 @@ const getDailyTimeBreakdown = (
 
     return result;
 };
+
+const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        const hours = Math.floor(data.value / 60);
+        const minutes = data.value % 60;
+        return (
+            <div className="p-2 bg-card border border-border rounded-lg shadow-lg">
+                <p className="font-bold" style={{ color: data.color }}>{data.name}</p>
+                <p className="text-sm text-muted-foreground">{`${hours}h ${minutes}m`}</p>
+            </div>
+        );
+    }
+    return null;
+};
+
+const renderLegend = (props: any) => {
+    const { payload } = props;
+    return (
+        <ul className="flex flex-col space-y-2">
+            {payload.map((entry: any, index: number) => {
+                if (entry.payload.name === 'Unallocated' && entry.payload.value > 0) return null;
+                const percentage = ((entry.payload.value / 1440) * 100).toFixed(0);
+                return (
+                    <li key={`item-${index}`} className="flex items-center text-sm">
+                        <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: entry.color }}></span>
+                        <span className="text-muted-foreground">{entry.value}</span>
+                        <span className="ml-auto text-foreground font-semibold">{percentage}%</span>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
 
 
 const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date, hideFooter = false, records: recordsProp, taskDefinitions: taskDefinitionsProp }) => {
@@ -184,42 +218,6 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
             percentage: totalMinutesForAllSlices > 0 ? (item.value / totalMinutesForAllSlices) * 100 : 0,
         }));
     }, [data, totalMinutesForAllSlices]);
-    
-    const renderCustomizedLabel = useCallback(({ cx, cy, midAngle, outerRadius, name, value, color, percentage }: any) => {
-      const RADIAN = Math.PI / 180;
-      const radius = outerRadius + 25; // How far the label is from the center
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-      const sin = Math.sin(-midAngle * RADIAN);
-      const cos = Math.cos(-midAngle * RADIAN);
-      const mx = cx + (outerRadius + 10) * cos;
-      const my = cy + (outerRadius + 10) * sin;
-      const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-      const ey = my;
-      const textAnchor = cos >= 0 ? "start" : "end";
-
-      if (name === 'Unallocated' && percentage === 100) {
-        return <text x={cx} y={cy} textAnchor="middle" fill="hsl(var(--muted-foreground))" dominantBaseline="central" className="text-sm">No Time Logged</text>;
-      }
-      
-      if (name === 'Unallocated') {
-        return null;
-      }
-      
-      const labelValue = dashboardSettings.pieChartLabelFormat === 'time'
-        ? `${Math.floor(value / 60)}h ${value % 60}m`
-        : `${percentage.toFixed(0)}%`;
-
-      return (
-        <g>
-          <path d={`M${mx},${my}L${ex},${ey}`} stroke={color} fill="none" />
-          <circle cx={ex} cy={ey} r={2} fill={color} stroke="none" />
-          <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" dominantBaseline="central" className="text-xs">
-            {`${name} (${labelValue})`}
-          </text>
-        </g>
-      );
-    }, [dashboardSettings.pieChartLabelFormat]);
 
     const getRecordsByDate = (dateStr: string): RecordEntry[] => {
         return records.filter(r => r.date === dateStr);
@@ -232,33 +230,53 @@ const DailyTimeBreakdownChart: React.FC<DailyTimeBreakdownChartProps> = ({ date,
         return task && (task.unit === 'minutes' || task.unit === 'hours');
     });
 
+    const isChartEmpty = pieData.length === 1 && pieData[0].name === 'Unallocated';
+
     return (
         <div className="bg-transparent">
-            <div className="h-[300px] w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                     <PieChart margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>
-                        <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={renderCustomizedLabel}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            nameKey="name"
-                            strokeWidth={2}
-                            stroke="hsl(var(--background))"
-                        >
-                            {pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center min-h-[300px]">
+                <div className="h-[300px] w-full relative">
+                    {isChartEmpty ? (
+                         <div className="flex items-center justify-center h-full text-muted-foreground">No time logged today.</div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Tooltip content={<CustomTooltip />} />
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius="60%"
+                                    outerRadius="80%"
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    nameKey="name"
+                                    strokeWidth={2}
+                                    stroke="hsl(var(--background))"
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                    )}
+                </div>
+                <div className="flex flex-col justify-center gap-4">
+                    {pieData.filter(item => item.name !== 'Unallocated').map((item, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                            <div>
+                                <p className="font-semibold text-sm text-foreground">{item.name}</p>
+                                <p className="text-xs text-muted-foreground">{Math.floor(item.value / 60)}h {item.value % 60}m</p>
+                            </div>
+                            <p className="ml-auto text-lg font-bold" style={{ color: item.color }}>{item.percentage?.toFixed(0)}%</p>
+                        </div>
+                    ))}
+                </div>
             </div>
             {!hideFooter && (
-                <div className="flex-col items-start gap-4 p-6 pt-0">
+                <div className="flex-col items-start gap-4 p-6 pt-4">
                     <Separator />
                     <button 
                       className="w-full flex justify-between items-center p-2 rounded-md hover:bg-muted/50 transition-colors"
