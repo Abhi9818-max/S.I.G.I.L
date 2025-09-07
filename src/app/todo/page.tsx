@@ -68,7 +68,7 @@ export default function TodoPage() {
     try {
       const createdAtDate = parseISO(item.createdAt);
       return isSameDay(createdAtDate, selectedDate);
-    } catch (e) => {
+    } catch (e) {
       return false;
     }
   });
@@ -137,7 +137,6 @@ export default function TodoPage() {
   };
 
   return (
-    <>
     <div className={cn("min-h-screen flex flex-col", pageTierClass)}>
        <Header 
         onAddRecordClick={() => {}} 
@@ -195,13 +194,12 @@ export default function TodoPage() {
       <footer className="text-center py-4 text-sm text-muted-foreground border-t border-border">
         S.I.G.I.L. Pacts &copy; {currentYear}
       </footer>
+      {/* Offscreen card for image generation */}
+      <div className="fixed -left-[9999px] top-0">
+          <div ref={pactCardRef}>
+              {isDownloading && <PactCard pacts={displayedPacts} date={selectedDate} />}
+          </div>
+      </div>
     </div>
-    {/* Offscreen card for image generation */}
-    <div className="fixed -left-[9999px] top-0">
-        <div ref={pactCardRef}>
-            {isDownloading && <PactCard pacts={displayedPacts} date={selectedDate} />}
-        </div>
-    </div>
-    </>
   );
 }
