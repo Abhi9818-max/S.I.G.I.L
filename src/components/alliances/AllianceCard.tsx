@@ -47,7 +47,7 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
   const timeRemaining = differenceInDays(parseISO(endDate), new Date());
 
   return (
-    <div className="w-[450px] bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
+    <div className="w-[450px] h-auto bg-background rounded-2xl shadow-2xl p-6 flex flex-col font-sans border border-white/10">
       <header className="flex items-center gap-4 mb-4">
         <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20">
           {photoURL ? (
@@ -97,18 +97,13 @@ const AllianceCard: React.FC<AllianceCardProps> = ({ alliance }) => {
           </h3>
           <div className="flex flex-wrap gap-2">
             {members.slice(0, 8).map(member => {
-              const src = member.photoURL
-                ? getAvatarForId(member.uid, member.photoURL)
-                : null;
+              const src = getAvatarForId(member.uid, member.photoURL);
               return (
                 <Avatar key={member.uid}>
-                  {src ? (
-                    <AvatarImage src={src} alt={member.username} />
-                  ) : (
-                    <AvatarFallback>
-                      {member.username.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  )}
+                  <AvatarImage src={src} alt={member.username} />
+                  <AvatarFallback>
+                    {member.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               );
             })}
