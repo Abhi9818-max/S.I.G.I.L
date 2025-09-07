@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff, Download } from 'lucide-react';
+import { Users, ArrowRight, Swords, Search, PlusCircle, Check, X, ShieldCheck, Pin, PinOff, Download, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Alliance, AllianceChallenge, AllianceMember, UserData } from '@/types';
 import Link from 'next/link';
@@ -47,6 +47,9 @@ const getAllianceImage = (alliance: Alliance & { members: AllianceMember[] }) =>
 
 const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { alliance: Alliance & { members: AllianceMember[] }, isPinned: boolean, onPinToggle: (e: React.MouseEvent, allianceId: string) => void, onDownload: (alliance: Alliance & { members: AllianceMember[] }) => void }) => {
     const cardRef = useRef<HTMLDivElement>(null);
+    const isEnded = isPast(parseISO(alliance.endDate));
+    const isObjectiveMet = alliance.progress >= alliance.target;
+    const isFailed = isEnded && !isObjectiveMet;
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current) return;
@@ -105,6 +108,11 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
                                 fill 
                                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                             />
+                            {isFailed && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                                    <XCircle className="h-24 w-24 text-red-500/80" strokeWidth={1.5} />
+                                </div>
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent/20" />
                             <div className="absolute bottom-0 left-0 p-4 text-white">
                                  <CardTitle className="text-lg text-shadow">{alliance.name}</CardTitle>
@@ -336,9 +344,6 @@ export default function AlliancesPage() {
                     </div>
                 )}
             </div>
-          </div>
-
-           <div className="lg:col-start-1 lg:col-span-2 space-y-8">
             {completed.length > 0 && (
               <div className="space-y-4 pt-8">
                  <div className="flex items-center gap-2">
@@ -348,7 +353,7 @@ export default function AlliancesPage() {
                 {renderAllianceSection(completed)}
               </div>
             )}
-           </div>
+          </div>
         </div>
       </main>
     </div>
