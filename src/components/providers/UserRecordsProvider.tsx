@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement, Notification } from '@/types';
@@ -41,6 +40,7 @@ import {
 } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { DEFAULT_TASK_COLOR } from '@/lib/constants';
 
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
@@ -661,7 +661,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return false;
   }, [getAvailableSkillPoints, unlockedAchievements, updateUserDataInDb, spentSkillPoints]);
 
-
   const constellations = useMemo(() => CONSTELLATIONS, []);
 
   // Insights Functions
@@ -852,7 +851,6 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const updatedGoals = highGoals.filter(g => g.id !== goalId);
     updateUserDataInDb({ highGoals: updatedGoals });
-
   }, [highGoals, updateUserDataInDb, userData?.aetherShards, toast]);
   
   const getHighGoalProgress = useCallback((goal: HighGoal) => {
