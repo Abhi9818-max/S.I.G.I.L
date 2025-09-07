@@ -48,9 +48,6 @@ const TaskProgressCard: React.FC<TaskProgressCardProps> = ({ task, records, mont
       </header>
 
       <main className="space-y-4">
-        <div className="grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d}>{d}</div>)}
-        </div>
         <div className="grid grid-cols-7 gap-1.5">
           {Array.from({ length: firstDayOfMonth }).map((_, i) => (
             <div key={`empty-${i}`} className="w-full aspect-square" />
