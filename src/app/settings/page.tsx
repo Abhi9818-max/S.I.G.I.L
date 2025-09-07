@@ -42,6 +42,7 @@ import AvatarSelectionDialog from '@/components/settings/AvatarSelectionDialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Link from 'next/link';
 import { useFriends } from '@/components/providers/FriendProvider';
+import { useAlliance } from '@/components/providers/AllianceProvider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -167,7 +168,8 @@ const SettingsSection = ({ title, children }: { title: string, children: React.R
 
 export default function SettingsPage() {
   const { getUserLevelInfo, awardBonusPoints, masterBonusAwarded, getCurrentStreak, unlockedAchievements, resetUserProgress } = useUserRecords();
-  const { friends, pendingRequests, incomingRequests, deleteAllCreatedAlliances, createPost } = useFriends();
+  const { friends, pendingRequests, incomingRequests, createPost } = useFriends();
+  const { deleteAllCreatedAlliances } = useAlliance();
   const { dashboardSettings, updateDashboardSetting } = useSettings();
   const { user, userData, updateProfilePicture, updateBio, logout, equipTitle, updatePrivacySetting } = useAuth();
   const { toast } = useToast();
