@@ -72,6 +72,26 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
             onMouseLeave={handleMouseLeave}
         >
             <div className="relative w-full h-full group">
+                <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100">
+                    <Button 
+                        size="icon" 
+                        variant="secondary"
+                        className={cn("h-8 w-8", isPinned && "bg-primary text-primary-foreground")}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPinToggle(e, alliance.id); }}
+                        aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
+                    >
+                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                        size="icon" 
+                        variant="secondary"
+                        className="h-8 w-8"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(alliance); }}
+                        aria-label="Download alliance card"
+                    >
+                        <Download className="h-4 w-4" />
+                    </Button>
+                </div>
                 <Link href={`/alliances/${alliance.id}`} className="block w-full h-full card-3d-content overflow-hidden rounded-lg group-hover:shadow-2xl">
                     <Card className="w-full h-full border-0 rounded-lg">
                         <div className="relative w-full h-full">
@@ -101,26 +121,6 @@ const AllianceCard3D = ({ alliance, isPinned, onPinToggle, onDownload }: { allia
                         </div>
                     </Card>
                 </Link>
-                <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 transition-opacity opacity-60 group-hover:opacity-100">
-                    <Button 
-                        size="icon" 
-                        variant="secondary"
-                        className={cn("h-8 w-8", isPinned && "bg-primary text-primary-foreground")}
-                        onClick={(e) => onPinToggle(e, alliance.id)}
-                        aria-label={isPinned ? 'Unpin alliance' : 'Pin alliance'}
-                    >
-                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                    </Button>
-                    <Button 
-                        size="icon" 
-                        variant="secondary"
-                        className="h-8 w-8"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(alliance); }}
-                        aria-label="Download alliance card"
-                    >
-                        <Download className="h-4 w-4" />
-                    </Button>
-                </div>
             </div>
          </div>
     );
