@@ -278,7 +278,7 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   
     return () => unsubscribe();
   
-  }, [friendId, isFriend, isOwnProfile, router, toast]);
+  }, [friendId, isFriend, isOwnProfile, router, toast, viewMode]);
 
   const friendPacts = useMemo(() => {
     if (!friendData?.todoItems) return [];
@@ -379,6 +379,11 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   }, []);
 
   const pageTierClass = levelInfo ? `page-tier-group-${levelInfo.tierGroup}` : 'page-tier-group-1';
+  
+  const userPosts = useMemo(() => {
+    if (!friendData?.posts) return [];
+    return [...friendData.posts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [friendData?.posts]);
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading profile...</div>;
@@ -400,12 +405,6 @@ export default function ClientFriendProfilePage({ friendId }: Props) {
   const yesterday = subDays(today, 1);
   const displayName = friendInfo?.nickname || friendData.username;
   
-  const userPosts = useMemo(() => {
-    if (!friendData?.posts) return [];
-    return [...friendData.posts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [friendData?.posts]);
-
-
   const getRelationshipContent = () => {
     if (!isFriend) return null;
     if (pendingProposal) {
