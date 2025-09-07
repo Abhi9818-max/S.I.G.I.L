@@ -237,7 +237,7 @@ export default function AlliancesPage() {
                 <div className="space-y-2 pt-2">
                   <h3 className="text-sm font-medium text-muted-foreground">Search Results</h3>
                   {searchResults.map(result => (
-                    <Card key={result.id} className="p-3">
+                    <div key={result.id} className="-m-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
                        <div className="flex justify-between items-center">
                           <div>
                             <p className="font-semibold">{result.name}</p>
@@ -248,7 +248,7 @@ export default function AlliancesPage() {
                             Challenge
                           </Button>
                        </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               )}
