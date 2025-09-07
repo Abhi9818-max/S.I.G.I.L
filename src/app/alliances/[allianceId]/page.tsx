@@ -171,10 +171,8 @@ export default function AlliancePage({ params }: AlliancePageProps) {
             const membersData = [...(allianceData.members || [])].sort((a, b) => b.contribution - a.contribution);
             
             let topContributorId = '';
-            
-            const allianceHasEnded = isPast(parseISO(allianceData.endDate));
-            if (!allianceHasEnded && membersData.length > 0) {
-              topContributorId = membersData[0].uid; // The first member is the top contributor after sorting
+            if (membersData.length > 0 && membersData[0].contribution > 0) {
+              topContributorId = membersData[0].uid;
             }
 
             const membersWithStatus = membersData.map(member => ({
@@ -182,7 +180,7 @@ export default function AlliancePage({ params }: AlliancePageProps) {
                 isFriend: friends.some(f => f.uid === member.uid),
                 isPending: pendingRequests.some(req => req.recipientId === member.uid),
                 isIncoming: incomingRequests.some(req => req.senderId === member.uid),
-                isTopContributor: member.uid === topContributorId && member.contribution > 0
+                isTopContributor: member.uid === topContributorId
             }));
             setMembers(membersWithStatus);
         } else {
@@ -568,5 +566,7 @@ export default function AlliancePage({ params }: AlliancePageProps) {
     </>
   );
 }
+
+    
 
     
