@@ -24,7 +24,6 @@ interface PactCardProps {
 }
 
 const PactCard: React.FC<PactCardProps> = ({ pacts, date }) => {
-    const completedCount = pacts.filter(p => p.completed).length;
     const showDate = !isToday(date);
 
   return (
@@ -33,10 +32,6 @@ const PactCard: React.FC<PactCardProps> = ({ pacts, date }) => {
         <div>
           <h2 className="text-xl font-bold text-white">Daily Pacts</h2>
           {showDate && <p className="text-sm text-white/70">{format(date, "EEEE, MMMM d, yyyy")}</p>}
-        </div>
-        <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-primary">{completedCount}/{pacts.length}</span>
-            <span className="text-xs text-muted-foreground">Completed</span>
         </div>
       </header>
 
@@ -68,7 +63,7 @@ const PactCard: React.FC<PactCardProps> = ({ pacts, date }) => {
       </main>
 
       <footer className="text-center pt-4 mt-auto border-t border-white/10">
-        <p className="font-bold text-lg text-white/90">S.I.G.I.L.</p>
+        <p className="font-bold text-base text-white/90">S.I.G.I.L.</p>
       </footer>
     </div>
   );
