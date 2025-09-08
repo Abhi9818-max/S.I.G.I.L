@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -55,7 +54,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             return;
         };
 
-        const alliancesQuery = query(collection(db!, 'alliances'), where('memberIds', 'array-contains', user.uid));
+        const alliancesQuery = query(collection(db, 'alliances'), where('memberIds', 'array-contains', user.uid));
         
         const unsubscribe = onSnapshot(alliancesQuery, (snapshot) => {
             const alliancesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alliance));
@@ -107,7 +106,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             status: 'ongoing',
         };
         
-        const docRef = await addDoc(collection(db!, 'alliances'), newAllianceData);
+        const docRef = await addDoc(collection(db, 'alliances'), newAllianceData);
         
         const memberData: AllianceMember = {
             uid: user.uid,
@@ -123,7 +122,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const getAllianceWithMembers = useCallback(async (allianceId: string): Promise<{allianceData: Alliance, membersData: AllianceMember[]} | null> => {
         if (!db) return null;
-        const allianceRef = doc(db!, 'alliances', allianceId);
+        const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
 
         if (!allianceSnap.exists()) return null;
@@ -134,11 +133,11 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const leaveAlliance = useCallback(async (allianceId: string, memberId: string) => {
         if (!db) return;
-        const allianceRef = doc(db!, 'alliances', allianceId);
+        const allianceRef = doc(db, 'alliances', allianceId);
         const allianceSnap = await getDoc(allianceRef);
         if (!allianceSnap.exists()) throw new Error("Alliance not found.");
 
-        const batch = writeBatch(db!);
+        const batch = writeBatch(db);
         batch.update(allianceRef, {
             memberIds: arrayRemove(memberId)
         });
@@ -148,19 +147,18 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         batch.update(allianceRef, { members: updatedMembers });
 
         await batch.commit();
-
     }, []);
 
     const disbandAlliance = useCallback(async (allianceId: string) => {
         if (!db) return;
-        const allianceRef = doc(db!, 'alliances', allianceId);
+        const allianceRef = doc(db, 'alliances', allianceId);
         await deleteDoc(allianceRef);
     }, []);
 
     const deleteAllCreatedAlliances = useCallback(async () => {
         if (!user || !db) throw new Error("Authentication required.");
     
-        const alliancesRef = collection(db!, 'alliances');
+        const alliancesRef = collection(db, 'alliances');
         const q = query(alliancesRef, where('creatorId', '==', user.uid));
         const querySnapshot = await getDocs(q);
     
@@ -169,14 +167,14 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             return;
         }
     
-        const batch = writeBatch(db!);
+        const batch = writeBatch(db);
     
         for (const docSnap of querySnapshot.docs) {
             const allianceData = docSnap.data() as Alliance;
     
             // Handle active challenges
             if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
-                const opponentAllianceRef = doc(db!, 'alliances', allianceData.opponentDetails.allianceId);
+                const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
                 // Opponent wins by forfeit. Set their view of opponent's progress to 0 and clear challenge.
                 batch.update(opponentAllianceRef, {
                     'opponentDetails.opponentProgress': 0, // Opponent's opponent (us) is gone
@@ -196,14 +194,14 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (!user || !userData || !db) throw new Error("Authentication required.");
 
         const invitationId = `${user.uid}_${recipientId}_${allianceId}`;
-        const inviteRef = doc(db!, 'alliance_invitations', invitationId);
+        const inviteRef = doc(db, 'alliance_invitations', invitationId);
         const inviteSnap = await getDoc(inviteRef);
 
         if (inviteSnap.exists()) {
             throw new Error("Invitation already sent.");
         }
 
-        const recipientDoc = await getDoc(doc(db!, 'users', recipientId));
+        const recipientDoc = await getDoc(doc(db, 'users', recipientId));
         if (!recipientDoc.exists()) throw new Error("Recipient not found.");
         const recipientData = recipientDoc.data() as any;
         
@@ -220,13 +218,12 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         await setDoc(inviteRef, newInvite);
         await createNotification(recipientId, 'alliance_invite', `invited you to join the alliance "${allianceName}".`, `/alliances`, { ...newInvite, id: invitationId });
-
     }, [user, userData, createNotification]);
 
     const acceptAllianceInvitation = useCallback(async (invitation: AllianceInvitation) => {
         if (!user || !userData || !db) throw new Error("Authentication required.");
         
-        const allianceRef = doc(db!, 'alliances', invitation.allianceId);
+        const allianceRef = doc(db, 'alliances', invitation.allianceId);
         const allianceSnap = await getDoc(allianceRef);
         if(!allianceSnap.exists()) throw new Error("Alliance no longer exists.");
 
@@ -243,7 +240,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             members: arrayUnion(newMember)
         });
 
-        await deleteDoc(doc(db!, 'alliance_invitations', invitation.id));
+        await deleteDoc(doc(db, 'alliance_invitations', invitation.id));
         await createNotification(invitation.senderId, 'friend_activity', `accepted your invitation to join ${invitation.allianceName}!`, `/alliances/${invitation.allianceId}`);
         toast({ title: "Joined Alliance!", description: `You are now a member of ${invitation.allianceName}.` });
         router.push(`/alliances/${invitation.allianceId}`);
@@ -251,14 +248,14 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     const declineAllianceInvitation = useCallback(async (invitationId: string) => {
         if (!db) return;
-        await deleteDoc(doc(db!, 'alliance_invitations', invitationId));
+        await deleteDoc(doc(db, 'alliance_invitations', invitationId));
         toast({ title: 'Invitation Declined', variant: 'destructive' });
     }, [toast]);
 
     const getPendingAllianceInvitesFor = useCallback(async (allianceId: string): Promise<AllianceInvitation[]> => {
         if (!db) return [];
         const invitesQuery = query(
-            collection(db!, 'alliance_invitations'),
+            collection(db, 'alliance_invitations'),
             where('allianceId', '==', allianceId),
             where('status', '==', 'pending')
         );
@@ -268,13 +265,13 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const setAllianceDare = useCallback(async (allianceId: string, dare: string) => {
         if (!db) return;
-        const allianceRef = doc(db!, 'alliances', allianceId);
+        const allianceRef = doc(db, 'alliances', allianceId);
         await updateDoc(allianceRef, { dare });
     }, []);
 
     const searchAlliances = useCallback(async (name: string): Promise<Alliance[]> => {
         if (!db) return [];
-        const alliancesRef = collection(db!, 'alliances');
+        const alliancesRef = collection(db, 'alliances');
         const q = query(
             alliancesRef,
             where('name', '>=', name),
@@ -293,8 +290,8 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         const challengeId = `${challengerAlliance.id}_${challengedAlliance.id}`;
         const reverseChallengeId = `${challengedAlliance.id}_${challengerAlliance.id}`;
-        const challengeRef = doc(db!, 'alliance_challenges', challengeId);
-        const reverseChallengeRef = doc(db!, 'alliance_challenges', reverseChallengeId);
+        const challengeRef = doc(db, 'alliance_challenges', challengeId);
+        const reverseChallengeRef = doc(db, 'alliance_challenges', reverseChallengeId);
         
         const challengeSnap = await getDoc(challengeRef);
         const reverseChallengeSnap = await getDoc(reverseChallengeRef);
@@ -320,12 +317,12 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const acceptAllianceChallenge = useCallback(async (challenge: AllianceChallenge) => {
         if (!db) return;
-        const batch = writeBatch(db!);
+        const batch = writeBatch(db);
         
-        const challengeRef = doc(db!, 'alliance_challenges', challenge.id);
+        const challengeRef = doc(db, 'alliance_challenges', challenge.id);
         batch.update(challengeRef, { status: 'active' });
 
-        const challengerAllianceRef = doc(db!, 'alliances', challenge.challengerAllianceId);
+        const challengerAllianceRef = doc(db, 'alliances', challenge.challengerAllianceId);
         batch.update(challengerAllianceRef, {
             activeChallengeId: challenge.id,
             opponentDetails: {
@@ -335,7 +332,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             }
         });
 
-        const challengedAllianceRef = doc(db!, 'alliances', challenge.challengedAllianceId);
+        const challengedAllianceRef = doc(db, 'alliances', challenge.challengedAllianceId);
         batch.update(challengedAllianceRef, {
             activeChallengeId: challenge.id,
             opponentDetails: {
@@ -352,14 +349,14 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const declineAllianceChallenge = useCallback(async (challengeId: string) => {
         if (!db) return;
-        const challengeRef = doc(db!, 'alliance_challenges', challengeId);
+        const challengeRef = doc(db, 'alliance_challenges', challengeId);
         await updateDoc(challengeRef, { status: 'declined' });
         toast({ title: 'Challenge Declined', variant: 'destructive' });
     }, [toast]);
 
     const updateAlliance = useCallback(async (allianceId: string, data: Partial<Pick<Alliance, 'name' | 'description' | 'target' | 'startDate' | 'endDate'>>) => {
         if (!db) return;
-        const allianceRef = doc(db!, 'alliances', allianceId);
+        const allianceRef = doc(db, 'alliances', allianceId);
         await updateDoc(allianceRef, data);
     }, []);
 
@@ -387,8 +384,6 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
                 // If in a challenge, update opponent's view of my progress
                 if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
                     const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
-                    // This update doesn't need to be in the transaction if it's just for display
-                    // and not critical for consistency, but it's safer this way.
                     transaction.update(opponentAllianceRef, { 
                         'opponentDetails.opponentProgress': newProgress
                     });
@@ -396,7 +391,6 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
             });
         } catch (error) {
             console.error("Error updating alliance progress:", error);
-            // Optionally re-throw or handle the error
         }
     }, [user]);
 
