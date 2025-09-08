@@ -600,6 +600,10 @@ export default function SettingsPage() {
                                     <Award className="mr-2 h-4 w-4" />
                                     Change Title
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleDownloadProfileCard}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download Profile Card
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={handleShareProfile}>
                                     <Share2 className="mr-2 h-4 w-4" />
                                     Share Profile
@@ -1037,3 +1041,4 @@ export default function SettingsPage() {
     </>
   );
 }
+
