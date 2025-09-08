@@ -371,7 +371,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         try {
             await runTransaction(db, async (transaction) => {
-                const allianceRef = doc(db, 'alliances', allianceId);
+                const allianceRef = doc(db!, 'alliances', allianceId);
                 const allianceDoc = await transaction.get(allianceRef);
                 if (!allianceDoc.exists()) {
                     throw new Error("Alliance does not exist!");
@@ -383,7 +383,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
                 // If in a challenge, update opponent's view of my progress
                 if (allianceData.activeChallengeId && allianceData.opponentDetails?.allianceId) {
-                    const opponentAllianceRef = doc(db, 'alliances', allianceData.opponentDetails.allianceId);
+                    const opponentAllianceRef = doc(db!, 'alliances', allianceData.opponentDetails.allianceId);
                     transaction.update(opponentAllianceRef, { 
                         'opponentDetails.opponentProgress': newProgress
                     });
@@ -396,7 +396,7 @@ export const AllianceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const updateMemberContribution = useCallback(async (allianceId: string, memberId: string, xpValue: number) => {
         if (!db) return;
-        const allianceRef = doc(db, 'alliances', allianceId);
+        const allianceRef = doc(db!, 'alliances', allianceId);
         
         try {
             await runTransaction(db, async (transaction) => {
