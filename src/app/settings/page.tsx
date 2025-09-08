@@ -584,6 +584,10 @@ export default function SettingsPage() {
                         {userData?.bio || "No bio yet."}
                     </div>
                     <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleDownloadProfileCard}>
+                            <Download className="h-4 w-4" />
+                            <span className="sr-only">Download Profile Card</span>
+                        </Button>
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -599,10 +603,6 @@ export default function SettingsPage() {
                                 <DropdownMenuItem onSelect={() => setIsTitleDialogOpen(true)}>
                                     <Award className="mr-2 h-4 w-4" />
                                     Change Title
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleDownloadProfileCard}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download Profile Card
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={handleShareProfile}>
                                     <Share2 className="mr-2 h-4 w-4" />
