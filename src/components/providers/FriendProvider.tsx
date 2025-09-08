@@ -706,12 +706,16 @@ export const FriendProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const unreadNotifs = notifications.filter(n => !n.isRead);
         if (unreadNotifs.length === 0) return;
 
+        if (!db) {
+            throw new Error('Firestore not initialized');
+        }
+        
         const batch = writeBatch(db);
         unreadNotifs.forEach(notif => {
-            const notifRef = doc(db, 'notifications', notif.id);
+            const notifRef = doc(db!, 'notifications', notif.id);
             batch.update(notifRef, { isRead: true });
         });
-        await batch.commit();
+        await batch.commit();        
 
     }, [user, notifications]);
 
