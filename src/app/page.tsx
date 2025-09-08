@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -43,7 +41,7 @@ export default function HomePage() {
   const [selectedDateForModal, setSelectedDateForModal] = useState<string | null>(null);
   const [isManageTasksModalOpen, setIsManageTasksModalOpen] = useState(false);
   const [selectedTaskFilterId, setSelectedTaskFilterId] = useState<string | null>(null);
-  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quote, setQuote] = useState<typeof QUOTES[number] | null>(null);
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [taskToDownload, setTaskToDownload] = useState<TaskDefinition | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -219,27 +217,28 @@ export default function HomePage() {
     if (timeBreakdownRef.current === null) return;
     setIsDownloading(true);
     setTimeout(() => {
-      toPng(timeBreakdownRef.current, { cacheBust: true, pixelRatio: 2 })
-        .then((dataUrl) => {
-          const link = document.createElement('a');
-          link.download = `sigil-time-breakdown-${format(new Date(), 'yyyy-MM-dd')}.png`;
-          link.href = dataUrl;
-          link.click();
-        })
-        .catch((err) => {
-          console.error("Could not generate time breakdown image", err);
-          toast({
-            title: "Download Failed",
-            description: "Could not generate the time breakdown image.",
-            variant: "destructive",
+      if (timeBreakdownRef.current) {
+        toPng(timeBreakdownRef.current, { cacheBust: true, pixelRatio: 2 })
+          .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = `sigil-time-breakdown-${format(new Date(), 'yyyy-MM-dd')}.png`;
+            link.href = dataUrl;
+            link.click();
+          })
+          .catch((err) => {
+            console.error("Could not generate time breakdown image", err);
+            toast({
+              title: "Download Failed",
+              description: "Could not generate the time breakdown image.",
+              variant: "destructive",
+            });
+          })
+          .finally(() => {
+            setIsDownloading(false);
           });
-        })
-        .finally(() => {
-          setIsDownloading(false);
-        });
+      }
     }, 100);
   }, [timeBreakdownRef, toast]);
-  
 
   const handleDayClick = (date: string) => {
     setSelectedDateForModal(date);
@@ -258,9 +257,9 @@ export default function HomePage() {
   if (!isUserDataLoaded) {
     return (
       <div className="fixed inset-0 z-50 bg-black">
-          <div className="flex items-center justify-center min-h-screen">
-              <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
-          </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <Image src="/loading.gif" alt="Loading..." width={242} height={242} unoptimized priority />
+        </div>
       </div>
     );
   }
@@ -299,55 +298,55 @@ export default function HomePage() {
         )}
         
         {dashboardSettings.showContributionGraph && (
-            <div ref={tourRefs.calendar}>
-                <ContributionGraph
-                    onDayClick={handleDayClick}
-                    onDayDoubleClick={handleDayClick}
-                    selectedTaskFilterId={selectedTaskFilterId}
-                    displayMode="full"
-                />
-                <div className="text-center mt-4">
-                    <Button asChild variant="outline" size="sm">
-                    <Link href="/calendar">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        View Full Calendar
-                    </Link>
-                    </Button>
-                </div>
+          <div ref={tourRefs.calendar}>
+            <ContributionGraph
+              onDayClick={handleDayClick}
+              onDayDoubleClick={handleDayClick}
+              selectedTaskFilterId={selectedTaskFilterId}
+              displayMode="full"
+            />
+            <div className="text-center mt-4">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/calendar">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  View Full Calendar
+                </Link>
+              </Button>
             </div>
+          </div>
         )}
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {dashboardSettings.showTodoList && (
-                <div ref={tourRefs.pacts} className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-                    <TodoListCard />
-                </div>
-            )}
-            <div ref={tourRefs.charts} className={cn("space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
-                {dashboardSettings.showProgressChart && (
-                  <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
-                )}
-
-                <div className="grid grid-cols-1 gap-6">
-                  {dashboardSettings.showTimeBreakdownChart && (
-                      <div className="animate-fade-in-up mt-8" style={{ animationDelay: '500ms' }}>
-                          <div className="mb-4 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-2xl font-semibold">Shit Done Today</h2>
-                                <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
-                            </div>
-                            <Button variant="ghost" size="icon" onClick={handleDownloadTimeBreakdown} aria-label="Download chart">
-                                <Download className="h-5 w-5" />
-                            </Button>
-                          </div>
-                          <DailyTimeBreakdownChart />
-                      </div>
-                  )}
-                </div>
+          {dashboardSettings.showTodoList && (
+            <div ref={tourRefs.pacts} className="lg:col-span-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+              <TodoListCard />
             </div>
-        </div>
+          )}
+          <div ref={tourRefs.charts} className={cn("space-y-6 animate-fade-in-up", dashboardSettings.showTodoList ? "lg:col-span-2" : "lg:col-span-3")} style={{ animationDelay: '200ms' }}>
+            {dashboardSettings.showProgressChart && (
+              <ProgressOverTimeChart selectedTaskFilterId={selectedTaskFilterId} />
+            )}
 
+            <div className="grid grid-cols-1 gap-6">
+              {dashboardSettings.showTimeBreakdownChart && (
+                <div className="animate-fade-in-up mt-8" style={{ animationDelay: '500ms' }}>
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold">Shit Done Today</h2>
+                      <p className="text-sm text-muted-foreground">A 24-hour visualization of your time-based tasks.</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={handleDownloadTimeBreakdown} aria-label="Download chart">
+                      <Download className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <DailyTimeBreakdownChart />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </main>
+      
       <RecordModal
         isOpen={isRecordModalOpen}
         onOpenChange={setIsRecordModalOpen}
@@ -364,32 +363,32 @@ export default function HomePage() {
       
       {/* Offscreen elements for image generation */}
       <div className="fixed -left-[9999px] top-0">
-          <div ref={quoteCardRef}>
-              <QuoteDisplayCard quote={quote} />
-          </div>
-          <div ref={taskCardRef}>
-            {taskToDownload && (
-              <TaskProgressCard 
-                task={taskToDownload} 
-                records={recordsForDownload.filter(r => r.taskType === taskToDownload.id)}
-                endDate={new Date()}
-                months={dashboardSettings.taskCardTimeRange || 1}
-                orientation={dashboardSettings.taskCardOrientation}
-              />
-            )}
-          </div>
-          <div ref={timeBreakdownRef}>
-              {isDownloading && (
-                <Card className="w-[800px] h-auto bg-background p-6 border border-white/10">
-                    <CardHeader>
-                        <CardTitle>Daily Time Breakdown</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <DailyTimeBreakdownChart date={new Date()} />
-                    </CardContent>
-                </Card>
-              )}
-          </div>
+        <div ref={quoteCardRef}>
+          <QuoteDisplayCard quote={quote} />
+        </div>
+        <div ref={taskCardRef}>
+          {taskToDownload && (
+            <TaskProgressCard 
+              task={taskToDownload} 
+              records={recordsForDownload.filter(r => r.taskType === taskToDownload.id)}
+              endDate={new Date()}
+              months={dashboardSettings.taskCardTimeRange || 1}
+              orientation={dashboardSettings.taskCardOrientation}
+            />
+          )}
+        </div>
+        <div ref={timeBreakdownRef}>
+          {isDownloading && (
+            <Card className="w-[800px] h-auto bg-background p-6 border border-white/10">
+              <CardHeader>
+                <CardTitle>Daily Time Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DailyTimeBreakdownChart date={new Date()} />
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
