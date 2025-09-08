@@ -791,7 +791,7 @@ export default function SettingsPage() {
                           <p className="text-xs text-muted-foreground mt-1">Set the time period for the downloadable task progress card.</p>
                           <Select
                             value={String(dashboardSettings.taskCardTimeRange || 1)}
-                            onValueChange={(value) => updateDashboardSetting('taskCardTimeRange', Number(value))}
+                            onValueChange={(value) => updateDashboardSetting('taskCardTimeRange', Number(value) as 1 | 3 | 6 | 12)}
                           >
                             <SelectTrigger className="mt-2">
                                 <SelectValue placeholder="Select time range..." />
