@@ -218,8 +218,16 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
   };
 
   const handleDeleteTask = (taskId: string, taskName: string) => {
-    deleteTaskDefinition(taskId);
-    toast({ title: "Task Deleted", description: `Task "${taskName}" deleted.`, variant: "destructive" });
+    const isDefault = taskDefinitions.find(t => t.id === taskId && ['work', 'exercise', 'reading', 'other', 'learning', 'personal'].includes(t.id));
+    
+    if (isDefault) {
+        deleteTaskDefinition(taskId);
+        toast({ title: "Default Task Hidden", description: `Task "${taskName}" will no longer appear.` });
+    } else {
+        deleteTaskDefinition(taskId);
+        toast({ title: "Task Deleted", description: `Task "${taskName}" deleted.`, variant: "destructive" });
+    }
+    
     if (editingTask?.id === taskId) {
       resetFormFields(null);
     }
@@ -519,7 +527,7 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
-                                  <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete "{task.name}" and remove it from any existing records.</AlertDialogDescription></AlertDialogHeader>
+                                  <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete "{task.name}". Associated records will be unassigned.</AlertDialogDescription></AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.name)} className={buttonVariants({ variant: "destructive" })}>Delete</AlertDialogAction>
