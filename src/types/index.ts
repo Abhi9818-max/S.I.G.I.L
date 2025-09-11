@@ -320,6 +320,7 @@ export interface UserData {
     gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
     records?: RecordEntry[];
     taskDefinitions?: TaskDefinition[];
+    deletedDefaultTaskIds?: string[];
     bonusPoints?: number;
     unlockedAchievements?: string[];
     claimableAchievements?: string[];

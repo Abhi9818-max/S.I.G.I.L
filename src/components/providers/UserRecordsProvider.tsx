@@ -1,12 +1,13 @@
+
 "use client";
 
 import type { RecordEntry, TaskDefinition, WeeklyProgressStats, AggregatedTimeDataPoint, UserLevelInfo, Constellation, TaskDistributionData, ProductivityByDayData, HighGoal, DailyTimeBreakdownData, UserData, ProgressChartTimeRange, TaskStatus, TaskMastery, TaskMasteryInfo, LevelXPConfig, Note, Achievement, Notification } from '@/types';
 import React, { useEffect, useState, useCallback, useMemo, useContext } from 'react';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, writeBatch, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from './AuthProvider';
 import {
-  TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS,
+  TASK_DEFINITIONS as DEFAULT_TASK_DEFINITIONS_BASE,
   calculateUserLevelInfo,
   STREAK_MILESTONES_FOR_CRYSTALS,
   calculateMasteryLevelInfo,
@@ -41,6 +42,8 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_TASK_COLOR } from '@/lib/constants';
+
+const DEFAULT_TASK_DEFINITIONS = DEFAULT_TASK_DEFINITIONS_BASE.map(t => ({...t, status: 'active' as TaskStatus}));
 
 // Helper function to recursively remove undefined values from an object
 const removeUndefinedValues = (obj: any): any => {
@@ -145,12 +148,15 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
   
   const taskDefinitions = useMemo(() => {
     const userTasks = userData?.taskDefinitions || [];
-    const defaultTasks = DEFAULT_TASK_DEFINITIONS.map(t => ({...t, status: 'active' as TaskStatus}));
+    const deletedDefaultIds = new Set(userData?.deletedDefaultTaskIds || []);
+
+    // Filter out deleted default tasks
+    const activeDefaultTasks = DEFAULT_TASK_DEFINITIONS.filter(task => !deletedDefaultIds.has(task.id));
 
     const userTaskMap = new Map(userTasks.map(task => [task.id, task]));
 
     // Merge default tasks with user tasks, user's overrides default
-    const mergedTasks = defaultTasks.map(defaultTask => 
+    const mergedTasks = activeDefaultTasks.map(defaultTask => 
       userTaskMap.has(defaultTask.id) 
         ? { ...defaultTask, ...userTaskMap.get(defaultTask.id) } 
         : defaultTask
@@ -158,13 +164,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     // Add any truly custom tasks (not in defaults)
     userTasks.forEach(userTask => {
-      if (!defaultTasks.some(dt => dt.id === userTask.id)) {
+      if (!DEFAULT_TASK_DEFINITIONS.some(dt => dt.id === userTask.id)) {
         mergedTasks.push(userTask);
       }
     });
     
     return mergedTasks;
-  }, [userData?.taskDefinitions]);
+  }, [userData?.taskDefinitions, userData?.deletedDefaultTaskIds]);
 
   const totalBonusPoints = useMemo(() => userData?.bonusPoints || 0, [userData]);
   const unlockedAchievements = useMemo(() => userData?.unlockedAchievements || [], [userData]);
@@ -447,21 +453,42 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       id: newId,
       status: 'active' as TaskStatus,
     };
-    const updatedTasks = [...taskDefinitions, newTask];
+    const updatedTasks = [...(userData?.taskDefinitions || []), newTask];
     updateUserDataInDb({ taskDefinitions: updatedTasks });
     return newId;
-  }, [taskDefinitions, updateUserDataInDb]);
+  }, [userData?.taskDefinitions, updateUserDataInDb]);
 
   const updateTaskDefinition = useCallback((updatedTask: TaskDefinition) => {
     const updatedTasks = taskDefinitions.map(task => task.id === updatedTask.id ? { ...updatedTask } : task);
-    updateUserDataInDb({ taskDefinitions: updatedTasks });
+    // When updating, we only need to store the user's customized tasks.
+    // The defaults are merged in the useMemo hook.
+    const userDefinedTasks = updatedTasks.filter(task => {
+        const isDefault = DEFAULT_TASK_DEFINITIONS.some(dt => dt.id === task.id);
+        // Only store if it's not a default task or if it's a default task that has been modified
+        if (!isDefault) return true;
+        const defaultTask = DEFAULT_TASK_DEFINITIONS.find(dt => dt.id === task.id);
+        // A simple JSON.stringify comparison to check for modifications
+        return JSON.stringify(task) !== JSON.stringify(defaultTask);
+    });
+    updateUserDataInDb({ taskDefinitions: userDefinedTasks });
   }, [taskDefinitions, updateUserDataInDb]);
 
   const deleteTaskDefinition = useCallback((taskId: string) => {
-    const updatedTasks = taskDefinitions.filter(task => task.id !== taskId);
+    const isDefault = DEFAULT_TASK_DEFINITIONS.some(dt => dt.id === taskId);
+    if (isDefault) {
+      // Don't delete from config, just mark as deleted for this user
+      const updatedDeletedIds = [...(userData?.deletedDefaultTaskIds || []), taskId];
+      updateUserDataInDb({ deletedDefaultTaskIds: updatedDeletedIds });
+    } else {
+      // It's a custom task, so remove it from the user's list
+      const updatedTasks = userData?.taskDefinitions?.filter(task => task.id !== taskId);
+      updateUserDataInDb({ taskDefinitions: updatedTasks });
+    }
+    
+    // Unassign task from records
     const updatedRecords = records.map(rec => rec.taskType === taskId ? {...rec, taskType: undefined} : rec);
-    updateUserDataInDb({ taskDefinitions: updatedTasks, records: updatedRecords });
-  }, [taskDefinitions, records, updateUserDataInDb]);
+    updateUserDataInDb({ records: updatedRecords });
+  }, [records, userData, updateUserDataInDb]);
 
   const updateTaskStatus = useCallback((taskId: string, status: TaskStatus) => {
     const updatedTasks = taskDefinitions.map(task => {
@@ -474,7 +501,13 @@ export const UserRecordsProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
         return task;
     });
-    updateUserDataInDb({ taskDefinitions: updatedTasks });
+
+    const userDefinedTasks = updatedTasks.filter(task => {
+      const isDefault = DEFAULT_TASK_DEFINITIONS.some(dt => dt.id === task.id);
+      return !isDefault || (isDefault && task.status !== 'active');
+    });
+
+    updateUserDataInDb({ taskDefinitions: userDefinedTasks });
   }, [taskDefinitions, updateUserDataInDb]);
 
   const getStatsForCompletedWeek = useCallback((weekOffset: number, taskId?: string | null): WeeklyProgressStats | null => {
