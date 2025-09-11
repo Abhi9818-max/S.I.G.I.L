@@ -73,7 +73,7 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
       },
       { message: "This task name already exists." }
     ),
-  color: z.string().regex(/^hsl\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\)$/, "Color must be a valid HSL string."),
+  color: z.string().regex(/^hsl\(\s*\d+\s*[,]?\s*\d+%?\s*[,]?\s*\d+%?\s*\)$/, "Color must be a valid HSL string."),
   priority: z.enum(['normal', 'high']).optional(),
   unit: z.enum(['count', 'minutes', 'hours', 'pages', 'generic', 'custom']).optional(),
   customUnitName: z.string().max(20, "Custom unit must be 20 characters or less.").optional(),
