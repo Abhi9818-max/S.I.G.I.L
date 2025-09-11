@@ -429,14 +429,6 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                             <div>
                                 <p className="font-semibold flex items-center gap-2">
                                   {task.name}
-                                  {task.priority === 'high' && (
-                                    <Tooltip>
-                                      <TooltipTrigger>
-                                        <Flame className="h-4 w-4 text-orange-400" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>High Priority</TooltipContent>
-                                    </Tooltip>
-                                  )}
                                 </p>
                                 <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs mt-1">
                                     <Tooltip>
@@ -454,6 +446,14 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
 
                                     <Tooltip><TooltipTrigger className="flex items-center gap-1"><CalendarCheck className="h-4 w-4" /><span>{getFrequencyLabel(task)}</span></TooltipTrigger><TooltipContent><p>Task Frequency</p></TooltipContent></Tooltip>
 
+                                    {task.priority === 'high' && (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Flame className="h-4 w-4 text-orange-400" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>High Priority</TooltipContent>
+                                    </Tooltip>
+                                  )}
                                     {task.darkStreakEnabled && (
                                         <Tooltip><TooltipTrigger><Zap className="h-4 w-4 text-yellow-400" /></TooltipTrigger><TooltipContent><p>Dark Streak Enabled</p></TooltipContent></Tooltip>
                                     )}
