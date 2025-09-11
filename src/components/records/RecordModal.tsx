@@ -28,7 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Trash2, Pencil, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parseISO, isValid, isPast } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import type { RecordEntry, TaskDefinition } from '@/types';
 import { useUserRecords } from '@/components/providers/UserRecordsProvider';
 import { useToast } from "@/hooks/use-toast";
@@ -91,9 +91,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
     getRecordsByDate, 
     taskDefinitions,
     getTaskDefinitionById,
-    awardBonusPoints,
   } = useUserRecords();
-  const { userAlliances } = useAlliance();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
@@ -101,15 +99,8 @@ const RecordModal: React.FC<RecordModalProps> = ({
   const dailyRecords = selectedDate ? getRecordsByDate(selectedDate) : [];
   
   const activeTaskDefinitions = useMemo(() => {
-    const completedAllianceTaskIds = new Set(
-        userAlliances
-            .filter(a => isPast(parseISO(a.endDate)))
-            .map(a => a.taskId)
-    );
-    return taskDefinitions.filter(task => 
-        task.status === 'active' && !completedAllianceTaskIds.has(task.id)
-    );
-  }, [taskDefinitions, userAlliances]);
+    return taskDefinitions.filter(task => task.status === 'active');
+  }, [taskDefinitions]);
 
   const recordSchema = useMemo(() => createRecordSchema(getTaskDefinitionById), [getTaskDefinitionById]);
 
@@ -143,7 +134,7 @@ const RecordModal: React.FC<RecordModalProps> = ({
     if (isOpen) {
       resetAndPrepareForm(null); // Always start with the 'new record' form
     }
-  }, [isOpen, selectedDate, defaultTaskTypeId]);
+  }, [isOpen, selectedDate, defaultTaskTypeId, activeTaskDefinitions]);
 
   const onSubmit = (data: RecordFormData) => {
     if (!selectedDate) return;
