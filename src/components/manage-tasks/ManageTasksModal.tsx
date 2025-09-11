@@ -73,7 +73,7 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
       },
       { message: "This task name already exists." }
     ),
-  color: z.string().regex(/^hsl\(\s*\d+\s*[,]?\s*\d+%?\s*[,]?\s*\d+%?\s*\)$/, "Color must be a valid HSL string."),
+  color: z.string().regex(/^hsl\(\s*\d+\s*[,]?\s*\d*%?\s*[,]?\s*\d*%?\s*\)$/, "Color must be a valid HSL string."),
   priority: z.enum(['normal', 'high']).optional(),
   unit: z.enum(['count', 'minutes', 'hours', 'pages', 'generic', 'custom']).optional(),
   customUnitName: z.string().max(20, "Custom unit must be 20 characters or less.").optional(),
@@ -130,20 +130,23 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
 type TaskFormData = z.infer<ReturnType<typeof createTaskFormSchema>>;
 
 const PRESET_COLORS = [
-  // GitHub Greens
-  'hsl(135 60% 75%)', // Light Green
-  'hsl(140 50% 60%)', // Mid Green
-  'hsl(145 63% 42%)', // Dark Green
-  'hsl(150 70% 30%)', // Darkest Green
-  // Bright & Premium
-  'hsl(180 80% 60%)', // Cyan
+  // Greens
+  'hsl(142 76% 36%)', // Dark Green
+  'hsl(142 66% 46%)', // Green
+  'hsl(142 56% 56%)', // Mid Green
+  'hsl(142 46% 66%)', // Light Green
+  // Blues
   'hsl(210 90% 70%)', // Bright Blue
-  'hsl(260 85% 70%)', // Indigo/Purple
+  'hsl(200 80% 60%)', // Sky Blue
+  // Purples
+  'hsl(260 85% 70%)', // Indigo
+  'hsl(280 75% 65%)', // Purple
+  // Pinks & Reds
   'hsl(330 85% 65%)', // Bright Pink
-  'hsl(0 85% 65%)',   // Bright Red
+  'hsl(350 90% 60%)', // Red
+  // Oranges & Yellows
   'hsl(25 95% 60%)',  // Orange
   'hsl(45 95% 55%)',  // Yellow
-  'hsl(0 0% 80%)',    // Neutral Gray
 ];
 
 
