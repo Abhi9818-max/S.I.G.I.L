@@ -130,18 +130,20 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
 type TaskFormData = z.infer<ReturnType<typeof createTaskFormSchema>>;
 
 const PRESET_COLORS = [
-  'hsl(210 80% 60%)', // Work
-  'hsl(140 70% 55%)', // Exercise
-  'hsl(25 95% 60%)',  // Reading
-  'hsl(290 80% 65%)', // Personal
-  'hsl(45 90% 55%)',  // Learning
-  'hsl(0 0% 80%)',    // Other
-  'hsl(0 80% 60%)',   // Red
-  'hsl(50 90% 55%)',  // Yellow
-  'hsl(250 85% 70%)', // Indigo
-  'hsl(330 85% 65%)', // Pink
-  'hsl(180 70% 45%)', // Teal
-  'hsl(90 65% 50%)',  // Lime
+  // GitHub Greens
+  'hsl(135 60% 75%)', // Light Green
+  'hsl(140 50% 60%)', // Mid Green
+  'hsl(145 63% 42%)', // Dark Green
+  'hsl(150 70% 30%)', // Darkest Green
+  // Bright & Premium
+  'hsl(180 80% 60%)', // Cyan
+  'hsl(210 90% 70%)', // Bright Blue
+  'hsl(260 85% 70%)', // Indigo/Purple
+  'hsl(330 85% 65%)', // Bright Pink
+  'hsl(0 85% 65%)',   // Bright Red
+  'hsl(25 95% 60%)',  // Orange
+  'hsl(45 95% 55%)',  // Yellow
+  'hsl(0 0% 80%)',    // Neutral Gray
 ];
 
 
