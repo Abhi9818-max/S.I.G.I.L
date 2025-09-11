@@ -73,7 +73,7 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
       },
       { message: "This task name already exists." }
     ),
-  color: z.string().regex(/^(#[0-9A-Fa-f]{6}|hsl\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\))$/, "Color must be a valid hex or HSL string."),
+  color: z.string().regex(/^hsl\(\s*\d+\s*,\s*\d+%?\s*,\s*\d+%?\s*\)$/, "Color must be a valid HSL string."),
   priority: z.enum(['normal', 'high']).optional(),
   unit: z.enum(['count', 'minutes', 'hours', 'pages', 'generic', 'custom']).optional(),
   customUnitName: z.string().max(20, "Custom unit must be 20 characters or less.").optional(),
@@ -128,6 +128,22 @@ const createTaskFormSchema = (existingTasks: TaskDefinition[], editingTaskId: st
 });
 
 type TaskFormData = z.infer<ReturnType<typeof createTaskFormSchema>>;
+
+const PRESET_COLORS = [
+  'hsl(210 80% 60%)', // Work
+  'hsl(140 70% 55%)', // Exercise
+  'hsl(25 95% 60%)',  // Reading
+  'hsl(290 80% 65%)', // Personal
+  'hsl(45 90% 55%)',  // Learning
+  'hsl(0 0% 80%)',    // Other
+  'hsl(0 80% 60%)',   // Red
+  'hsl(50 90% 55%)',  // Yellow
+  'hsl(250 85% 70%)', // Indigo
+  'hsl(330 85% 65%)', // Pink
+  'hsl(180 70% 45%)', // Teal
+  'hsl(90 65% 50%)',  // Lime
+];
+
 
 interface ManageTasksModalProps {
   isOpen: boolean;
@@ -307,13 +323,36 @@ const ManageTasksModal: React.FC<ManageTasksModalProps> = ({ isOpen, onOpenChang
                     {form.formState.errors.name && (<p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>)}
                   </div>
                   <div>
-                    <Label htmlFor="taskColor">Task Color</Label>
-                    <Controller name="color" control={form.control} render={({ field }) => (
-                      <div className="flex items-center mt-1 gap-2 border border-input rounded-md pr-2 focus-within:ring-2 focus-within:ring-ring">
-                        <Input id="taskColor" type="color" value={field.value.startsWith('hsl') ? '#000000' : field.value} onChange={(e) => field.onChange(e.target.value)} className="w-10 h-10 p-1 border-0 bg-transparent cursor-pointer"/>
-                        <Input type="text" value={field.value} onChange={field.onChange} placeholder="hsl(...) or #..." className="flex-grow border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"/>
-                      </div>
-                    )}/>
+                    <Controller
+                        name="color"
+                        control={form.control}
+                        render={({ field }) => (
+                            <div>
+                                <Label>Task Color</Label>
+                                <div className="grid grid-cols-6 gap-2 mt-1">
+                                    {PRESET_COLORS.map(color => (
+                                        <button
+                                            type="button"
+                                            key={color}
+                                            className={cn(
+                                                "h-8 w-full rounded-md border-2 transition-all",
+                                                field.value === color ? 'border-primary ring-2 ring-primary/50' : 'border-transparent'
+                                            )}
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => field.onChange(color)}
+                                        />
+                                    ))}
+                                </div>
+                                <Input 
+                                    type="text" 
+                                    value={field.value} 
+                                    onChange={field.onChange} 
+                                    className="mt-2 text-xs" 
+                                    placeholder="Or enter HSL value"
+                                />
+                            </div>
+                        )}
+                    />
                     {form.formState.errors.color && (<p className="text-sm text-destructive mt-1">{form.formState.errors.color.message}</p>)}
                   </div>
                 </div>
